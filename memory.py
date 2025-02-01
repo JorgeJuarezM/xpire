@@ -16,7 +16,9 @@ class Memory:
     Memory class for the CPU emulator.
     """
 
-    def __init__(self):
+    size: int = 0x00
+
+    def __init__(self, size: int = 0xFFFF):
         """
         Initialize a new Memory object.
 
@@ -24,8 +26,9 @@ class Memory:
         dictionary to store the memory cells.
         """
         self.memory = {}
+        self.size = size
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, addr: int, value: int) -> None:
         """
         Set the value at the specified memory address.
 
@@ -35,9 +38,18 @@ class Memory:
         Args:
             key: The memory address where the value is to be stored.
             value: The value to store at the specified memory address.
-        """
 
-        self.memory[key] = value
+        Raises:
+            Exception: If the memory address is out of bounds.
+            Exception: If the value is too large to fit in a byte.
+        """
+        if addr > self.size:
+            raise Exception(f"Memory overflow: Invalid address: {addr:02x}")
+
+        if value.bit_length() > 0x08:
+            raise Exception(f"Memory overflow: Invalid value 0x{value:02x}")
+
+        self.memory[addr] = value
 
     def __getitem__(self, addr: int) -> int:
         """
@@ -51,7 +63,13 @@ class Memory:
         Returns:
             The value stored at the specified memory address.
         """
-        return self.memory[addr]
+        if addr > self.size:
+            raise Exception(f"Memory overflow: Invalid address: {addr}")
+
+        return self.memory[addr] if addr in self.memory else 0x00
+
+    def __len__(self):
+        return self.size
 
     def items(self):
         """
@@ -84,18 +102,14 @@ class Memory:
             elements.append(f"0x{k:04x}: 0x{v:02x}")
         return "\n".join(elements)
 
-    def fetch(self, addr: int) -> int:
+    def max_address(self) -> int:
         """
-        Retrieve a byte from memory at the specified address.
+        Return the maximum address in the memory.
 
-        This method returns the value stored at the given memory address.
-        If the address does not exist in the memory, it returns 0x00.
-
-        Args:
-            addr: The memory address from which to retrieve the value.
+        This method returns the maximum address in the memory, which is the
+        highest address that can be used to store a value.
 
         Returns:
-            int: The value stored at the specified memory address, or 0x00 if not found.
+            The maximum address in the memory.
         """
-
-        return self.memory[addr] if addr in self.memory else 0x00
+        return self.size
