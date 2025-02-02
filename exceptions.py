@@ -1,3 +1,8 @@
+"""
+This module contains the exception classes used in the emulator.
+"""
+
+
 class BaseException(Exception):
     """
     Base class for all exceptions.
