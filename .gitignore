@@ -2,3 +2,16 @@
 __pycache__/
 *.py[cod]
 *$py.class
+__*
+*.o
+*.bin
+*.com
+*.asm
+*.txt
+*.c
+*.s
+test.py
+screen.py
+temp
+8080/
+instructions/
