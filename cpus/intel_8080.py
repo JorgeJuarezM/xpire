@@ -1,3 +1,7 @@
+"""
+Intel 8080 CPU implementation.
+"""
+
 from cpus.cpu import CPU
 from decorators import increment_stack_pointer
 from registers.inter_8080 import Registers
