@@ -10,15 +10,17 @@ the memory cells. The memory is represented as a dictionary where
 the keys are memory addresses and the values are memory cells.
 """
 
+from constants import FULL_WORD
+
 
 class Memory:
     """
     Memory class for the CPU emulator.
     """
 
-    size: int = 0x00
+    size: int
 
-    def __init__(self, size: int = 0xFFFF):
+    def __init__(self, size: int = FULL_WORD):
         """
         Initialize a new Memory object.
 
