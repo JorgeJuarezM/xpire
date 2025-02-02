@@ -70,7 +70,7 @@ def run(program_file):
     print(f"Final E:    0x{cpu.registers[Registers.E]:04x}")
     print(f"Final H:    0x{cpu.registers[Registers.H]:04x}")
     print(f"Final L:    0x{cpu.registers[Registers.L]:04x}")
-    print("===================================")
+    print("================================================")
     print(cpu.memory.dump())
 
     if cpu.exception:

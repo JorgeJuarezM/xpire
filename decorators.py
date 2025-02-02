@@ -109,11 +109,3 @@ def increment_stack_pointer() -> Callable:
         return wrapped
 
     return wrapper
-
-
-# def set_register(fn) -> Callable:
-#     def wrapper(self, *args, **kwargs):
-#         result = fn(self, *args, **kwargs)
-#         return result
-
-#     return wrapper
