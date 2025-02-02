@@ -18,6 +18,22 @@ class BaseException(Exception):
         self.message = message
 
 
+class SystemHalt(BaseException):
+    """
+    Exception raised when the system halts.
+    """
+
+    def __init__(self):
+        """
+        Initialize a new SystemHalt exception with a default message.
+
+        This constructor calls the base exception class with a predefined
+        message indicating that the system is exiting with a halt signal.
+        """
+
+        super().__init__("System exits with halt signal.")
+
+
 class InvalidMemoryAddress(BaseException):
     """
     Exception raised when an invalid memory address is accessed.

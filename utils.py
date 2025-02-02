@@ -22,3 +22,7 @@ def load_program_into_memory(memory: Memory, program_path: str):
         while opcode := f.read(1):
             memory.memory[i] = int(opcode.hex(), 16)
             i += 1
+
+
+def reset_value_if_overflow(value: int, max_size: int) -> int:
+    return value & max_size
