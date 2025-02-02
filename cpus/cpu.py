@@ -21,7 +21,7 @@ class CPU(threading.Thread, AbstractCPU):
         self.close_event = threading.Event()
 
         self.memory = memory
-        self.SP = memory.max_address()
+        self.SP = 0xFF
         self.PC = 0x00
 
         self.instructions = {
@@ -81,7 +81,6 @@ class CPU(threading.Thread, AbstractCPU):
 
     def execute_instruction(self):
         opcode = self.fetch_byte()
-        # print(f"0x{opcode:02x}")
         if self.has_instruction(opcode):
             self.instructions[opcode]()
         else:

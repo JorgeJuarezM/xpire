@@ -60,7 +60,6 @@ class Intel8080(CPU):
         self.PC = address
 
     def increment_accumulator(self):
-        # print(self.REG_A)
         self.REG_A += 0x01
 
     def load_immediate_to_stack_pointer(self):
