@@ -4,6 +4,12 @@ class BaseException(Exception):
     """
 
     def __init__(self, message):
+        """
+        Initialize a new BaseException with a given message.
+
+        Args:
+            message: the message to associate with the exception.
+        """
         self.message = message
 
 
