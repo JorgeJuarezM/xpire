@@ -6,12 +6,14 @@ from exceptions import SystemHalt
 from typing import Callable
 from decorators import increment_program_counter
 from cpus.abstract import AbstractCPU
+from registers.register import RegisterManager
 
 
 class CPU(threading.Thread, AbstractCPU):
 
     instructions: dict[int, Callable]
     exception: Exception
+    registers: RegisterManager
 
     def __init__(self, memory: Memory):
         threading.Thread.__init__(self)
@@ -21,6 +23,8 @@ class CPU(threading.Thread, AbstractCPU):
         self.close_event = threading.Event()
 
         self.memory = memory
+        self.registers = RegisterManager()
+
         self.SP = 0xFF
         self.PC = 0x00
 

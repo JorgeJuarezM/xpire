@@ -4,6 +4,7 @@ from memory import Memory
 from utils import load_program_into_memory
 from constants import K_64KB
 from exceptions import BaseException
+from cpus.intel_8080 import Registers
 
 
 @click.group()
@@ -57,11 +58,15 @@ def run(program_file):
     print(f"Final PC:   0x{cpu.PC:04x}")
     print(f"Final SP:   0x{cpu.SP:04x}")
     print("===================================")
-    print(f"Final A:    0x{cpu.REG_A:04x}")
-    print(f"Final B:    0x{cpu.REG_B:04x}")
-    print(f"Final C:    0x{cpu.REG_C:04x}")
-    print(f"Final H:    0x{cpu.REG_H:04x}")
-    print(f"Final L:    0x{cpu.REG_L:04x}")
+    print(f"Final A:    0x{cpu.registers[Registers.A]:04x}")
+    print(f"Final B:    0x{cpu.registers[Registers.B]:04x}")
+    print(f"Final C:    0x{cpu.registers[Registers.C]:04x}")
+    print(f"Final D:    0x{cpu.registers[Registers.D]:04x}")
+    print(f"Final E:    0x{cpu.registers[Registers.E]:04x}")
+    print(f"Final H:    0x{cpu.registers[Registers.H]:04x}")
+    print(f"Final L:    0x{cpu.registers[Registers.L]:04x}")
+    print("===================================")
+    print(cpu.memory.dump())
 
     if cpu.exception:
         if isinstance(cpu.exception, BaseException):
