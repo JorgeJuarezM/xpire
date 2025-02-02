@@ -1,42 +1,42 @@
-"""
-Main module for the CPU emulator.
-"""
-
-from cpu import CPU, SystemHalt
-import sys
+import click
+from cpus.intel_8080 import Intel8080
 from memory import Memory
 from utils import load_program_into_memory
 
 
-def main():
-    memory = Memory()
-    cpu = CPU(memory=memory)
-    try:
-        load_program_into_memory(memory, "test.com")
-        cpu.execute()
-    except SystemHalt:
-        print("========= Flags =========")
-        print(f"Z: {cpu.Flags.Z}")
-        print(f"S: {cpu.Flags.S}")
-        print(f"O: {cpu.Flags.O}")
-        print(f"C: {cpu.Flags.C}")
+@click.group()
+def xpire():
+    pass
 
-        print("========= Stack =========")
-        print(f"SP: 0x{cpu.SP:02x} -> {cpu.SP}")
-        print(f"PC: 0x{cpu.PC:02x} -> {cpu.PC}")
-        print(f"STACK: 0x{cpu.STACK:02x} -> {cpu.STACK}")
 
-        print("========= Registers =========")
-        print(f"A: 0x{cpu.A:02x} -> {cpu.A}")
-        print(f"B: 0x{cpu.B:02x} -> {cpu.B}")
-        print(f"C: 0x{cpu.C:02x} -> {cpu.C}")
-        print(f"D: 0x{cpu.D:02x} -> {cpu.D}")
+@xpire.command()
+@click.argument(
+    "program_file",
+    type=click.Path(
+        exists=True,
+        resolve_path=True,
+    ),
+    required=True,
+    metavar="FILE",
+)
+def run(program_file):
+    memory = Memory(size=0xFFFF)
+    load_program_into_memory(memory, program_file)
+    cpu = Intel8080(memory=memory)
+    cpu.start()
+    cpu.join()
 
-        print("========= Memory Dump =========")
-        print(memory.dump())
+    print("Program execution complete.")
+    print(f"Final PC:   0x{cpu.PC:04x}")
+    print(f"Final SP:   0x{cpu.SP:04x}")
+    print("===================================")
+    print(f"Final A:    0x{cpu.REG_A:04x}")
+    print(f"Final B:    0x{cpu.REG_B:04x}")
+    print(f"Final C:    0x{cpu.REG_C:04x}")
 
-        sys.exit(0)
+    if cpu.exception:
+        print(f"Exception: {cpu.exception}")
 
 
 if __name__ == "__main__":
-    main()
+    xpire()
