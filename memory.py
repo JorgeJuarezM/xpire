@@ -10,7 +10,8 @@ the memory cells. The memory is represented as a dictionary where
 the keys are memory addresses and the values are memory cells.
 """
 
-from constants import FULL_WORD
+from constants import FULL_WORD, BYTE_SIZE, DEFAULT_MEMORY_VALUE
+from exceptions import InvalidMemoryAddress, InvalidMemoryValue
 
 
 class Memory:
@@ -46,10 +47,10 @@ class Memory:
             Exception: If the value is too large to fit in a byte.
         """
         if addr > self.size:
-            raise Exception(f"Memory overflow: Invalid address: {addr:02x}")
+            raise InvalidMemoryAddress(addr)
 
-        if value.bit_length() > 0x08:
-            raise Exception(f"Memory overflow: Invalid value 0x{value:02x}")
+        if value.bit_length() > BYTE_SIZE:
+            raise InvalidMemoryValue(addr, value)
 
         self.memory[addr] = value
 
@@ -66,9 +67,9 @@ class Memory:
             The value stored at the specified memory address.
         """
         if addr > self.size:
-            raise Exception(f"Memory overflow: Invalid address: {addr}")
+            raise InvalidMemoryAddress(addr)
 
-        return self.memory[addr] if addr in self.memory else 0x00
+        return self.memory[addr] if addr in self.memory else DEFAULT_MEMORY_VALUE
 
     def __len__(self):
         return self.size
