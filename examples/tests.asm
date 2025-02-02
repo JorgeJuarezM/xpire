@@ -20,8 +20,3 @@ load_from_memory:
 increment:
     INR a
     ret
-
-
-; loop:
-;    DCR b
-;    JNZ loop
