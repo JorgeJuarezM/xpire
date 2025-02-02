@@ -1,3 +1,11 @@
+"""
+Main module for the Xpire package.
+
+This module contains the main entry point for the Xpire package.
+It provides a command-line interface for loading and running
+CP/M-80 programs on the Intel 8080 CPU.
+"""
+
 import click
 from cpus.intel_8080 import Intel8080
 from memory import Memory
@@ -21,16 +29,12 @@ def xpire():
 
     This package is intended for educational and development use only.
     """
-    pass
 
 
 @xpire.command()
 @click.argument(
     "program_file",
-    type=click.Path(
-        exists=True,
-        resolve_path=True,
-    ),
+    type=click.Path(exists=True, resolve_path=True),
     required=True,
     metavar="FILE",
 )
@@ -47,17 +51,18 @@ def run(program_file):
 
     :param program_file: The file containing the CP/M-80 program to run.
     """
-
     memory = Memory(size=K_64KB)
-    load_program_into_memory(memory, program_file)
     cpu = Intel8080(memory=memory)
+
+    load_program_into_memory(memory, program_file)
+
     cpu.start()
     cpu.join()
 
     print("Program execution complete.")
     print(f"Final PC:   0x{cpu.PC:04x}")
     print(f"Final SP:   0x{cpu.SP:04x}")
-    print("===================================")
+    print("================================================")
     print(f"Final A:    0x{cpu.registers[Registers.A]:04x}")
     print(f"Final B:    0x{cpu.registers[Registers.B]:04x}")
     print(f"Final C:    0x{cpu.registers[Registers.C]:04x}")
@@ -76,5 +81,4 @@ def run(program_file):
 
 
 if __name__ == "__main__":
-    # xpire(args=("run", "test.com"))
     xpire()
