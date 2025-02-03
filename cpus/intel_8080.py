@@ -30,17 +30,22 @@ class Intel8080(CPU):
         self.registers[Registers.L] = 0x00
 
         self.add_instruction(0x03, self.increment_bc_register)
-        self.add_instruction(0x04, self.increment_b_register)
+        self.add_instruction(0x04, lambda: self.increment_register(Registers.B))
         self.add_instruction(0x06, self.move_immediate_to_register(Registers.B))
+        self.add_instruction(0x0C, lambda: self.increment_register(Registers.C))
         self.add_instruction(0x0E, self.move_immediate_to_register(Registers.C))
+        self.add_instruction(0x14, lambda: self.increment_register(Registers.D))
         self.add_instruction(0x16, self.move_immediate_to_register(Registers.D))
+        self.add_instruction(0x1C, lambda: self.increment_register(Registers.E))
         self.add_instruction(0x1E, self.move_immediate_to_register(Registers.E))
+        self.add_instruction(0x24, lambda: self.increment_register(Registers.H))
         self.add_instruction(0x26, self.move_immediate_to_register(Registers.H))
+        self.add_instruction(0x2C, lambda: self.increment_register(Registers.L))
         self.add_instruction(0x2E, self.move_immediate_to_register(Registers.L))
         self.add_instruction(0x31, self.load_immediate_to_stack_pointer)
         self.add_instruction(0x32, self.store_accumulator_to_memory)
         self.add_instruction(0x3A, self.load_memory_address_to_accumulator)
-        self.add_instruction(0x3C, self.increment_accumulator)
+        self.add_instruction(0x3C, lambda: self.increment_register(Registers.A))
         self.add_instruction(0x3E, self.move_immediate_to_register(Registers.A))
         self.add_instruction(0xC3, self.jump_to_address)
         self.add_instruction(0xC5, self.push_bc_to_stack)
@@ -69,15 +74,6 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.PC = address
 
-    def increment_accumulator(self) -> None:
-        """
-        Increment the accumulator (A register) by one.
-
-        This method increases the value stored in the accumulator by 0x01.
-        If the result exceeds 0xFF, it wraps around to 0x00.
-        """
-        self.registers[Registers.A] += 0x01
-
     def load_immediate_to_stack_pointer(self) -> None:
         """
         Load a 16-bit address from memory to the stack pointer (SP).
@@ -103,15 +99,6 @@ class Intel8080(CPU):
         h, l = self.split_word(self.PC)
         self.push(h, l)
         self.PC = address_to_jump
-
-    def increment_b_register(self) -> None:
-        """
-        Increment the B register by one.
-
-        This method increments the value in the B register by one. If the
-        result is greater than 0xFF, it wraps around to 0x00.
-        """
-        self.registers[Registers.B] += 0x01
 
     def increment_bc_register(self) -> None:
         """
@@ -248,3 +235,11 @@ class Intel8080(CPU):
             self.registers[register] = self.fetch_byte()
 
         return move_immediate_to_register_func
+
+    def increment_register(self, register: int) -> None:
+        """
+        Increment the value of the specified register by one.
+
+        This method increases the value stored in the specified register by 0x01.
+        """
+        self.registers[register] += 0x01

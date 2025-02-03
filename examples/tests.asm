@@ -24,4 +24,10 @@ load_from_memory:
 ; increment
 increment:
     INR a
+    INR b
+    INR c
+    INR d
+    INR e
+    INR h
+    INR l
     ret
