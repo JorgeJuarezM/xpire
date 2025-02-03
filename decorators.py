@@ -103,7 +103,7 @@ def increment_stack_pointer() -> Callable:
                 The result of executing the given function.
             """
             result = func(self, *args, **kwargs)
-            self.SP = reset_value_if_overflow(self.SP + 0x02, self.memory.max_address())
+            self.SP = reset_value_if_overflow(self.SP + 0x02, 0xFFFF)
             return result
 
         return wrapped
