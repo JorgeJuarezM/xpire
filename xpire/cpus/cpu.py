@@ -7,7 +7,7 @@ instructions.
 """
 
 import threading
-from typing import Callable
+from typing import Callable, Optional
 
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
@@ -15,6 +15,26 @@ from xpire.exceptions import SystemHalt
 from xpire.memory import Memory
 from xpire.registers.register import RegisterManager
 from xpire.utils import join_bytes
+
+
+class InstructionSet:
+    instructions = {}
+
+    @classmethod
+    def add_instruction(cls, opcode: int, registers: Optional[list] = []) -> Callable:
+        def wrapper(func):
+            cls.instructions[opcode] = func, registers
+            return func
+
+        return wrapper
+
+    @classmethod
+    def execute(cls, opcode: int, cpu: AbstractCPU):
+        if opcode not in cls.instructions:
+            raise Exception(f"Unknown opcode: 0x{opcode:02x}")
+
+        handler, registers = cls.instructions[opcode]
+        handler(cpu, *registers)
 
 
 class CPU(threading.Thread, AbstractCPU):
@@ -59,6 +79,7 @@ class CPU(threading.Thread, AbstractCPU):
             0x76: self._system_halt,
         }
 
+    @InstructionSet.add_instruction(0x00, [])
     def _no_operation(self) -> None:
         """
         No operation.
@@ -67,6 +88,7 @@ class CPU(threading.Thread, AbstractCPU):
         no operation should be performed.
         """
 
+    @InstructionSet.add_instruction(0x76, [])
     def _system_halt(self) -> None:
         """
         Halt the system by raising a SystemHalt exception.
@@ -161,7 +183,7 @@ class CPU(threading.Thread, AbstractCPU):
         Returns:
             int: The byte value stored at the specified memory address.
         """
-        return self.memory[addr & self.memory.max_address()]
+        return self.memory[addr & 0xFFFF]
 
     def read_memory_word_bytes(self, addr: int) -> tuple[int, int]:
         """
@@ -221,10 +243,11 @@ class CPU(threading.Thread, AbstractCPU):
             None
         """
         opcode = self.fetch_byte()
-        if self.has_instruction(opcode):
-            self.instructions[opcode]()
-        else:
-            raise Exception(f"Unknown opcode: 0x{opcode:02x}")
+        # if self.has_instruction(opcode):
+        #     self.instructions[opcode]()
+        # else:
+        #     raise Exception(f"Unknown opcode: 0x{opcode:02x}")
+        InstructionSet.execute(opcode, self)
 
     def decrement_stack_pointer(self) -> None:
         """

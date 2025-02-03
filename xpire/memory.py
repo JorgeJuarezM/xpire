@@ -85,7 +85,7 @@ class Memory:
         Returns:
             An iterator over the memory cells.
         """
-        return self.memory.items()
+        return sorted(self.memory.items(), key=lambda x: x[0])
 
     def dump(self):
         """
@@ -101,7 +101,7 @@ class Memory:
             A string containing a memory dump.
         """
         elements = []
-        for k, v in self.memory.items():
+        for k, v in self.items():
             elements.append(f"0x{k:04x}: 0x{v:02x}")
         return "\n".join(elements)
 
