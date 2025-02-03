@@ -32,7 +32,51 @@ class Intel8080(CPU):
         self.registers[Registers.H] = 0x00
         self.registers[Registers.L] = 0x00
 
-    @manager.add_instruction(opcode=OPCodes.LDA)
+    def write_memory_byte(self, address, value) -> None:
+        """
+        Store a byte in memory at the specified address.
+
+        This method takes a 16-bit address and an 8-bit value, and stores the value in memory at the specified address.
+        """
+        address = address & 0xFFFF
+        self.memory[address] = value
+
+    def push(self, high_byte, low_byte) -> None:
+        """
+        Push a word to the stack.
+
+        This method decrements the stack pointer by two and stores
+        the given high and low bytes at the new stack pointer location.
+        The high byte is stored first, followed by the low byte.
+
+        Args:
+            high_byte (int): The high byte of the word to push.
+            low_byte (int): The low byte of the word to push.
+        """
+        self.decrement_stack_pointer()
+        self.write_memory_word(self.SP, high_byte, low_byte)
+
+    def write_memory_word(self, address, high_byte, low_byte) -> None:
+        """
+        Store a 16-bit value in memory at the specified address.
+
+        This method takes a 16-bit address and a 16-bit value, and stores the value in memory at the specified address.
+        The value is stored in memory as a 16-bit value (i.e. high byte first, low byte second).
+        """
+        self.write_memory_byte(address, high_byte)
+        self.write_memory_byte(address + 0x01, low_byte)
+
+    @increment_stack_pointer()
+    def pop(self) -> tuple[int, int]:
+        """
+        Pop a 16-bit value from the stack.
+
+        This instruction pops two bytes from the stack and returns them as a 16-bit value (i.e. high byte first, low byte second).
+        The stack pointer is incremented by two after the pop.
+        """
+        return self.read_memory_word_bytes(self.SP)
+
+    @manager.add_instruction(OPCodes.LDA)
     def load_memory_address_to_accumulator(self) -> None:
         """
         Load the value at the specified memory address to the accumulator (A register).
@@ -43,7 +87,7 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.registers[Registers.A] = self.read_memory_byte(address)
 
-    @manager.add_instruction(opcode=OPCodes.JMP)
+    @manager.add_instruction(OPCodes.JMP)
     def jump_to_address(self) -> None:
         """
         Jump to the specified address.
@@ -55,7 +99,7 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.PC = address
 
-    @manager.add_instruction(opcode=OPCodes.LXI_SP)
+    @manager.add_instruction(OPCodes.LXI_SP)
     def load_immediate_to_stack_pointer(self) -> None:
         """
         Load a 16-bit address from memory to the stack pointer (SP).
@@ -64,7 +108,7 @@ class Intel8080(CPU):
         """
         self.SP = self.fetch_word()
 
-    @manager.add_instruction(opcode=OPCodes.CALL)
+    @manager.add_instruction(OPCodes.CALL)
     def call_address(self) -> None:
         """
         Call the subroutine at the specified address.
@@ -83,7 +127,7 @@ class Intel8080(CPU):
         self.push(h, l)
         self.PC = address_to_jump
 
-    @manager.add_instruction(opcode=OPCodes.RET)
+    @manager.add_instruction(OPCodes.RET)
     def return_from_call(self) -> None:
         """
         Return from a subroutine call by restoring the program counter.
@@ -97,30 +141,9 @@ class Intel8080(CPU):
         h, l = self.pop()
         self.PC = h << 0x08 | l & 0xFF
 
-    def push(self, high_byte, low_byte) -> None:
-        """
-        Push a word to the stack.
-
-        This method decrements the stack pointer by two and stores
-        the given high and low bytes at the new stack pointer location.
-        The high byte is stored first, followed by the low byte.
-
-        Args:
-            high_byte (int): The high byte of the word to push.
-            low_byte (int): The low byte of the word to push.
-        """
-        self.decrement_stack_pointer()
-        self.write_memory_word(self.SP, high_byte, low_byte)
-
-    @manager.add_instruction(
-        opcode=OPCodes.PUSH_BC, registers=[Registers.B, Registers.C]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.PUSH_DE, registers=[Registers.D, Registers.E]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.PUSH_HL, registers=[Registers.H, Registers.L]
-    )
+    @manager.add_instruction(OPCodes.PUSH_BC, [Registers.B, Registers.C])
+    @manager.add_instruction(OPCodes.PUSH_DE, [Registers.D, Registers.E])
+    @manager.add_instruction(OPCodes.PUSH_HL, [Registers.H, Registers.L])
     def push_to_stack(self, h: int, l: int) -> None:
         """
         Push the contents of the BC register pair onto the stack.
@@ -131,25 +154,9 @@ class Intel8080(CPU):
         """
         self.push(self.registers[h], self.registers[l])
 
-    @increment_stack_pointer()
-    def pop(self) -> tuple[int, int]:
-        """
-        Pop a 16-bit value from the stack.
-
-        This instruction pops two bytes from the stack and returns them as a 16-bit value (i.e. high byte first, low byte second).
-        The stack pointer is incremented by two after the pop.
-        """
-        return self.read_memory_word_bytes(self.SP)
-
-    @manager.add_instruction(
-        opcode=OPCodes.POP_BC, registers=[Registers.B, Registers.C]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.POP_DE, registers=[Registers.D, Registers.E]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.POP_HL, registers=[Registers.H, Registers.L]
-    )
+    @manager.add_instruction(OPCodes.POP_BC, [Registers.B, Registers.C])
+    @manager.add_instruction(OPCodes.POP_DE, [Registers.D, Registers.E])
+    @manager.add_instruction(OPCodes.POP_HL, [Registers.H, Registers.L])
     def pop_from_stack(self, h: int, l: int) -> None:
         """
         Pop two bytes from the stack and store them in the specified registers pair.
@@ -157,26 +164,7 @@ class Intel8080(CPU):
         """
         self.registers[h], self.registers[l] = self.pop()
 
-    def write_memory_byte(self, address, value) -> None:
-        """
-        Store a byte in memory at the specified address.
-
-        This method takes a 16-bit address and an 8-bit value, and stores the value in memory at the specified address.
-        """
-        address = address & 0xFFFF
-        self.memory[address] = value
-
-    def write_memory_word(self, address, high_byte, low_byte) -> None:
-        """
-        Store a 16-bit value in memory at the specified address.
-
-        This method takes a 16-bit address and a 16-bit value, and stores the value in memory at the specified address.
-        The value is stored in memory as a 16-bit value (i.e. high byte first, low byte second).
-        """
-        self.write_memory_byte(address, high_byte)
-        self.write_memory_byte(address + 0x01, low_byte)
-
-    @manager.add_instruction(opcode=OPCodes.STA)
+    @manager.add_instruction(OPCodes.STA)
     def store_accumulator_to_memory(self) -> None:
         """
         Store the value of the accumulator in memory at the address specified by the next two bytes.
@@ -188,13 +176,13 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.write_memory_byte(address, self.registers[Registers.A])
 
-    @manager.add_instruction(opcode=OPCodes.MVI_A, registers=[Registers.A])
-    @manager.add_instruction(opcode=OPCodes.MVI_B, registers=[Registers.B])
-    @manager.add_instruction(opcode=OPCodes.MVI_C, registers=[Registers.C])
-    @manager.add_instruction(opcode=OPCodes.MVI_D, registers=[Registers.D])
-    @manager.add_instruction(opcode=OPCodes.MVI_E, registers=[Registers.E])
-    @manager.add_instruction(opcode=OPCodes.MVI_H, registers=[Registers.H])
-    @manager.add_instruction(opcode=OPCodes.MVI_L, registers=[Registers.L])
+    @manager.add_instruction(OPCodes.MVI_A, [Registers.A])
+    @manager.add_instruction(OPCodes.MVI_B, [Registers.B])
+    @manager.add_instruction(OPCodes.MVI_C, [Registers.C])
+    @manager.add_instruction(OPCodes.MVI_D, [Registers.D])
+    @manager.add_instruction(OPCodes.MVI_E, [Registers.E])
+    @manager.add_instruction(OPCodes.MVI_H, [Registers.H])
+    @manager.add_instruction(OPCodes.MVI_L, [Registers.L])
     def move_immediate_to_register(self, register: int) -> callable:
         """
         Move an immediate value to the specified register.
@@ -209,13 +197,13 @@ class Intel8080(CPU):
         """
         self.registers[register] = self.fetch_byte()
 
-    @manager.add_instruction(opcode=OPCodes.INC_A, registers=[Registers.A])
-    @manager.add_instruction(opcode=OPCodes.INC_B, registers=[Registers.B])
-    @manager.add_instruction(opcode=OPCodes.INC_C, registers=[Registers.C])
-    @manager.add_instruction(opcode=OPCodes.INC_D, registers=[Registers.D])
-    @manager.add_instruction(opcode=OPCodes.INC_E, registers=[Registers.E])
-    @manager.add_instruction(opcode=OPCodes.INC_H, registers=[Registers.H])
-    @manager.add_instruction(opcode=OPCodes.INC_L, registers=[Registers.L])
+    @manager.add_instruction(OPCodes.INC_A, [Registers.A])
+    @manager.add_instruction(OPCodes.INC_B, [Registers.B])
+    @manager.add_instruction(OPCodes.INC_C, [Registers.C])
+    @manager.add_instruction(OPCodes.INC_D, [Registers.D])
+    @manager.add_instruction(OPCodes.INC_E, [Registers.E])
+    @manager.add_instruction(OPCodes.INC_H, [Registers.H])
+    @manager.add_instruction(OPCodes.INC_L, [Registers.L])
     def increment_register(self, register: int) -> None:
         """
         Increment the value of the specified register by one.
@@ -224,15 +212,9 @@ class Intel8080(CPU):
         """
         self.registers[register] += 0x01
 
-    @manager.add_instruction(
-        opcode=OPCodes.INR_BC, registers=[Registers.B, Registers.C]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.INR_DE, registers=[Registers.D, Registers.E]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.INR_HL, registers=[Registers.H, Registers.L]
-    )
+    @manager.add_instruction(OPCodes.INR_BC, [Registers.B, Registers.C])
+    @manager.add_instruction(OPCodes.INR_DE, [Registers.D, Registers.E])
+    @manager.add_instruction(OPCodes.INR_HL, [Registers.H, Registers.L])
     def increment_register_pair(self, h: int, l: int) -> None:
         high_byte, low_byte = increment_bytes_pair(
             self.registers[h],
@@ -242,15 +224,9 @@ class Intel8080(CPU):
         self.registers[h] = high_byte
         self.registers[l] = low_byte
 
-    @manager.add_instruction(
-        opcode=OPCodes.LXI_BC, registers=[Registers.B, Registers.C]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.LXI_DE, registers=[Registers.D, Registers.E]
-    )
-    @manager.add_instruction(
-        opcode=OPCodes.LXI_HL, registers=[Registers.H, Registers.L]
-    )
+    @manager.add_instruction(OPCodes.LXI_BC, [Registers.B, Registers.C])
+    @manager.add_instruction(OPCodes.LXI_DE, [Registers.D, Registers.E])
+    @manager.add_instruction(OPCodes.LXI_HL, [Registers.H, Registers.L])
     def load_immediate_to_registry_pair(self, h: int, l: int) -> None:
         self.registers[l] = self.fetch_byte()
         self.registers[h] = self.fetch_byte()
