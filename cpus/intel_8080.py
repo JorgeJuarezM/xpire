@@ -145,11 +145,11 @@ class Intel8080(CPU):
 
     def push(self, high_byte, low_byte) -> None:
         """
-        Push a word onto the stack.
+        Push a word to the stack.
 
-        This method decreases the stack pointer by two and stores the
-        provided 16-bit value on the stack at the updated stack pointer
-        location. The high byte is stored first, followed by the low byte.
+        This method decrements the stack pointer by two and stores
+        the given high and low bytes at the new stack pointer location.
+        The high byte is stored first, followed by the low byte.
 
         Args:
             high_byte (int): The high byte of the word to push.
@@ -160,12 +160,11 @@ class Intel8080(CPU):
 
     def push_bc_to_stack(self) -> None:
         """
-        Push the value of the BC register to the stack.
+        Push the contents of the BC register pair onto the stack.
 
-        This method decrements the stack pointer by two and
-        stores the value of the BC register at the new stack
-        pointer location.
-
+        This method pushes the values stored in the B and C registers onto the stack.
+        The value in the C register is pushed first as the low byte, followed by the
+        value in the B register as the high byte.
         """
         self.push(
             self.registers[Registers.C],
