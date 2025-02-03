@@ -152,12 +152,7 @@ class Intel8080(CPU):
     )
     def pop_from_stack(self, h: int, l: int) -> None:
         """
-        Pop two bytes from the stack and store them in the H and L registers.
-
-        This instruction pops two bytes from the stack and stores them in the H and L registers. The
-        value is popped from the stack as a 16-bit value (i.e. high byte first, low byte second) and
-        is stored in the H and L registers.
-
+        Pop two bytes from the stack and store them in the specified registers pair.
         The stack pointer is incremented by two after the pop.
         """
         self.registers[h], self.registers[l] = self.pop()
