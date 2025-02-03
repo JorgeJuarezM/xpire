@@ -7,16 +7,15 @@ instructions.
 """
 
 import threading
-from typing import Callable
 
+import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
 from xpire.exceptions import SystemHalt
+from xpire.instructions.manager import InstructionManager as manager
 from xpire.memory import Memory
 from xpire.registers.register import RegisterManager
-from xpire.instructions.manager import InstructionManager as manager
 from xpire.utils import join_bytes
-import xpire.instructions.common as OPCodes
 
 
 class CPU(threading.Thread, AbstractCPU):

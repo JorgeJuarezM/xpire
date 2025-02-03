@@ -8,7 +8,8 @@ The instructions are stored in a dictionary where the keys are the opcodes and t
 values are tuples containing the instruction handler and the registers.
 """
 
-from typing import Optional, Callable, List, Tuple
+from typing import Callable, List, Optional, Tuple
+
 from xpire.cpus.abstract import AbstractCPU
 
 
