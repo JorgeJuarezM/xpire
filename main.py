@@ -81,5 +81,4 @@ def run(program_file):
 
 
 if __name__ == "__main__":
-    # xpire()
-    xpire(["run", "examples/tests.bin"])
+    xpire()

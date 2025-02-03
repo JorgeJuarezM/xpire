@@ -145,7 +145,7 @@ class CPU(threading.Thread, AbstractCPU):
         """
         addr_l = self.fetch_byte()
         addr_h = self.fetch_byte()
-        return addr_h << 0x08 | addr_l & 0x00FF
+        return addr_h << 0x08 | addr_l
 
     def read_memory_byte(self, addr: int) -> int:
         """
