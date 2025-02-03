@@ -7,8 +7,8 @@ of CPU instructions.
 
 from typing import Callable
 
-from cpus.abstract import AbstractCPU
-from utils import reset_value_if_overflow
+from xpire.cpus.abstract import AbstractCPU
+from xpire.utils import reset_value_if_overflow
 
 
 def increment_program_counter() -> Callable:
