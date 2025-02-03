@@ -15,6 +15,7 @@ from typing import Callable
 from decorators import increment_program_counter
 from cpus.abstract import AbstractCPU
 from registers.register import RegisterManager
+from utils import join_bytes
 
 
 class CPU(threading.Thread, AbstractCPU):
@@ -145,7 +146,7 @@ class CPU(threading.Thread, AbstractCPU):
         """
         addr_l = self.fetch_byte()
         addr_h = self.fetch_byte()
-        return addr_h << 0x08 | addr_l
+        return join_bytes(addr_h, addr_l)
 
     def read_memory_byte(self, addr: int) -> int:
         """
@@ -195,7 +196,7 @@ class CPU(threading.Thread, AbstractCPU):
             int: The word value stored at the specified memory address.
         """
         h_addr, l_addr = self.read_memory_word_bytes(addr)
-        return h_addr << 0x08 | l_addr
+        return join_bytes(h_addr, l_addr)
 
     def has_instruction(self, opcode) -> bool:
         """
@@ -241,21 +242,3 @@ class CPU(threading.Thread, AbstractCPU):
 
         self.SP = new_value & 0xFFFF
         return None
-
-    def split_word(self, word: int) -> tuple[int, int]:
-        """
-        Split a 16-bit word into two bytes.
-
-        This method takes a 16-bit word and splits it into two bytes: the high byte
-        and the low byte. The high byte is the result of shifting the word right by
-        8 bits and masking the result with 0xFF, and the low byte is the result of
-        masking the word with 0xFF.
-
-        Args:
-            word (int): The 16-bit word to split.
-
-        Returns:
-            tuple[int, int]: A tuple containing the high byte and low byte of the
-            input word.
-        """
-        return (word >> 0x08) & 0xFF, word & 0xFF
