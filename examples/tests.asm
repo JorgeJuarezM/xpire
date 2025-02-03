@@ -4,6 +4,10 @@ main:
     call load_from_memory
     call increment
     call increment_pairs
+    call jump
+    call load_immediate_16
+    call store_accumulator_in_memory
+    call push_to_stack
     hlt
 
 ; Load immediate value to register
@@ -37,4 +41,28 @@ increment_pairs:
     INX bc
     INX de
     INX hl
+    ret
+
+jump:
+    JMP jump_to
+    jump_to:
+        ret
+
+load_immediate_16:
+    LXI bc, 0x1234h
+    LXI de, 0x5678h
+    LXI hl, 0x9012h
+    ret
+
+store_accumulator_in_memory:
+    STA 0x8888h
+    ret
+
+push_to_stack:
+    push bc
+    push de
+    push hl
+    pop bc
+    pop de
+    pop hl
     ret
