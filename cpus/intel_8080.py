@@ -140,8 +140,7 @@ class Intel8080(CPU):
         complete address.
         """
         h, l = self.pop()
-        print(f"Return from call: 0x{h:02X} 0x{l:02X}")
-        self.PC = h << 0x08 | l & 0x00FF
+        self.PC = h << 0x08 | l & 0xFF
 
     def push(self, high_byte, low_byte) -> None:
         """
