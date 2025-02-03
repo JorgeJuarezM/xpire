@@ -2,9 +2,9 @@
 Intel 8080 CPU implementation.
 """
 
+import xpire.instructions.intel_8080 as OPCodes
 from xpire.cpus.cpu import CPU, InstructionSet
 from xpire.decorators import increment_stack_pointer
-from xpire.instructions.intel_8080 import Intel8080InstructionSet as OPCodes
 from xpire.registers.inter_8080 import Registers
 from xpire.utils import increment_bytes_pair, split_word
 
