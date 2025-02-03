@@ -3,7 +3,8 @@ Intel 8080 CPU implementation.
 """
 
 import xpire.instructions.intel_8080 as OPCodes
-from xpire.cpus.cpu import CPU, InstructionSet
+from xpire.cpus.cpu import CPU
+from xpire.instructions.manager import InstructionManager as manager
 from xpire.decorators import increment_stack_pointer
 from xpire.registers.inter_8080 import Registers
 from xpire.utils import increment_bytes_pair, split_word
@@ -31,7 +32,7 @@ class Intel8080(CPU):
         self.registers[Registers.H] = 0x00
         self.registers[Registers.L] = 0x00
 
-    @InstructionSet.add_instruction(opcode=OPCodes.LDA)
+    @manager.add_instruction(opcode=OPCodes.LDA)
     def load_memory_address_to_accumulator(self) -> None:
         """
         Load the value at the specified memory address to the accumulator (A register).
@@ -42,7 +43,7 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.registers[Registers.A] = self.read_memory_byte(address)
 
-    @InstructionSet.add_instruction(opcode=OPCodes.JMP)
+    @manager.add_instruction(opcode=OPCodes.JMP)
     def jump_to_address(self) -> None:
         """
         Jump to the specified address.
@@ -54,7 +55,7 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.PC = address
 
-    @InstructionSet.add_instruction(opcode=OPCodes.LXI_SP)
+    @manager.add_instruction(opcode=OPCodes.LXI_SP)
     def load_immediate_to_stack_pointer(self) -> None:
         """
         Load a 16-bit address from memory to the stack pointer (SP).
@@ -63,7 +64,7 @@ class Intel8080(CPU):
         """
         self.SP = self.fetch_word()
 
-    @InstructionSet.add_instruction(opcode=OPCodes.CALL)
+    @manager.add_instruction(opcode=OPCodes.CALL)
     def call_address(self) -> None:
         """
         Call the subroutine at the specified address.
@@ -82,7 +83,7 @@ class Intel8080(CPU):
         self.push(h, l)
         self.PC = address_to_jump
 
-    @InstructionSet.add_instruction(opcode=OPCodes.RET)
+    @manager.add_instruction(opcode=OPCodes.RET)
     def return_from_call(self) -> None:
         """
         Return from a subroutine call by restoring the program counter.
@@ -111,13 +112,13 @@ class Intel8080(CPU):
         self.decrement_stack_pointer()
         self.write_memory_word(self.SP, high_byte, low_byte)
 
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.PUSH_BC, registers=[Registers.B, Registers.C]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.PUSH_DE, registers=[Registers.D, Registers.E]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.PUSH_HL, registers=[Registers.H, Registers.L]
     )
     def push_to_stack(self, h: int, l: int) -> None:
@@ -140,13 +141,13 @@ class Intel8080(CPU):
         """
         return self.read_memory_word_bytes(self.SP)
 
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.POP_BC, registers=[Registers.B, Registers.C]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.POP_DE, registers=[Registers.D, Registers.E]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.POP_HL, registers=[Registers.H, Registers.L]
     )
     def pop_from_stack(self, h: int, l: int) -> None:
@@ -180,7 +181,7 @@ class Intel8080(CPU):
         self.write_memory_byte(address, high_byte)
         self.write_memory_byte(address + 0x01, low_byte)
 
-    @InstructionSet.add_instruction(opcode=OPCodes.STA)
+    @manager.add_instruction(opcode=OPCodes.STA)
     def store_accumulator_to_memory(self) -> None:
         """
         Store the value of the accumulator in memory at the address specified by the next two bytes.
@@ -192,13 +193,13 @@ class Intel8080(CPU):
         address = self.fetch_word()
         self.write_memory_byte(address, self.registers[Registers.A])
 
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_A, registers=[Registers.A])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_B, registers=[Registers.B])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_C, registers=[Registers.C])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_D, registers=[Registers.D])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_E, registers=[Registers.E])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_H, registers=[Registers.H])
-    @InstructionSet.add_instruction(opcode=OPCodes.MVI_L, registers=[Registers.L])
+    @manager.add_instruction(opcode=OPCodes.MVI_A, registers=[Registers.A])
+    @manager.add_instruction(opcode=OPCodes.MVI_B, registers=[Registers.B])
+    @manager.add_instruction(opcode=OPCodes.MVI_C, registers=[Registers.C])
+    @manager.add_instruction(opcode=OPCodes.MVI_D, registers=[Registers.D])
+    @manager.add_instruction(opcode=OPCodes.MVI_E, registers=[Registers.E])
+    @manager.add_instruction(opcode=OPCodes.MVI_H, registers=[Registers.H])
+    @manager.add_instruction(opcode=OPCodes.MVI_L, registers=[Registers.L])
     def move_immediate_to_register(self, register: int) -> callable:
         """
         Move an immediate value to the specified register.
@@ -213,13 +214,13 @@ class Intel8080(CPU):
         """
         self.registers[register] = self.fetch_byte()
 
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_A, registers=[Registers.A])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_B, registers=[Registers.B])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_C, registers=[Registers.C])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_D, registers=[Registers.D])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_E, registers=[Registers.E])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_H, registers=[Registers.H])
-    @InstructionSet.add_instruction(opcode=OPCodes.INC_L, registers=[Registers.L])
+    @manager.add_instruction(opcode=OPCodes.INC_A, registers=[Registers.A])
+    @manager.add_instruction(opcode=OPCodes.INC_B, registers=[Registers.B])
+    @manager.add_instruction(opcode=OPCodes.INC_C, registers=[Registers.C])
+    @manager.add_instruction(opcode=OPCodes.INC_D, registers=[Registers.D])
+    @manager.add_instruction(opcode=OPCodes.INC_E, registers=[Registers.E])
+    @manager.add_instruction(opcode=OPCodes.INC_H, registers=[Registers.H])
+    @manager.add_instruction(opcode=OPCodes.INC_L, registers=[Registers.L])
     def increment_register(self, register: int) -> None:
         """
         Increment the value of the specified register by one.
@@ -228,13 +229,13 @@ class Intel8080(CPU):
         """
         self.registers[register] += 0x01
 
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.INR_BC, registers=[Registers.B, Registers.C]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.INR_DE, registers=[Registers.D, Registers.E]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.INR_HL, registers=[Registers.H, Registers.L]
     )
     def increment_register_pair(self, h: int, l: int) -> None:
@@ -246,13 +247,13 @@ class Intel8080(CPU):
         self.registers[h] = high_byte
         self.registers[l] = low_byte
 
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.LXI_BC, registers=[Registers.B, Registers.C]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.LXI_DE, registers=[Registers.D, Registers.E]
     )
-    @InstructionSet.add_instruction(
+    @manager.add_instruction(
         opcode=OPCodes.LXI_HL, registers=[Registers.H, Registers.L]
     )
     def load_immediate_to_registry_pair(self, h: int, l: int) -> None:

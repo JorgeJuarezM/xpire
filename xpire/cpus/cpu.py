@@ -7,34 +7,16 @@ instructions.
 """
 
 import threading
-from typing import Callable, Optional
+from typing import Callable
 
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
 from xpire.exceptions import SystemHalt
 from xpire.memory import Memory
 from xpire.registers.register import RegisterManager
+from xpire.instructions.manager import InstructionManager as manager
 from xpire.utils import join_bytes
-
-
-class InstructionSet:
-    instructions = {}
-
-    @classmethod
-    def add_instruction(cls, opcode: int, registers: Optional[list] = []) -> Callable:
-        def wrapper(func):
-            cls.instructions[opcode] = func, registers
-            return func
-
-        return wrapper
-
-    @classmethod
-    def execute(cls, opcode: int, cpu: AbstractCPU):
-        if opcode not in cls.instructions:
-            raise Exception(f"Unknown opcode: 0x{opcode:02x}")
-
-        handler, registers = cls.instructions[opcode]
-        handler(cpu, *registers)
+import xpire.instructions.common as OPCodes
 
 
 class CPU(threading.Thread, AbstractCPU):
@@ -46,7 +28,6 @@ class CPU(threading.Thread, AbstractCPU):
     instructions.
     """
 
-    instructions: dict[int, Callable]
     exception: Exception
     registers: RegisterManager
 
@@ -67,46 +48,11 @@ class CPU(threading.Thread, AbstractCPU):
         self.close_event = threading.Event()
 
         self.exception = None
-
         self.memory = memory
         self.registers = RegisterManager()
 
         self.SP = 0x0000
         self.PC = 0x0000
-
-        self.instructions = {
-            0x00: self._no_operation,
-            0x76: self._system_halt,
-        }
-
-    @InstructionSet.add_instruction(0x00, [])
-    def _no_operation(self) -> None:
-        """
-        No operation.
-
-        This instruction does nothing. It is used to indicate
-        no operation should be performed.
-        """
-
-    @InstructionSet.add_instruction(0x76, [])
-    def _system_halt(self) -> None:
-        """
-        Halt the system by raising a SystemHalt exception.
-
-        This method is used to signal to the emulator that the program
-        has finished executing by raising a SystemHalt exception.
-        """
-        raise SystemHalt()
-
-    def add_instruction(self, opcode, func: Callable) -> None:
-        """
-        Add a new instruction to the CPU's instruction set.
-
-        Args:
-            opcode (int): The opcode for the instruction.
-            func (Callable): The function to call when the instruction is executed.
-        """
-        self.instructions[opcode] = func
 
     def run(self) -> None:
         """
@@ -219,18 +165,6 @@ class CPU(threading.Thread, AbstractCPU):
         h_addr, l_addr = self.read_memory_word_bytes(addr)
         return join_bytes(h_addr, l_addr)
 
-    def has_instruction(self, opcode) -> bool:
-        """
-        Check if the given opcode has an associated instruction.
-
-        Args:
-            opcode (int): The opcode to check.
-
-        Returns:
-            bool: True if the opcode has an associated instruction, False otherwise.
-        """
-        return opcode in self.instructions
-
     def execute_instruction(self) -> None:
         """
         Execute the instruction at the current program counter.
@@ -243,11 +177,7 @@ class CPU(threading.Thread, AbstractCPU):
             None
         """
         opcode = self.fetch_byte()
-        # if self.has_instruction(opcode):
-        #     self.instructions[opcode]()
-        # else:
-        #     raise Exception(f"Unknown opcode: 0x{opcode:02x}")
-        InstructionSet.execute(opcode, self)
+        manager.execute(opcode, self)
 
     def decrement_stack_pointer(self) -> None:
         """
@@ -264,3 +194,22 @@ class CPU(threading.Thread, AbstractCPU):
 
         self.SP = new_value & 0xFFFF
         return None
+
+    @manager.add_instruction(OPCodes.NOP)
+    def exec_no_operation(self) -> None:
+        """
+        No operation.
+
+        This instruction does nothing. It is used to indicate
+        no operation should be performed.
+        """
+
+    @manager.add_instruction(OPCodes.HLT)
+    def raise_system_halt(self) -> None:
+        """
+        Halt the system by raising a SystemHalt exception.
+
+        This method is used to signal to the emulator that the program
+        has finished executing by raising a SystemHalt exception.
+        """
+        raise SystemHalt()
