@@ -51,8 +51,8 @@ class CPU(threading.Thread, AbstractCPU):
         self.memory = memory
         self.registers = RegisterManager()
 
-        self.SP = 0xFF
-        self.PC = 0x00
+        self.SP = 0x0000
+        self.PC = 0x0000
 
         self.instructions = {
             0x00: self._no_operation,
@@ -145,7 +145,7 @@ class CPU(threading.Thread, AbstractCPU):
         """
         addr_l = self.fetch_byte()
         addr_h = self.fetch_byte()
-        return addr_h << 0x08 | addr_l
+        return addr_h << 0x08 | addr_l & 0x00FF
 
     def read_memory_byte(self, addr: int) -> int:
         """
@@ -235,8 +235,11 @@ class CPU(threading.Thread, AbstractCPU):
         value is wrapped using a bitwise AND with the maximum memory address,
         effectively decrementing the stack pointer with wrapping behavior.
         """
-        new_value = (self.SP + 0x01) & self.memory.max_address()
-        self.SP = new_value
+        new_value = self.SP - 0x02
+        if new_value < 0x00:
+            new_value = 0xFFFF + new_value + 0x0001
+
+        self.SP = new_value & 0xFFFF
         return None
 
     def split_word(self, word: int) -> tuple[int, int]:

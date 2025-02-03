@@ -99,9 +99,10 @@ class Intel8080(CPU):
         is split into high and low bytes and pushed onto the stack.
         """
 
-        address = self.fetch_word()
-        self.push(self.PC >> 0x08, self.PC & 0x00FF)
-        self.PC = address
+        address_to_jump = self.fetch_word()
+        h, l = self.split_word(self.PC)
+        self.push(h, l)
+        self.PC = address_to_jump
 
     def increment_b_register(self) -> None:
         """
@@ -139,7 +140,8 @@ class Intel8080(CPU):
         complete address.
         """
         h, l = self.pop()
-        self.PC = h << 0x08 | l
+        print(f"Return from call: 0x{h:02X} 0x{l:02X}")
+        self.PC = h << 0x08 | l & 0x00FF
 
     def push(self, high_byte, low_byte) -> None:
         """
@@ -153,8 +155,7 @@ class Intel8080(CPU):
             high_byte (int): The high byte of the word to push.
             low_byte (int): The low byte of the word to push.
         """
-
-        self.SP -= 0x02
+        self.decrement_stack_pointer()
         self.write_memory_word(self.SP, high_byte, low_byte)
 
     def push_bc_to_stack(self) -> None:
@@ -167,8 +168,8 @@ class Intel8080(CPU):
 
         """
         self.push(
-            self.registers[Registers.B],
             self.registers[Registers.C],
+            self.registers[Registers.B],
         )
 
     @increment_stack_pointer()
@@ -199,6 +200,7 @@ class Intel8080(CPU):
 
         This method takes a 16-bit address and an 8-bit value, and stores the value in memory at the specified address.
         """
+        address = address & 0xFFFF
         self.memory[address] = value
 
     def write_memory_word(self, address, high_byte, low_byte) -> None:
