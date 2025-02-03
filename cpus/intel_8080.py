@@ -6,6 +6,7 @@ from cpus.cpu import CPU
 from decorators import increment_stack_pointer
 from registers.inter_8080 import Registers
 from utils import split_word
+from utils import increment_bytes_pair
 
 
 class Intel8080(CPU):
@@ -30,15 +31,23 @@ class Intel8080(CPU):
         self.registers[Registers.H] = 0x00
         self.registers[Registers.L] = 0x00
 
-        self.add_instruction(0x03, self.increment_bc_register)
+        self.add_instruction(
+            0x03, lambda: self.increment_register_pair(Registers.B, Registers.C)
+        )
         self.add_instruction(0x04, lambda: self.increment_register(Registers.B))
         self.add_instruction(0x06, self.move_immediate_to_register(Registers.B))
         self.add_instruction(0x0C, lambda: self.increment_register(Registers.C))
         self.add_instruction(0x0E, self.move_immediate_to_register(Registers.C))
+        self.add_instruction(
+            0x13, lambda: self.increment_register_pair(Registers.D, Registers.E)
+        )
         self.add_instruction(0x14, lambda: self.increment_register(Registers.D))
         self.add_instruction(0x16, self.move_immediate_to_register(Registers.D))
         self.add_instruction(0x1C, lambda: self.increment_register(Registers.E))
         self.add_instruction(0x1E, self.move_immediate_to_register(Registers.E))
+        self.add_instruction(
+            0x23, lambda: self.increment_register_pair(Registers.H, Registers.L)
+        )
         self.add_instruction(0x24, lambda: self.increment_register(Registers.H))
         self.add_instruction(0x26, self.move_immediate_to_register(Registers.H))
         self.add_instruction(0x2C, lambda: self.increment_register(Registers.L))
@@ -100,23 +109,6 @@ class Intel8080(CPU):
         h, l = split_word(self.PC)
         self.push(h, l)
         self.PC = address_to_jump
-
-    def increment_bc_register(self) -> None:
-        """
-        Increment the BC register by one.
-
-        This method increments the value in the BC register by one. If the
-        result is greater than 0xFFFF, it wraps around to 0x0000.
-        """
-        from utils import increment_bytes_pair
-
-        high_byte, low_byte = increment_bytes_pair(
-            self.registers[Registers.C],
-            self.registers[Registers.B],
-        )
-
-        self.registers[Registers.C] = high_byte
-        self.registers[Registers.B] = low_byte
 
     def return_from_call(self) -> None:
         """
@@ -245,3 +237,12 @@ class Intel8080(CPU):
         This method increases the value stored in the specified register by 0x01.
         """
         self.registers[register] += 0x01
+
+    def increment_register_pair(self, h: int, l: int) -> None:
+        high_byte, low_byte = increment_bytes_pair(
+            self.registers[h],
+            self.registers[l],
+        )
+
+        self.registers[h] = high_byte
+        self.registers[l] = low_byte
