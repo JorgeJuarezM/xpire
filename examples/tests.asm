@@ -3,6 +3,7 @@ main:
     call load_immediate
     call load_from_memory
     call increment
+    call increment_pairs
     hlt
 
 ; Load immediate value to register
@@ -30,4 +31,10 @@ increment:
     INR e
     INR h
     INR l
+    ret
+
+increment_pairs:
+    INX bc
+    INX de
+    INX hl
     ret
