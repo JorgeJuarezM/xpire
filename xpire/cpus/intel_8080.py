@@ -2,10 +2,10 @@
 Intel 8080 CPU implementation.
 """
 
-from cpus.cpu import CPU
-from decorators import increment_stack_pointer
-from registers.inter_8080 import Registers
-from utils import increment_bytes_pair, split_word
+from xpire.cpus.cpu import CPU
+from xpire.decorators import increment_stack_pointer
+from xpire.registers.inter_8080 import Registers
+from xpire.utils import increment_bytes_pair, split_word
 
 
 class Intel8080(CPU):

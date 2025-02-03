@@ -2,7 +2,7 @@
 Utility functions for the CPU emulator.
 """
 
-from memory import Memory
+from xpire.memory import Memory
 
 
 def load_program_into_memory(memory: Memory, program_path: str):

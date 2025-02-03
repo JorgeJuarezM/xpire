@@ -9,12 +9,12 @@ instructions.
 import threading
 from typing import Callable
 
-from cpus.abstract import AbstractCPU
-from decorators import increment_program_counter
-from exceptions import SystemHalt
-from memory import Memory
-from registers.register import RegisterManager
-from utils import join_bytes
+from xpire.cpus.abstract import AbstractCPU
+from xpire.decorators import increment_program_counter
+from xpire.exceptions import SystemHalt
+from xpire.memory import Memory
+from xpire.registers.register import RegisterManager
+from xpire.utils import join_bytes
 
 
 class CPU(threading.Thread, AbstractCPU):
