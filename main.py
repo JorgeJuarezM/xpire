@@ -7,12 +7,12 @@ CP/M-80 programs on the Intel 8080 CPU.
 """
 
 import click
-from cpus.intel_8080 import Intel8080
+
+from constants import K_64KB
+from cpus.intel_8080 import Intel8080, Registers
+from exceptions import BaseException
 from memory import Memory
 from utils import load_program_into_memory
-from constants import K_64KB
-from exceptions import BaseException
-from cpus.intel_8080 import Registers
 
 
 @click.group()
