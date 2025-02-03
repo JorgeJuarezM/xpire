@@ -2,12 +2,13 @@
 Decorators for the CPU emulator.
 
 This module defines decorators that are used to modify the behavior
-of CPU instructions. 
+of CPU instructions.
 """
 
-from utils import reset_value_if_overflow
-from cpus.abstract import AbstractCPU
 from typing import Callable
+
+from cpus.abstract import AbstractCPU
+from utils import reset_value_if_overflow
 
 
 def increment_program_counter() -> Callable:

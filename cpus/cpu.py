@@ -7,13 +7,12 @@ instructions.
 """
 
 import threading
-import time
-from tracemalloc import Frame
-from memory import Memory
-from exceptions import SystemHalt
 from typing import Callable
-from decorators import increment_program_counter
+
 from cpus.abstract import AbstractCPU
+from decorators import increment_program_counter
+from exceptions import SystemHalt
+from memory import Memory
 from registers.register import RegisterManager
 from utils import join_bytes
 

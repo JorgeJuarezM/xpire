@@ -5,8 +5,7 @@ Intel 8080 CPU implementation.
 from cpus.cpu import CPU
 from decorators import increment_stack_pointer
 from registers.inter_8080 import Registers
-from utils import split_word
-from utils import increment_bytes_pair
+from utils import increment_bytes_pair, split_word
 
 
 class Intel8080(CPU):

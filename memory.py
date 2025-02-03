@@ -10,7 +10,7 @@ the memory cells. The memory is represented as a dictionary where
 the keys are memory addresses and the values are memory cells.
 """
 
-from constants import FULL_WORD, BYTE_SIZE, DEFAULT_MEMORY_VALUE
+from constants import BYTE_SIZE, DEFAULT_MEMORY_VALUE, FULL_WORD
 from exceptions import InvalidMemoryAddress, InvalidMemoryValue
 
 
