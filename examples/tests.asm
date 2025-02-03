@@ -1,5 +1,12 @@
+; main program
+main:
+    call load_immediate
+    call load_from_memory
+    call increment
+    hlt
+
 ; Load immediate value to register
-load_inmmediate:
+load_immediate:
     MVI a, 1
     MVI b, 2
     MVI c, 3
@@ -7,13 +14,11 @@ load_inmmediate:
     MVI e, 5
     MVI h, 6
     MVI l, 7
-    call load_from_memory
-    hlt
+    ret
 
 ; load from memory
 load_from_memory:
     LDA 0h
-    call increment
     ret
 
 ; increment
