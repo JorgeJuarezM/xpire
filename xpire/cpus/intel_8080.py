@@ -251,12 +251,13 @@ class Intel8080(CPU):
         self.registers[l] = self.fetch_byte()
         self.registers[h] = self.fetch_byte()
 
+    @manager.add_instruction(OPCodes.LDAX_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.LDAX_DE, [Registers.D, Registers.E])
-    def load_add_from_register_to_accumulator(self, h: int, l: int) -> None:
+    def load_address_from_register_to_accumulator(self, h: int, l: int) -> None:
         address_l = self.registers[l]
         address_h = self.registers[h]
         address = join_bytes(address_h, address_l)
-        self.registers[Registers.A] += self.read_memory_byte(address)
+        self.registers[Registers.A] = self.read_memory_byte(address)
 
     @manager.add_instruction(OPCodes.MOV_M_A, [Registers.A])
     def move_register_to_hl_memory(self, register: int) -> None:
@@ -274,6 +275,7 @@ class Intel8080(CPU):
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.write_memory_byte(address, self.fetch_byte())
 
+    @manager.add_instruction(OPCodes.MOV_D_A, [Registers.A, Registers.D])
     @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
     @manager.add_instruction(OPCodes.MOV_A_H, [Registers.H, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_L, [Registers.L, Registers.A])
@@ -377,3 +379,21 @@ class Intel8080(CPU):
 
         self.registers[h] = high_byte
         self.registers[l] = low_byte
+
+    @manager.add_instruction(OPCodes.JZ)
+    def jump_if_zero(self) -> None:
+        address = self.fetch_word()
+        if self.flags["Z"]:
+            self.PC = address
+
+    @manager.add_instruction(OPCodes.ADD_D, [Registers.D])
+    def add_to_accumulator(self, register: int) -> None:
+        result = self.registers[register] + self.registers[Registers.A]
+
+        # Todo: Implement flags
+        self.flags["Z"] = result == 0
+        self.flags["S"] = result < 0
+        self.flags["P"] = result % 2 == 1
+        self.flags["C"] = result > 0xFF
+
+        self.registers[Registers.A] = result

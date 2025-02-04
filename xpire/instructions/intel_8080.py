@@ -34,9 +34,11 @@ MVI_L = 0x2E
 
 # Move 8-bit register to other register
 
+MOV_D_A = 0x57
 MOV_L_A = 0x6F
 MOV_A_H = 0x7C
 MOV_A_L = 0x7D
+MOV_A_D = 0x0A  # check
 
 
 # Move 8-bit register to memory (HL)
@@ -63,6 +65,7 @@ LXI_HL = 0x21
 LXI_SP = 0x31
 
 # Load accumulator from memory
+LDAX_BC = 0x0A
 LDAX_DE = 0x1A
 
 # Load content of address in memory, and next to HL
@@ -72,6 +75,8 @@ LHLD = 0x2A
 CPI_A = 0xFE
 
 # Arithmetic operations
+ADD_D = 0x82  # sum D with A, store result in A
+
 DAD_HL = 0x29  # sum HL with HL, store result in HL
 DAD_DE = 0x19  # sum DE with HL, store result in HL
 
@@ -97,6 +102,8 @@ ORA = 0xB4  # OR H with A
 # Control flow
 JNZ = 0xC2
 JMP = 0xC3
+JZ = 0xCA
+
 RET = 0xC9
 RNC = 0xD0
 CALL = 0xCD
