@@ -11,6 +11,15 @@ INC_E = 0x1C
 INC_H = 0x24
 INC_L = 0x2C
 
+# Decrement 8-bit registers
+DCR_A = 0x3D
+DCR_B = 0x05
+DCR_C = 0x0D
+DCR_D = 0x15
+DCR_E = 0x1D
+DCR_H = 0x25
+DCR_L = 0x2D
+
 # Move immediate value to 8-bit register
 MVI_A = 0x3E
 MVI_B = 0x06

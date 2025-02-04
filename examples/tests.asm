@@ -3,6 +3,7 @@ main:
     call load_immediate
     call load_from_memory
     call increment
+    call decrement
     call increment_pairs
     call jump
     call load_immediate_16
@@ -36,6 +37,17 @@ increment:
     INR h
     INR l
     ret
+
+decrement:
+    DCR a
+    DCR b
+    DCR c
+    DCR d
+    DCR e
+    DCR h
+    DCR l
+    ret
+
 
 increment_pairs:
     INX bc

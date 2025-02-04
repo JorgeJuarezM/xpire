@@ -212,6 +212,22 @@ class Intel8080(CPU):
         """
         self.registers[register] += 0x01
 
+    @manager.add_instruction(OPCodes.DCR_A, [Registers.A])
+    @manager.add_instruction(OPCodes.DCR_B, [Registers.B])
+    @manager.add_instruction(OPCodes.DCR_C, [Registers.C])
+    @manager.add_instruction(OPCodes.DCR_D, [Registers.D])
+    @manager.add_instruction(OPCodes.DCR_E, [Registers.E])
+    @manager.add_instruction(OPCodes.DCR_H, [Registers.H])
+    @manager.add_instruction(OPCodes.DCR_L, [Registers.L])
+    def decrement_register(self, register: int) -> None:
+        """
+        Decrement the value of the specified register by one.
+
+        This method decreases the value stored in the specified register by 0x01.
+        """
+        new_value = self.registers[register] - 0x01
+        self.registers[register] = new_value & 0xFF
+
     @manager.add_instruction(OPCodes.INR_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.INR_DE, [Registers.D, Registers.E])
     @manager.add_instruction(OPCodes.INR_HL, [Registers.H, Registers.L])
