@@ -225,7 +225,8 @@ class Intel8080(CPU):
 
         This method decreases the value stored in the specified register by 0x01.
         """
-        self.registers[register] -= 0x01
+        new_value = self.registers[register] - 0x01
+        self.registers[register] = new_value & 0xFF
 
     @manager.add_instruction(OPCodes.INR_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.INR_DE, [Registers.D, Registers.E])
