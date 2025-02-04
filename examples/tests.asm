@@ -46,6 +46,7 @@ decrement:
     DCR e
     DCR h
     DCR l
+    ret
 
 
 increment_pairs:
