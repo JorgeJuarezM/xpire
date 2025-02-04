@@ -7,7 +7,7 @@ from xpire.cpus.cpu import CPU
 from xpire.decorators import increment_stack_pointer
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.registers.inter_8080 import Registers
-from xpire.utils import increment_bytes_pair, split_word
+from xpire.utils import increment_bytes_pair, join_bytes, split_word
 
 
 class Intel8080(CPU):
@@ -31,6 +31,10 @@ class Intel8080(CPU):
         self.registers[Registers.E] = 0x00
         self.registers[Registers.H] = 0x00
         self.registers[Registers.L] = 0x00
+
+        self.out = {}
+
+        self.flags["Z"] = False
 
     def write_memory_byte(self, address, value) -> None:
         """
@@ -246,3 +250,130 @@ class Intel8080(CPU):
     def load_immediate_to_registry_pair(self, h: int, l: int) -> None:
         self.registers[l] = self.fetch_byte()
         self.registers[h] = self.fetch_byte()
+
+    @manager.add_instruction(OPCodes.LDAX_DE, [Registers.D, Registers.E])
+    def load_add_from_register_to_accumulator(self, h: int, l: int) -> None:
+        address_l = self.registers[l]
+        address_h = self.registers[h]
+        address = join_bytes(address_h, address_l)
+        self.registers[Registers.A] += self.read_memory_byte(address)
+
+    @manager.add_instruction(OPCodes.MOV_M_A, [Registers.A])
+    def move_register_to_hl_memory(self, register: int) -> None:
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.write_memory_byte(address, self.registers[register])
+
+    @manager.add_instruction(OPCodes.JNZ)
+    def jump_if_not_zero(self) -> None:
+        address = self.fetch_word()
+        if not self.flags["Z"]:
+            self.pc = address
+
+    @manager.add_instruction(OPCodes.MVI_M)
+    def move_immediate_to_hl_memory(self) -> None:
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.write_memory_byte(address, self.fetch_byte())
+
+    @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_A_H, [Registers.H, Registers.A])
+    @manager.add_instruction(OPCodes.MOV_A_L, [Registers.L, Registers.A])
+    def move_register_to_register(self, src: int, dst: int) -> None:
+        self.registers[dst] = self.registers[src]
+
+    @manager.add_instruction(OPCodes.CPI_A, [Registers.A])
+    def compare_register_with_immediate(self, register: int) -> None:
+        value = self.fetch_byte()
+
+        # Todo: Implement flags
+        self.flags["Z"] = self.registers[register] == value
+        self.flags["C"] = self.registers[register] < value
+        self.flags["S"] = self.registers[register] < 0
+        self.flags["P"] = self.registers[register] % 2 == 1
+
+    @manager.add_instruction(OPCodes.DAD_DE, [Registers.D, Registers.E])
+    @manager.add_instruction(OPCodes.DAD_HL, [Registers.H, Registers.L])
+    def sum_register_pair_with_self(self, h: int, l: int) -> None:
+        h_value = self.registers[h]
+        l_value = self.registers[l]
+
+        value1 = join_bytes(h_value, l_value)
+        value2 = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+
+        result = value1 + value2
+        result_no_overflow = result & 0xFFFF
+        self.registers[Registers.H], self.registers[Registers.L] = split_word(
+            result_no_overflow
+        )
+
+        self.flags["C"] = result > 0xFFFF
+
+    @manager.add_instruction(OPCodes.DAD_SP)
+    def sum_register_pair_with_self(self) -> None:
+        h_value, l_value = split_word(self.SP)
+
+        value1 = join_bytes(h_value, l_value)
+        value2 = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+
+        result = value1 + value2
+        result_no_overflow = result & 0xFFFF
+        self.registers[Registers.H], self.registers[Registers.L] = split_word(
+            result_no_overflow
+        )
+
+        self.flags["C"] = result > 0xFFFF
+
+    @manager.add_instruction(
+        OPCodes.XCHG, [Registers.H, Registers.L, Registers.D, Registers.E]
+    )
+    def exchange_register_pairs(self, h: int, l: int, d: int, e: int) -> None:
+        h1 = self.registers[h]
+        l1 = self.registers[l]
+        d1 = self.registers[d]
+        e1 = self.registers[e]
+
+        self.registers[h] = d1
+        self.registers[l] = e1
+        self.registers[d] = h1
+        self.registers[e] = l1
+
+    @manager.add_instruction(OPCodes.OUT)
+    def out_to_port(self) -> None:
+        print("=========== OUT ============", end="")
+        port = self.fetch_byte()
+        print(f"Port: {port} Value: {chr(self.fetch_byte())}")
+
+    @manager.add_instruction(OPCodes.RNC)
+    def return_if_not_carry(self) -> None:
+        if not self.flags["C"]:
+            self.pc = join_bytes(self.pop())
+
+    @manager.add_instruction(OPCodes.LHLD)
+    def load_address_and_next_to_hl(self) -> None:
+        address1 = self.fetch_word()
+        address2 = (address1 + 0x01) & 0xFFFF
+
+        l = self.read_memory_byte(address1)
+        h = self.read_memory_byte(address2)
+
+        self.registers[Registers.L] = l
+        self.registers[Registers.H] = h
+
+    @manager.add_instruction(OPCodes.ORA, [Registers.H, Registers.L])
+    def register_or_with_accumulator(self, h, l) -> None:
+        hl = join_bytes(self.registers[h], self.registers[l])
+        self.registers[Registers.A] |= hl
+
+        # Todo: Implement flags
+        self.flags["Z"] = self.registers[Registers.A] == 0
+        self.flags["S"] = self.registers[Registers.A] < 0
+        self.flags["P"] = self.registers[Registers.A] % 2 == 1
+
+    @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
+    def decrement_register_pair(self, h: int, l: int) -> None:
+        value = join_bytes(self.registers[h], self.registers[l])
+        value = (value - 0x01) & 0xFFFF
+
+        high_byte, low_byte = split_word(value)
+
+        self.registers[h] = high_byte
+        self.registers[l] = low_byte

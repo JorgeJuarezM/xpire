@@ -49,6 +49,7 @@ class CPU(threading.Thread, AbstractCPU):
         self.exception = None
         self.memory = memory
         self.registers = RegisterManager()
+        self.flags = {}
 
         self.SP = 0x0000
         self.PC = 0x0000
