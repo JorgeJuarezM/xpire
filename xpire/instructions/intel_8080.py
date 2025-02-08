@@ -3,13 +3,13 @@ Intel 8080 instruction set.
 """
 
 # Increment 8-bit registers
-INC_A = 0x3C
-INC_B = 0x04
-INC_C = 0x0C
-INC_D = 0x14
-INC_E = 0x1C
-INC_H = 0x24
-INC_L = 0x2C
+INR_A = 0x3C
+INR_B = 0x04
+INR_C = 0x0C
+INR_D = 0x14
+INR_E = 0x1C
+INR_H = 0x24
+INR_L = 0x2C
 
 # Decrement 8-bit registers
 DCR_A = 0x3D

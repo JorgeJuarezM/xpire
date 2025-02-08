@@ -7,7 +7,7 @@ from xpire.cpus.cpu import CPU
 from xpire.decorators import increment_stack_pointer
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.registers.inter_8080 import Registers
-from xpire.utils import increment_bytes_pair, join_bytes, split_word
+from xpire.utils import join_bytes, split_word
 
 # import beepy
 # import pygame
@@ -225,20 +225,26 @@ class Intel8080(CPU):
         """
         self.registers[register] = self.fetch_byte()
 
-    @manager.add_instruction(OPCodes.INC_A, [Registers.A])
-    @manager.add_instruction(OPCodes.INC_B, [Registers.B])
-    @manager.add_instruction(OPCodes.INC_C, [Registers.C])
-    @manager.add_instruction(OPCodes.INC_D, [Registers.D])
-    @manager.add_instruction(OPCodes.INC_E, [Registers.E])
-    @manager.add_instruction(OPCodes.INC_H, [Registers.H])
-    @manager.add_instruction(OPCodes.INC_L, [Registers.L])
+    @manager.add_instruction(OPCodes.INR_A, [Registers.A])
+    @manager.add_instruction(OPCodes.INR_B, [Registers.B])
+    @manager.add_instruction(OPCodes.INR_C, [Registers.C])
+    @manager.add_instruction(OPCodes.INR_D, [Registers.D])
+    @manager.add_instruction(OPCodes.INR_E, [Registers.E])
+    @manager.add_instruction(OPCodes.INR_H, [Registers.H])
+    @manager.add_instruction(OPCodes.INR_L, [Registers.L])
     def increment_register(self, register: int) -> None:
         """
         Increment the value of the specified register by one.
 
-        This method increases the value stored in the specified register by 0x01.
+        Condition bits affected: Zero, Sign, Parity, Auxiliary.
         """
-        self.registers[register] += 0x01
+        value = self.registers[register]
+        result = value + 0x01
+        new_value = result & 0xFF
+        self.registers[register] = new_value
+
+        self.set_flags(new_value)
+        self.set_aux_carry_flag(value, 0x01)
 
     @manager.add_instruction(OPCodes.DCR_A, [Registers.A])
     @manager.add_instruction(OPCodes.DCR_B, [Registers.B])
@@ -251,11 +257,12 @@ class Intel8080(CPU):
         """
         Decrement the value of the specified register by one.
 
-        This method decreases the value stored in the specified register by 0x01.
+        Condition bits affected: Zero, Sign, Parity, Auxiliary Carry
         """
         reg_value = self.registers[register]
-        new_value = reg_value - 0x01
-        self.registers[register] = new_value & 0xFF
+        result = reg_value - 0x01
+        new_value = result & 0xFF
+        self.registers[register] = new_value
 
         self.set_flags(new_value)
         self.set_aux_carry_flag(reg_value, 0x01)
@@ -264,13 +271,20 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.INR_DE, [Registers.D, Registers.E])
     @manager.add_instruction(OPCodes.INR_HL, [Registers.H, Registers.L])
     def increment_register_pair(self, h: int, l: int) -> None:
-        high_byte, low_byte = increment_bytes_pair(
-            self.registers[h],
-            self.registers[l],
-        )
+        """
+        Increment the value of the specified register pair by one.
 
-        self.registers[h] = high_byte
-        self.registers[l] = low_byte
+        Condition bits affected: Zero, Sign, Parity, Auxiliary.
+        """
+        value = join_bytes(self.registers[h], self.registers[l])
+        new_value = value + 0x01
+
+        high, low = split_word(new_value & 0xFFFF)
+        self.registers[h] = high
+        self.registers[l] = low
+
+        self.set_flags(new_value)
+        self.set_aux_carry_flag(value, 0x01)
 
     @manager.add_instruction(OPCodes.LXI_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.LXI_DE, [Registers.D, Registers.E])
@@ -429,16 +443,22 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.ADD_D, [Registers.D])
     def add_to_accumulator(self, register: int) -> None:
-        result = self.registers[register] + self.registers[Registers.A]
+        """
+        The specified byte is added to the contents of the accumulator
+        using two's complement arithmetic.
 
-        print(result)
+        Condition bits affected: Carry, Sign, Zero, Parity, Auxiliary Carry.
+        """
+        value_1 = self.registers[register]
+        value_2 = self.registers[Registers.A]
+        result = value_1 + value_2
+        new_value = result & 0xFF
 
-        # Todo: Implement flags
-        self.set_flags(result)
+        self.set_flags(new_value)
         self.set_carry_flag(result)
-        self.set_aux_carry_flag(self.registers[register], self.registers[Registers.A])
+        self.set_aux_carry_flag(value_1, value_2)
 
-        self.registers[Registers.A] = result & 0xFF
+        self.registers[Registers.A] = new_value
 
     @manager.add_instruction(OPCodes.JPE)
     def jump_if_parity(self) -> None:
@@ -547,11 +567,24 @@ class Intel8080(CPU):
         self.set_aux_carry_flag(i_value, a_value)
 
     @manager.add_instruction(OPCodes.XRA, [Registers.A, Registers.A])
-    def apply_xorg_to_registers(self, r1: int, r2: int) -> None:
+    def apply_xor_to_registers(self, r1: int, r2: int) -> None:
+        """
+        The specified byte is EXCLUSIVE-ORed bit by bit
+        with the contents of the accumulator.
+
+        The Carry bit is reset to zero.
+
+        Condition bits affected: Carry, Zero, Sign, Parity, Auxiliary Carry
+        """
         value1 = self.registers[r1]
         value2 = self.registers[r2]
+
         result = value1 ^ value2
         self.registers[r1] = result
+
+        self.flags["C"] = False
+        self.set_flags(result)
+        self.set_aux_carry_flag(value1, value2)
 
     @manager.add_instruction(OPCodes.EI)
     def enable_interrupts(self) -> None:
@@ -559,7 +592,18 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.ANA_A, [Registers.A, Registers.A])
     def register_and_register(self, r1: int, r2: int) -> None:
+        """
+        The specified byte is logically ANDed bit by bit
+        with the contents of the accumulator.
+
+        The Carry bit is reset to zero.
+
+        Condition bits affected: Carry, Zero, Sign, Parity
+        """
         value1 = self.registers[r1]
         value2 = self.registers[r2]
         result = value1 & value2
         self.registers[r1] = result
+
+        self.flags["C"] = False
+        self.set_flags(result)
