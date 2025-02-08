@@ -34,15 +34,27 @@ MVI_L = 0x2E
 
 # Move 8-bit register to other register
 
+MOV_B_A = 0x47
+MOV_C_A = 0x4F
 MOV_D_A = 0x57
 MOV_L_A = 0x6F
+MOV_A_B = 0x78
+MOV_A_C = 0x79
+MOV_A_D = 0x7A
+MOV_A_E = 0x7B
 MOV_A_H = 0x7C
 MOV_A_L = 0x7D
-MOV_A_D = 0x0A  # check
 
 
 # Move 8-bit register to memory (HL)
 MOV_M_A = 0x77
+
+# Move memory (HL) to 8-bit register
+MOV_A_M = 0x7E
+MOV_C_M = 0x4E
+MOV_E_M = 0x5E
+MOV_D_M = 0x56
+MOV_H_M = 0x66
 
 # Move immediate value to memory (HL)
 MVI_M = 0x36
@@ -76,9 +88,11 @@ CPI_A = 0xFE
 
 # Arithmetic operations
 ADD_D = 0x82  # sum D with A, store result in A
+ADI = 0xC6
 
 DAD_HL = 0x29  # sum HL with HL, store result in HL
 DAD_DE = 0x19  # sum DE with HL, store result in HL
+DAD_BC = 0x09
 
 DAD_SP = 0x39
 
@@ -92,9 +106,12 @@ PUSH_BC = 0xC5
 PUSH_DE = 0xD5
 PUSH_HL = 0xE5
 
+PUSH_PSW = 0xF5
+
 POP_BC = 0xC1
 POP_DE = 0xD1
 POP_HL = 0xE1
+POP_PSW = 0xF1
 
 # Logical operations
 ORA = 0xB4  # OR H with A
@@ -103,6 +120,9 @@ ORA = 0xB4  # OR H with A
 JNZ = 0xC2
 JMP = 0xC3
 JZ = 0xCA
+JNC = 0xD2
+JPE = 0xEA
+JM = 0xFA
 
 RET = 0xC9
 RNC = 0xD0
@@ -110,3 +130,16 @@ CALL = 0xCD
 
 # Output
 OUT = 0xD3
+
+# Rotate
+RAR = 0x1F
+RRC = 0x0F
+
+
+# Logical operations
+ANI = 0xE6
+XRA = 0xAF
+ANA_A = 0xA7
+
+# Interrupts
+EI = 0xFB

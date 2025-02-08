@@ -62,7 +62,7 @@ class CPU(threading.Thread, AbstractCPU):
         until the `close_event` is set or an exception is raised.
         """
         while not self.close_event.is_set() and self.tick():
-            continue
+            pass
 
     def tick(self) -> bool:
         """
@@ -177,6 +177,7 @@ class CPU(threading.Thread, AbstractCPU):
             None
         """
         opcode = self.fetch_byte()
+        # print(f"Executing instruction: 0x{opcode:02x} PC: 0x{self.PC:04x}")
         manager.execute(opcode, self)
 
     def decrement_stack_pointer(self) -> None:
