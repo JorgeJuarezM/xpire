@@ -1,6 +1,7 @@
 """Abstract class for CPU emulator"""
 
 from abc import abstractmethod
+from collections import deque
 
 
 class AbstractCPU:
@@ -8,6 +9,9 @@ class AbstractCPU:
 
     PC: int
     SP: int
+    interrupts_enabled: bool
+    interrups: deque
+    cycles = 0x0000
 
     @abstractmethod
     def halt(self):

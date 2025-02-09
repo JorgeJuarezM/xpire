@@ -7,6 +7,7 @@ instructions.
 """
 
 import threading
+from collections import deque
 
 import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
@@ -49,9 +50,13 @@ class CPU(threading.Thread, AbstractCPU):
         self.exception = None
         self.memory = memory
         self.registers = RegisterManager()
+        self.flags = {}
 
         self.SP = 0x0000
         self.PC = 0x0000
+
+        self.interrupts = deque()
+        self.interrupts_enabled = False
 
     def run(self) -> None:
         """
@@ -61,7 +66,7 @@ class CPU(threading.Thread, AbstractCPU):
         until the `close_event` is set or an exception is raised.
         """
         while not self.close_event.is_set() and self.tick():
-            continue
+            pass
 
     def tick(self) -> bool:
         """
@@ -175,6 +180,14 @@ class CPU(threading.Thread, AbstractCPU):
         Returns:
             None
         """
+        if self.interrupts_enabled:
+            if self.cycles > (2000000 / 60):
+                self.cycles = 0
+                self.interrupts.extend((207, 215))
+                opcode = self.interrupts.popleft()
+                manager.execute(opcode, self)
+                return
+
         opcode = self.fetch_byte()
         manager.execute(opcode, self)
 
@@ -188,8 +201,8 @@ class CPU(threading.Thread, AbstractCPU):
         effectively decrementing the stack pointer with wrapping behavior.
         """
         new_value = self.SP - 0x02
-        if new_value < 0x00:
-            new_value = 0xFFFF + new_value + 0x0001
+        # if new_value < 0x00:
+        #     new_value = 0xFFFF + new_value + 0x0001
 
         self.SP = new_value & 0xFFFF
         return None
