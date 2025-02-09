@@ -45,6 +45,8 @@ class Intel8080(CPU):
         self.flags["C"] = False  # Carry flag
         self.flags["A"] = False  # Aux carry flag
 
+        self.interrupts_enabled = False
+
     def write_memory_byte(self, address, value) -> None:
         """
         Store a byte in memory at the specified address.
@@ -89,20 +91,23 @@ class Intel8080(CPU):
         """
         return self.read_memory_word_bytes(self.SP)
 
-    def set_flags(self, value: int) -> None:
+    def set_flags(self, value: int, mask: int = 0xFF) -> None:
         self.flags["Z"] = value == 0x00
         self.flags["S"] = bool(value & 0x80)
-        self.flags["P"] = self.check_parity(value)
+        self.flags["P"] = self.check_parity(value, mask)
 
-    def check_parity(self, value: int) -> bool:
-        return bin(value & 0xFF).count("1") % 2 == 0
+    def check_parity(self, value: int, mask: int = 0xFF) -> bool:
+        return bin(value & mask).count("1") % 2 == 0
 
     def set_carry_flag(self, value: int, mask: int = 0xFF) -> None:
         self.flags["C"] = value > mask
 
-    def set_aux_carry_flag(self, a: int, b: int) -> None:
-        aux_carry = ((a & 0x0F) + (b & 0x0F)) > 0x0F
-        self.flags["A"] = aux_carry
+    def set_aux_carry_flag(self, a: int, b: int, mask: int = 0x0F) -> None:
+        result = (a & mask) + (b & mask)
+        if result > mask or result < 0x00:
+            self.flags["A"] = True
+        else:
+            self.flags["A"] = False
 
     @manager.add_instruction(OPCodes.LDA)
     def load_memory_address_to_accumulator(self) -> None:
@@ -113,7 +118,9 @@ class Intel8080(CPU):
         to the accumulator. The value is loaded as a byte, not a word.
         """
         address = self.fetch_word()
-        self.registers[Registers.A] = self.read_memory_byte(address)
+        value = self.read_memory_byte(address)
+        self.registers[Registers.A] = value
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.JMP)
     def jump_to_address(self) -> None:
@@ -126,6 +133,7 @@ class Intel8080(CPU):
         """
         address = self.fetch_word()
         self.PC = address
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.LXI_SP)
     def load_immediate_to_stack_pointer(self) -> None:
@@ -135,6 +143,7 @@ class Intel8080(CPU):
         The stack pointer is set to the value of the 16-bit address fetched from memory.
         """
         self.SP = self.fetch_word()
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.CALL)
     def call_address(self) -> None:
@@ -154,6 +163,7 @@ class Intel8080(CPU):
         h, l = split_word(self.PC)
         self.push(h, l)
         self.PC = address_to_jump
+        self.cycles += 17
 
     @manager.add_instruction(OPCodes.RET)
     def return_from_call(self) -> None:
@@ -168,6 +178,7 @@ class Intel8080(CPU):
         """
         h, l = self.pop()
         self.PC = h << 0x08 | l & 0xFF
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.PUSH_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.PUSH_DE, [Registers.D, Registers.E])
@@ -181,6 +192,7 @@ class Intel8080(CPU):
         value in the B register as the high byte.
         """
         self.push(self.registers[h], self.registers[l])
+        self.cycles += 11
 
     @manager.add_instruction(OPCodes.POP_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.POP_DE, [Registers.D, Registers.E])
@@ -190,7 +202,9 @@ class Intel8080(CPU):
         Pop two bytes from the stack and store them in the specified registers pair.
         The stack pointer is incremented by two after the pop.
         """
-        self.registers[h], self.registers[l] = self.pop()
+        high, low = self.pop()
+        self.registers[h], self.registers[l] = high, low
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.STA)
     def store_accumulator_to_memory(self) -> None:
@@ -203,6 +217,7 @@ class Intel8080(CPU):
         """
         address = self.fetch_word()
         self.write_memory_byte(address, self.registers[Registers.A])
+        self.cycles += 13
 
     @manager.add_instruction(OPCodes.MVI_A, [Registers.A])
     @manager.add_instruction(OPCodes.MVI_B, [Registers.B])
@@ -224,6 +239,7 @@ class Intel8080(CPU):
                             should be stored.
         """
         self.registers[register] = self.fetch_byte()
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.INR_A, [Registers.A])
     @manager.add_instruction(OPCodes.INR_B, [Registers.B])
@@ -246,6 +262,8 @@ class Intel8080(CPU):
         self.set_flags(new_value)
         self.set_aux_carry_flag(value, 0x01)
 
+        self.cycles += 5
+
     @manager.add_instruction(OPCodes.DCR_A, [Registers.A])
     @manager.add_instruction(OPCodes.DCR_B, [Registers.B])
     @manager.add_instruction(OPCodes.DCR_C, [Registers.C])
@@ -267,6 +285,8 @@ class Intel8080(CPU):
         self.set_flags(new_value)
         self.set_aux_carry_flag(reg_value, 0x01)
 
+        self.cycles += 5
+
     @manager.add_instruction(OPCodes.INR_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.INR_DE, [Registers.D, Registers.E])
     @manager.add_instruction(OPCodes.INR_HL, [Registers.H, Registers.L])
@@ -277,14 +297,17 @@ class Intel8080(CPU):
         Condition bits affected: Zero, Sign, Parity, Auxiliary.
         """
         value = join_bytes(self.registers[h], self.registers[l])
-        new_value = value + 0x01
+        result = value + 0x01
+        new_value = result & 0xFFFF
 
-        high, low = split_word(new_value & 0xFFFF)
+        high, low = split_word(new_value)
         self.registers[h] = high
         self.registers[l] = low
 
-        self.set_flags(new_value)
-        self.set_aux_carry_flag(value, 0x01)
+        self.set_flags(new_value, mask=0x00FF)
+        self.set_aux_carry_flag(value, 0x01, mask=0x000F)
+
+        self.cycles += 5
 
     @manager.add_instruction(OPCodes.LXI_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.LXI_DE, [Registers.D, Registers.E])
@@ -292,6 +315,7 @@ class Intel8080(CPU):
     def load_immediate_to_registry_pair(self, h: int, l: int) -> None:
         self.registers[l] = self.fetch_byte()
         self.registers[h] = self.fetch_byte()
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.LDAX_BC, [Registers.B, Registers.C])
     @manager.add_instruction(OPCodes.LDAX_DE, [Registers.D, Registers.E])
@@ -300,22 +324,32 @@ class Intel8080(CPU):
         address_h = self.registers[h]
         address = join_bytes(address_h, address_l)
         self.registers[Registers.A] = self.read_memory_byte(address)
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.MOV_M_A, [Registers.A])
+    @manager.add_instruction(OPCodes.MOV_M_B, [Registers.B])
     def move_register_to_hl_memory(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.write_memory_byte(address, self.registers[register])
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.JNZ)
     def jump_if_not_zero(self) -> None:
         address = self.fetch_word()
+        # if self.PC in [0x0AE1, 0x0AA5]:
+        #     return
+
         if not self.flags["Z"]:
+            print(f"Salta: {self.PC:04x} -> {address:04x}")
             self.PC = address
+
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.MVI_M)
     def move_immediate_to_hl_memory(self) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.write_memory_byte(address, self.fetch_byte())
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.MOV_A_B, [Registers.B, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_C, [Registers.C, Registers.A])
@@ -326,20 +360,26 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.MOV_B_A, [Registers.A, Registers.B])
     @manager.add_instruction(OPCodes.MOV_C_A, [Registers.A, Registers.C])
     @manager.add_instruction(OPCodes.MOV_D_A, [Registers.A, Registers.D])
+    @manager.add_instruction(OPCodes.MOV_E_A, [Registers.A, Registers.E])
+    @manager.add_instruction(OPCodes.MOV_H_A, [Registers.A, Registers.H])
     @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_B_H, [Registers.H, Registers.B])
     def move_register_to_register(self, src: int, dst: int) -> None:
         self.registers[dst] = self.registers[src]
+        self.cycles += 5
 
     @manager.add_instruction(OPCodes.CPI_A, [Registers.A])
     def compare_register_with_immediate(self, register: int) -> None:
         value = self.fetch_byte()
-        a_value = self.registers[Registers.A]
+        a_value = self.registers[register]
         result = a_value - value
 
-        self.set_flags(result)
+        self.set_flags(result & 0xFF)
         self.flags["C"] = value > a_value
         if a_value & 0x80 ^ value & 0x80:
             self.flags["C"] = not self.flags["C"]
+
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.DAD_DE, [Registers.D, Registers.E])
     @manager.add_instruction(OPCodes.DAD_HL, [Registers.H, Registers.L])
@@ -365,6 +405,8 @@ class Intel8080(CPU):
 
         self.set_carry_flag(result, mask=0xFFFF)
 
+        self.cycles += 10
+
     @manager.add_instruction(OPCodes.DAD_SP)
     def sum_register_pair_with_self(self) -> None:
         h_value, l_value = split_word(self.SP)
@@ -373,12 +415,12 @@ class Intel8080(CPU):
         value2 = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
 
         result = value1 + value2
-        result_no_overflow = result & 0xFFFF
-        self.registers[Registers.H], self.registers[Registers.L] = split_word(
-            result_no_overflow
-        )
+        new_value = result & 0xFFFF
+        self.registers[Registers.H], self.registers[Registers.L] = split_word(new_value)
 
-        self.flags["C"] = result > 0xFFFF
+        self.set_carry_flag(result, mask=0xFFFF)
+
+        self.cycles += 10
 
     @manager.add_instruction(
         OPCodes.XCHG, [Registers.H, Registers.L, Registers.D, Registers.E]
@@ -400,6 +442,8 @@ class Intel8080(CPU):
         self.registers[d] = h1
         self.registers[e] = l1
 
+        self.cycles += 5
+
     @manager.add_instruction(OPCodes.OUT)
     def out_to_port(self) -> None:
         print("=========== OUT ============", end="")
@@ -408,11 +452,25 @@ class Intel8080(CPU):
         # raise NotImplementedError
         # sound = pygame.mixer.Sound("beep-01a.wav")
         # sound.play()
+        # self.registers[Registers.A] = 0
+
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.RNC)
     def return_if_not_carry(self) -> None:
+        h, l = self.pop()
         if not self.flags["C"]:
-            self.PC = join_bytes(self.pop())
+            self.PC = join_bytes(h, l)
+
+        self.cycles += 13
+
+    @manager.add_instruction(OPCodes.RC)
+    def return_if_carry(self) -> None:
+        h, l = self.pop()
+        if self.flags["C"]:
+            self.PC = join_bytes(h, l)
+
+        self.cycles += 13
 
     @manager.add_instruction(OPCodes.LHLD)
     def load_address_and_next_to_hl(self) -> None:
@@ -425,6 +483,9 @@ class Intel8080(CPU):
         self.registers[Registers.L] = l
         self.registers[Registers.H] = h
 
+        self.cycles += 16
+
+    @manager.add_instruction(OPCodes.ORA_B, [Registers.B])
     @manager.add_instruction(OPCodes.ORA_C, [Registers.C])
     @manager.add_instruction(OPCodes.ORA_H, [Registers.H])
     def register_or_with_accumulator(self, register: int) -> None:
@@ -441,6 +502,25 @@ class Intel8080(CPU):
 
         self.set_flags(result)
         self.flags["C"] = False
+
+        self.cycles += 4
+
+    @manager.add_instruction(OPCodes.ORA_M, [Registers.A])
+    def register_or_with_memory(self, register: int) -> None:
+        """
+        The specified byte is logically ORed bit by bit with the
+        contents of the accumulator.
+        The carry bit is reset to zero.
+        """
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value = self.read_memory_byte(address)
+        result = self.registers[register] | value
+        self.registers[register] = result
+
+        self.set_flags(result)
+        self.flags["C"] = False
+
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
     def decrement_register_pair(self, h: int, l: int) -> None:
@@ -460,11 +540,15 @@ class Intel8080(CPU):
         self.registers[h] = high_byte
         self.registers[l] = low_byte
 
+        self.cycles += 5
+
     @manager.add_instruction(OPCodes.JZ)
     def jump_if_zero(self) -> None:
         address = self.fetch_word()
         if self.flags["Z"]:
             self.PC = address
+
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.ADD_D, [Registers.D])
     def add_to_accumulator(self, register: int) -> None:
@@ -485,21 +569,27 @@ class Intel8080(CPU):
 
         self.registers[Registers.A] = new_value
 
+        self.cycles += 4
+
     @manager.add_instruction(OPCodes.JPE)
     def jump_if_parity(self) -> None:
         address = self.fetch_word()
         if self.flags.get("P"):
             self.PC = address
 
+        self.cycles += 10
+
     @manager.add_instruction(OPCodes.MOV_A_M, [Registers.A])
     @manager.add_instruction(OPCodes.MOV_C_M, [Registers.C])
     @manager.add_instruction(OPCodes.MOV_D_M, [Registers.D])
     @manager.add_instruction(OPCodes.MOV_E_M, [Registers.E])
     @manager.add_instruction(OPCodes.MOV_H_M, [Registers.H])
+    @manager.add_instruction(OPCodes.MOV_B_M, [Registers.B])
     def move_memory_hl_to_register(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.registers[register] = self.read_memory_byte(address)
 
+        self.cycles += 7
         # Todo: Implement flags
 
     @manager.add_instruction(OPCodes.RAR)
@@ -528,6 +618,8 @@ class Intel8080(CPU):
         self.registers[Registers.A] = accumulator
         self.flags["C"] = True if new_carry else False
 
+        self.cycles += 4
+
     @manager.add_instruction(OPCodes.RRC)
     def rotate_right_a(self) -> None:
         """
@@ -554,30 +646,46 @@ class Intel8080(CPU):
         self.registers[Registers.A] = accumulator
         self.flags["C"] = True if new_carry else False
 
+        self.cycles += 4
+
     @manager.add_instruction(OPCodes.JNC)
     def jump_if_not_carry(self) -> None:
         address = self.fetch_word()
         if not self.flags["C"]:
             self.PC = address
 
+        self.cycles += 10
+
+    @manager.add_instruction(OPCodes.JC)
+    def jump_if_carry(self) -> None:
+        address = self.fetch_word()
+        if self.flags["C"]:
+            self.PC = address
+
+        self.cycles += 10
+
     @manager.add_instruction(OPCodes.PUSH_PSW)
     def push_processor_state_word(self) -> None:
-        flags_byte = self.flags.get("S") << 7
-        flags_byte |= self.flags.get("Z") << 6
-        flags_byte |= self.flags.get("A") << 4
-        flags_byte |= self.flags.get("P") << 2
-        flags_byte |= self.flags.get("C") << 0
+        flags_byte = self.flags.get("S") << 0x07
+        flags_byte |= self.flags.get("Z") << 0x06
+        flags_byte |= self.flags.get("A") << 0x04
+        flags_byte |= self.flags.get("P") << 0x02
+        flags_byte |= self.flags.get("C") << 0x00
 
         self.push(self.registers[Registers.A], flags_byte)
+
+        self.cycles += 11
 
     @manager.add_instruction(OPCodes.POP_PSW)
     def pop_processor_state_word(self) -> None:
         self.registers[Registers.A], flags_byte = self.pop()
-        self.flags["S"] = bool(flags_byte & 0x80)
-        self.flags["Z"] = bool(flags_byte & 0x40)
-        self.flags["A"] = bool(flags_byte & 0x10)
-        self.flags["P"] = bool(flags_byte & 0x04)
-        self.flags["C"] = bool(flags_byte & 0x01)
+        self.flags["S"] = bool((flags_byte >> 0x07) & 0x01)
+        self.flags["Z"] = bool((flags_byte >> 0x06) & 0x01)
+        self.flags["A"] = bool((flags_byte >> 0x04) & 0x01)
+        self.flags["P"] = bool((flags_byte >> 0x02) & 0x01)
+        self.flags["C"] = bool((flags_byte >> 0x00) & 0x01)
+
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.ANI)
     def accumulator_and_immediate(self) -> None:
@@ -590,11 +698,15 @@ class Intel8080(CPU):
         self.flags["C"] = False
         self.set_flags(result)
 
+        self.cycles += 4
+
     @manager.add_instruction(OPCodes.JM)
     def jump_if_minus(self) -> None:
         address = self.fetch_word()
         if self.flags["S"]:
             self.PC = address
+
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.ADI)
     def add_immediate_to_accumulator(self) -> None:
@@ -616,6 +728,8 @@ class Intel8080(CPU):
         self.set_carry_flag(result)
         self.set_aux_carry_flag(i_value, a_value)
 
+        self.cycles += 7
+
     @manager.add_instruction(OPCodes.XRA, [Registers.A, Registers.A])
     def apply_xor_to_registers(self, r1: int, r2: int) -> None:
         """
@@ -636,9 +750,13 @@ class Intel8080(CPU):
         self.set_flags(result)
         self.set_aux_carry_flag(value1, value2)
 
+        self.cycles += 4
+
     @manager.add_instruction(OPCodes.EI)
     def enable_interrupts(self) -> None:
         self.interrupts_enabled = True
+
+        self.cycles += 4
 
     @manager.add_instruction(OPCodes.ANA_A, [Registers.A, Registers.A])
     def register_and_register(self, r1: int, r2: int) -> None:
@@ -657,3 +775,97 @@ class Intel8080(CPU):
 
         self.flags["C"] = False
         self.set_flags(result)
+
+        self.cycles += 4
+
+    @manager.add_instruction(OPCodes.STC)
+    def set_carry(self):
+        self.flags["C"] = True
+
+        self.cycles += 4
+
+    @manager.add_instruction(OPCodes.RZ)
+    def return_if_zero(self) -> None:
+        h, l = self.pop()
+        if self.flags["Z"]:
+            self.PC = join_bytes(h, l)
+
+        self.cycles += 11
+
+    @manager.add_instruction(OPCodes.RNZ)
+    def return_if_not_zero(self) -> None:
+        h, l = self.pop()
+        if not self.flags["Z"]:
+            self.PC = join_bytes(h, l)
+
+        self.cycles += 11
+
+    @manager.add_instruction(OPCodes.IN)
+    def input(self) -> int:
+        port = self.fetch_byte()
+        print(f"Port: {port} Value: {chr(self.registers[Registers.A])}")
+        # self.registers[Registers.A] = 0x00
+        # raise NotImplementedError
+
+        self.cycles += 10
+
+    @manager.add_instruction(OPCodes.XTHL)
+    def exchange_sp_hl(self) -> None:
+        h, l = self.registers[Registers.H], self.registers[Registers.L]
+
+        sp_value = self.read_memory_byte(self.SP)
+        next_sp_value = self.read_memory_byte(self.SP + 0x01)
+
+        _l = sp_value
+        _h = next_sp_value
+
+        self.registers[Registers.H] = _h
+        self.registers[Registers.L] = _l
+        self.SP = l
+
+        self.cycles += 18
+
+    @manager.add_instruction(OPCodes.PCHL)
+    def load_stack_pointer(self) -> None:
+        h = self.registers[Registers.H]
+        l = self.registers[Registers.L]
+        self.PC = join_bytes(h, l)
+
+        self.cycles += 5
+
+    @manager.add_instruction(OPCodes.DCR_M)
+    def decrement_memory_byte(self) -> None:
+        h = self.registers[Registers.H]
+        l = self.registers[Registers.L]
+        value = self.read_memory_byte(join_bytes(h, l))
+        result = value - 0x01
+        new_value = result & 0xFF
+        self.write_memory_byte(join_bytes(h, l), new_value)
+
+        self.set_flags(new_value)
+        self.set_aux_carry_flag(value, 0x01)
+
+        self.cycles += 10
+
+    @manager.add_instruction(OPCodes.CZ)
+    def call_if_zero(self) -> None:
+        address = self.fetch_word()
+        if self.flags["Z"]:
+            self.push(self.PC)
+            self.PC = address
+
+        self.cycles += 17
+
+    @manager.add_instruction(OPCodes.RST_1)
+    def rst_1(self) -> None:
+        self.interrupts_enabled = False
+        self.push(self.PC >> 0x08, self.PC & 0xFF)
+        self.PC = 0x08
+        self.cycles += 11
+
+    @manager.add_instruction(OPCodes.RST_2)
+    def rst_2(self) -> None:
+        self.interrupts_enabled = False
+        self.push(self.PC >> 0x08, self.PC & 0xFF)
+        self.PC = 0x10
+        self.cycles += 11

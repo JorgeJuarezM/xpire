@@ -34,9 +34,12 @@ MVI_L = 0x2E
 
 # Move 8-bit register to other register
 
+MOV_B_H = 0x44
 MOV_B_A = 0x47
 MOV_C_A = 0x4F
 MOV_D_A = 0x57
+MOV_E_A = 0x5F
+MOV_H_A = 0x67
 MOV_L_A = 0x6F
 MOV_A_B = 0x78
 MOV_A_C = 0x79
@@ -45,16 +48,17 @@ MOV_A_E = 0x7B
 MOV_A_H = 0x7C
 MOV_A_L = 0x7D
 
-
 # Move 8-bit register to memory (HL)
+MOV_M_B = 0x70
 MOV_M_A = 0x77
 
 # Move memory (HL) to 8-bit register
-MOV_A_M = 0x7E
+MOV_B_M = 0x46
 MOV_C_M = 0x4E
-MOV_E_M = 0x5E
 MOV_D_M = 0x56
+MOV_E_M = 0x5E
 MOV_H_M = 0x66
+MOV_A_M = 0x7E
 
 # Move immediate value to memory (HL)
 MVI_M = 0x36
@@ -114,8 +118,11 @@ POP_HL = 0xE1
 POP_PSW = 0xF1
 
 # Logical operations
+ORA_B = 0xB0  # OR B with A
 ORA_C = 0xB1  # OR C with A
 ORA_H = 0xB4  # OR H with A
+
+ORA_M = 0xB6  # OR M (HL) with A
 
 # Control flow
 JNZ = 0xC2
@@ -144,3 +151,25 @@ ANA_A = 0xA7
 
 # Interrupts
 EI = 0xFB
+
+STC = 0x37
+RZ = 0xC8
+
+JC = 0xDA
+RC = 0xD8
+IN = 0xDB
+
+RNZ = 0xC0
+
+
+XTHL = 0xE3
+
+PCHL = 0xE9
+
+DCR_M = 0x35
+
+CZ = 0xCC
+
+
+RST_1 = 0xCF
+RST_2 = 0xD7
