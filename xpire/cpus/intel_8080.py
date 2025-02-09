@@ -97,8 +97,8 @@ class Intel8080(CPU):
     def check_parity(self, value: int) -> bool:
         return bin(value & 0xFF).count("1") % 2 == 0
 
-    def set_carry_flag(self, value: int) -> None:
-        self.flags["C"] = value > 0xFF
+    def set_carry_flag(self, value: int, mask: int = 0xFF) -> None:
+        self.flags["C"] = value > mask
 
     def set_aux_carry_flag(self, a: int, b: int) -> None:
         aux_carry = ((a & 0x0F) + (b & 0x0F)) > 0x0F
@@ -344,7 +344,15 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.DAD_DE, [Registers.D, Registers.E])
     @manager.add_instruction(OPCodes.DAD_HL, [Registers.H, Registers.L])
     @manager.add_instruction(OPCodes.DAD_BC, [Registers.B, Registers.C])
-    def sum_register_pair_with_hlf(self, h: int, l: int) -> None:
+    def sum_register_pair_with_hl(self, h: int, l: int) -> None:
+        """
+        The 16-bit number in the specified register pair is added
+        to the 16-bit number held in the Hand L registers using two's complement arithmetic.
+
+        The result replaces the contents of the Hand L registers.
+
+        Condition bits affected: Carry.
+        """
         h_value = self.registers[h]
         l_value = self.registers[l]
 
@@ -352,14 +360,10 @@ class Intel8080(CPU):
         value2 = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
 
         result = value1 + value2
-        result_no_overflow = result & 0xFFFF
-        self.registers[Registers.H], self.registers[Registers.L] = split_word(
-            result_no_overflow
-        )
+        new_value = result & 0xFFFF
+        self.registers[Registers.H], self.registers[Registers.L] = split_word(new_value)
 
-        self.set_flags(result)
-        self.set_carry_flag(result)
-        self.set_aux_carry_flag(value1, value2)
+        self.set_carry_flag(result, mask=0xFFFF)
 
     @manager.add_instruction(OPCodes.DAD_SP)
     def sum_register_pair_with_self(self) -> None:
@@ -380,6 +384,12 @@ class Intel8080(CPU):
         OPCodes.XCHG, [Registers.H, Registers.L, Registers.D, Registers.E]
     )
     def exchange_register_pairs(self, h: int, l: int, d: int, e: int) -> None:
+        """
+        The 16 bits of data held in the Hand L registers are exchanged
+        with the 16 bits of data held in the D and E registers.
+
+        Condition bits affected: None
+        """
         h1 = self.registers[h]
         l1 = self.registers[l]
         d1 = self.registers[d]
@@ -415,18 +425,33 @@ class Intel8080(CPU):
         self.registers[Registers.L] = l
         self.registers[Registers.H] = h
 
-    @manager.add_instruction(OPCodes.ORA, [Registers.H, Registers.L])
-    def register_or_with_accumulator(self, h, l) -> None:
-        hl = join_bytes(self.registers[h], self.registers[l])
-        self.registers[Registers.A] |= hl
+    @manager.add_instruction(OPCodes.ORA_C, [Registers.C])
+    @manager.add_instruction(OPCodes.ORA_H, [Registers.H])
+    def register_or_with_accumulator(self, register: int) -> None:
+        """
+        The specified byte is logically ORed bit by bit with
+        the contents of the accumulator.
 
-        # Todo: Implement flags
-        self.flags["Z"] = self.registers[Registers.A] == 0
-        self.flags["S"] = self.registers[Registers.A] < 0
-        self.flags["P"] = self.registers[Registers.A] % 2 == 1
+        The carry bit is reset to zero.
+
+        Condition bits affected: Carry, zero, sign, parity.
+        """
+        result = self.registers[Registers.A] | self.registers[register]
+        self.registers[Registers.A] = result
+
+        self.set_flags(result)
+        self.flags["C"] = False
 
     @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
     def decrement_register_pair(self, h: int, l: int) -> None:
+        """
+        The 16-bit number held in the specified register pair
+        is decremented by one.
+
+        The result replaces the contents of the register pair.
+
+        Condition bits affected: None.
+        """
         value = join_bytes(self.registers[h], self.registers[l])
         value = (value - 0x01) & 0xFFFF
 
@@ -479,6 +504,14 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RAR)
     def rotate_right_a_through_carry(self) -> None:
+        """
+        The contents of the accumulator are rotated one bit position to the right.
+
+        The low-order bit of the accumulator replaces the carry bit,
+        while the carry bit replaces the high-order bit of the accumulator.
+
+        Condition bits affected: Carry.
+        """
         carry = 1 if self.flags["C"] else 0
         accumulator = self.registers[Registers.A] & 0xFF
 
@@ -497,6 +530,15 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RRC)
     def rotate_right_a(self) -> None:
+        """
+        The carry bit is set equal to the low-order bit of the accumulator.
+
+        The contents of the accumulator are rotated one bit position
+        to the right, with the low-order bit being transferred to the
+        high-order bit position of the accumulator.
+
+        Condition bits affected: Carry.
+        """
         accumulator = self.registers[Registers.A] & 0xFF
 
         # Obtener el bit menos significativo (LSB) del acumulador
@@ -556,14 +598,22 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.ADI)
     def add_immediate_to_accumulator(self) -> None:
+        """
+        The byte of immediate data is added to the contents
+        of the accumulator using two's complement arithmetic.
+
+        Condition bits affected: Carry, Sign, Zero,
+        Parity, Auxiliary Carry.
+        """
         i_value = self.fetch_byte()
         a_value = self.registers[Registers.A]
-        new_value = i_value + a_value
+        result = i_value + a_value
+        new_value = result & 0xFF
 
-        self.registers[Registers.A] = new_value & 0xFF
+        self.registers[Registers.A] = new_value
 
         self.set_flags(new_value)
-        self.set_carry_flag(new_value)
+        self.set_carry_flag(result)
         self.set_aux_carry_flag(i_value, a_value)
 
     @manager.add_instruction(OPCodes.XRA, [Registers.A, Registers.A])

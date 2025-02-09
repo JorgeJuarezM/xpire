@@ -114,7 +114,8 @@ POP_HL = 0xE1
 POP_PSW = 0xF1
 
 # Logical operations
-ORA = 0xB4  # OR H with A
+ORA_C = 0xB1  # OR C with A
+ORA_H = 0xB4  # OR H with A
 
 # Control flow
 JNZ = 0xC2
