@@ -1,4 +1,5 @@
 import pygame
+
 from xpire.cpus.cpu import AbstractCPU
 
 
