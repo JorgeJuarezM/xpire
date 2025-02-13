@@ -34,4 +34,3 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: JorgeJuarezM/xpire
-          file: coverage.xml
