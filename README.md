@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/JorgeJuarezM/xpire/graph/badge.svg?token=ZL54DIVD0M)](https://codecov.io/gh/JorgeJuarezM/xpire)
+
 # XPIRE – eXtended PYthon Interpreter for Retro Emulation
 
 ## Basic implementation of an Intel 8080 Emulator
