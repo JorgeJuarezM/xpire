@@ -16,3 +16,11 @@ temp
 8080/
 .DS_Store
 .coverage
+.vscode
+*.wav
+spyce-nvaders/
+test_game.py
+tests/
+daa.py
+invaders
+game.py
