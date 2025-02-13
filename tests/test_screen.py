@@ -1,6 +1,6 @@
 import unittest
 
-from xpire.cpus.intel_8080 import Intel8080, Registers
+from xpire.cpus.intel_8080 import Intel8080
 from xpire.memory import Memory
 from xpire.screen import Screen
 
