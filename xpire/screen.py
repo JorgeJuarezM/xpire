@@ -32,19 +32,6 @@ class Screen:
         )
         self.screen.blit(scaled, (0, 0))
 
-    def run(self, cpu: AbstractCPU) -> None:
-        while self.running and cpu.is_alive():
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-                    cpu.close_event.set()
-
-            # self.update(cpu)
-            # self.set_scale(self.scale)
-            # self.print_debug_info(cpu, self.screen)
-            # pygame.display.update()
-            self.clock.tick(self.fps)
-
     def render(self, cpu: AbstractCPU) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -57,7 +44,6 @@ class Screen:
         pygame.display.update()
 
     def update(self, cpu: AbstractCPU) -> None:
-        # print(self.screen.get_width(), self.screen.get_height())
         self._screen.fill((0, 0, 0))
         video_data = []
         for i in range(0x2400, 0x4000):
