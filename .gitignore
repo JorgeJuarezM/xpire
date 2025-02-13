@@ -2,7 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-__*
 *.o
 *.bin
 *.com
@@ -11,7 +10,6 @@ __*
 *.c
 *.s
 test.py
-screen.py
 temp
 8080/
 .DS_Store
@@ -24,3 +22,4 @@ daa.py
 invaders
 game.py
 spyce_nvaders/
+drafts/
