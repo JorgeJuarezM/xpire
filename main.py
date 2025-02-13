@@ -6,11 +6,13 @@ It provides a command-line interface for loading and running
 CP/M-80 programs on the Intel 8080 CPU.
 """
 
-import click
+import unittest
+from collections import deque
 
-from xpire.constants import K_64KB
-from xpire.cpus.intel_8080 import Intel8080, Registers
-from xpire.exceptions import BaseException
+import click
+from screen import Screen
+
+from xpire.cpus.intel_8080 import Intel8080
 from xpire.memory import Memory
 from xpire.utils import load_program_into_memory
 
@@ -38,7 +40,7 @@ def xpire():
     required=True,
     metavar="FILE",
 )
-def run(program_file):
+def run(program_file: str) -> None:
     """
     Run a CP/M-80 program.
 
@@ -51,33 +53,41 @@ def run(program_file):
 
     :param program_file: The file containing the CP/M-80 program to run.
     """
-    memory = Memory(size=K_64KB)
+    memory = Memory(size=0xFFFF)
     cpu = Intel8080(memory=memory)
+    interrupts = deque()
 
     load_program_into_memory(memory, program_file)
 
-    cpu.start()
-    cpu.join()
+    # cpu.start()
+    screen = Screen(224, 256, "Xpire", scale=3)
+    # cpu.event_handler.register("tick", screen.render)
 
-    print("Program execution complete.")
-    print(f"Final PC:   0x{cpu.PC:04x}")
-    print(f"Final SP:   0x{cpu.SP:04x}")
-    print("================================================")
-    print(f"Final A:    0x{cpu.registers[Registers.A]:04x}")
-    print(f"Final B:    0x{cpu.registers[Registers.B]:04x}")
-    print(f"Final C:    0x{cpu.registers[Registers.C]:04x}")
-    print(f"Final D:    0x{cpu.registers[Registers.D]:04x}")
-    print(f"Final E:    0x{cpu.registers[Registers.E]:04x}")
-    print(f"Final H:    0x{cpu.registers[Registers.H]:04x}")
-    print(f"Final L:    0x{cpu.registers[Registers.L]:04x}")
-    print("================================================")
-    print(cpu.memory.dump())
+    # screen.run(cpu)
 
-    if cpu.exception:
-        if isinstance(cpu.exception, BaseException):
-            print(f"Exception: {cpu.exception.message}")
-        else:
-            print(f"Exception: {cpu.exception}")
+    # cpu.join()
+    while True:
+        if cpu.interrupts_enabled:
+            if cpu.cycles > 200000 / 60:
+                screen.render(cpu)
+                interrupts.extend((207, 215))
+                interrupt = interrupts.popleft()
+                cpu.execute_interrupt(interrupt)
+                cpu.cycles = 0
+                continue
+
+        cpu.execute_instruction()
+
+
+@xpire.command()
+def test():
+    """
+    Run the Intel 8080 CPU tests.
+    """
+    loader = unittest.TestLoader()
+    testSuite = loader.discover("tests", pattern="test_*.py")
+    testRunner = unittest.TextTestRunner(verbosity=2)
+    testRunner.run(testSuite)
 
 
 if __name__ == "__main__":
