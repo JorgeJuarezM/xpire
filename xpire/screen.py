@@ -33,11 +33,6 @@ class Screen:
         self.screen.blit(scaled, (0, 0))
 
     def render(self, cpu: AbstractCPU) -> None:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                import sys
-
-                sys.exit(0)
         self.update(cpu)
         self.set_scale(self.scale)
         self.print_debug_info(cpu, self.screen)
