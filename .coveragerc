@@ -1,0 +1,4 @@
+[run]
+include = */xpire/*
+omit = *tests*
+concurrency=multiprocessing
