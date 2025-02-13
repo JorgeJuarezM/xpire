@@ -1,4 +1,5 @@
 [run]
-include = */xpire/*
-omit = *tests*
-concurrency=multiprocessing
+source =
+    xpire
+omit =
+   xpire/*__init__.py
