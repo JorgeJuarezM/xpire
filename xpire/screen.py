@@ -1,3 +1,5 @@
+import math
+
 import pygame
 
 from xpire.cpus.cpu import AbstractCPU
@@ -22,8 +24,6 @@ class Screen:
             (self.width * scale, self.height * scale), pygame.RESIZABLE
         )
         pygame.display.set_caption(self.title)
-        pygame.display.flip()
-
         self.color_table = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 
     def set_scale(self, scale: int) -> None:
@@ -57,8 +57,8 @@ class Screen:
         for i in range(self.width):
             for j in reversed(range(self.height)):
                 pixel = video_data[counter]
-                color_index = counter % 256 / (256 / 4)
-                color = self.color_table[int(color_index)]
+                color_index = counter % 256 / (256 / self.color_table.__len__())
+                color = self.color_table[math.floor(color_index)]
                 if pixel:
                     self._screen.set_at(
                         (i, j),
