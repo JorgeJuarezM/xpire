@@ -25,8 +25,10 @@ class Screen:
         )
         pygame.display.set_caption(self.title)
         self.color_table = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+        self.video_data = []
+        pygame.display.flip()
 
-    def set_scale(self, scale: int) -> None:
+    def resize(self) -> None:
         scaled = pygame.transform.scale(
             self._screen, (self.screen.get_width(), self.screen.get_height())
         )
@@ -34,32 +36,34 @@ class Screen:
 
     def render(self, cpu: AbstractCPU) -> None:
         self.update(cpu)
-        self.set_scale(self.scale)
+        self.resize()
         self.print_debug_info(cpu, self.screen)
         pygame.display.update()
 
-    def update(self, cpu: AbstractCPU) -> None:
-        self._screen.fill((0, 0, 0))
-        video_data = []
+    def render_pixel(self, pixel_index, x, y) -> None:
+        pixel = self.video_data[pixel_index]
+        color_index = pixel_index % 256 / (256 / self.color_table.__len__())
+        color = self.color_table[math.floor(color_index)]
+        if pixel:
+            self._screen.set_at((x, y), color)
+
+    def rasterize(self, cpu: AbstractCPU) -> None:
+        self.video_data = []
         for i in range(0x2400, 0x4000):
             memory_value = cpu.read_memory_byte(i)
             for j in range(0x08):
                 if memory_value & (1 << j):
-                    video_data.append(1)
+                    self.video_data.append(1)
                 else:
-                    video_data.append(0)
-        counter = 0
-        for i in range(self.width):
-            for j in reversed(range(self.height)):
-                pixel = video_data[counter]
-                color_index = counter % 256 / (256 / self.color_table.__len__())
-                color = self.color_table[math.floor(color_index)]
-                if pixel:
-                    self._screen.set_at(
-                        (i, j),
-                        color,
-                    )
+                    self.video_data.append(0)
 
+    def update(self, cpu: AbstractCPU) -> None:
+        self._screen.fill((0, 0, 0))
+        self.rasterize(cpu)
+        counter = 0
+        for x in range(self.width):
+            for y in reversed(range(self.height)):
+                self.render_pixel(counter, x, y)
                 counter += 1
 
     def print_debug_info(self, cpu: AbstractCPU, target: pygame.Surface) -> None:
