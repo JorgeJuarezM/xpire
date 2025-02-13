@@ -725,8 +725,6 @@ class Intel8080(CPU):
         self.registers[Registers.A] = result
 
         self.set_flags(result)
-        self.set_carry_flag(result)
-
         self.flags["C"] = False
         self.flags["A"] = False
 
