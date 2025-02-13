@@ -33,4 +33,5 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: JorgeJuarezM/xpire
           file: coverage.xml
