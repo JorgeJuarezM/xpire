@@ -3,6 +3,8 @@
 from abc import abstractmethod
 from collections import deque
 
+from xpire.events import EventHandler
+
 
 class AbstractCPU:
     """Abstract class for CPU emulator"""
@@ -11,7 +13,8 @@ class AbstractCPU:
     SP: int
     interrupts_enabled: bool
     interrups: deque
-    cycles = 0x0000
+    cycles: int
+    event_handler: EventHandler
 
     @abstractmethod
     def halt(self):

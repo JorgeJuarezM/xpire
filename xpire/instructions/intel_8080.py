@@ -64,9 +64,9 @@ MOV_A_M = 0x7E
 MVI_M = 0x36
 
 # Increment 16-bit register pair
-INR_BC = 0x03
-INR_DE = 0x13
-INR_HL = 0x23
+INX_BC = 0x03
+INX_DE = 0x13
+INX_HL = 0x23
 
 # Load and store accumulator from/to memory
 STA = 0x32
@@ -92,6 +92,8 @@ CPI_A = 0xFE
 
 # Arithmetic operations
 ADD_D = 0x82  # sum D with A, store result in A
+ADD_E = 0x83  # sum E with A, store result in A
+
 ADI = 0xC6
 
 DAD_HL = 0x29  # sum HL with HL, store result in HL
@@ -173,3 +175,46 @@ CZ = 0xCC
 
 RST_1 = 0xCF
 RST_2 = 0xD7
+
+
+SUI = 0xD6
+RLC = 0x07
+
+CNZ = 0xC4
+
+ORI = 0xF6
+ANA_B = 0xA0
+
+RM = 0xF8
+RST_7 = 0xFF
+MOV_B_D = 0x42
+MOV_B_C = 0x41
+MOV_C_C = 0x49
+MOV_E_C = 0x59
+
+
+SHLD = 0x22
+MOV_B_L = 0x45
+MOV_D_C = 0x51
+MOV_A_A = 0x7F
+MOV_L_M = 0x6E
+
+CPE = 0xEC
+
+RP = 0xF0
+XRA_B = 0xA8
+MOV_L_B = 0x68
+MOV_H_C = 0x61
+
+SBI = 0xDE
+
+ADD_M = 0x86
+CMA = 0x2F
+
+ANA_M = 0xA6
+ADD_L = 0x85
+
+CMP_H = 0xBC
+
+
+STAX_B = 0x02

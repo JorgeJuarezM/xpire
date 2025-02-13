@@ -8,7 +8,6 @@ of CPU instructions.
 from typing import Callable
 
 from xpire.cpus.abstract import AbstractCPU
-from xpire.utils import reset_value_if_overflow
 
 
 def increment_program_counter() -> Callable:
@@ -104,7 +103,7 @@ def increment_stack_pointer() -> Callable:
                 The result of executing the given function.
             """
             result = func(self, *args, **kwargs)
-            self.SP = reset_value_if_overflow(self.SP + 0x02, 0xFFFF)
+            self.SP = (self.SP + 0x02) & 0xFFFF
             return result
 
         return wrapped

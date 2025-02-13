@@ -61,17 +61,8 @@ class InstructionManager:
         Raises:
             Exception: If the opcode is unknown.
         """
-        print(f"Executing instruction: 0x{opcode:02x} --> {cpu.cycles}")
         if opcode not in cls.instructions:
-            print(f"Unknown opcode: 0x{opcode:02x}")
             raise Exception(f"Unknown opcode: 0x{opcode:02x}")
-            # if not hasattr(cls, "missed"):
-            #     cls.missed = {}
-            # if opcode not in cls.missed:
-            #     print(f"Unknown opcode: 0x{opcode:02x}")
-            #     cls.missed[opcode] = 1
-            # return
 
-        # print(f"Executing instruction: 0x{opcode:02x}")
         handler, registers = cls.instructions[opcode]
         handler(cpu, *registers)
