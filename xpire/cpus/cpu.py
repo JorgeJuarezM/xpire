@@ -7,7 +7,6 @@ instructions.
 """
 
 import threading
-from collections import deque
 
 import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
@@ -57,7 +56,6 @@ class CPU(threading.Thread, AbstractCPU):
         self.PC = 0x0000
 
         self.cycles = 0x00
-        self.interrupts = deque()
         self.interrupts_enabled = False
         self.event_handler = EventHandler()
 

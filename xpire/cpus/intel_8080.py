@@ -724,10 +724,9 @@ class Intel8080(CPU):
         result = value1 & value2
         self.registers[Registers.A] = result
 
-        self.flags["C"] = False
         self.set_flags(result)
-        self.set_carry_flag(result)
-        self.set_aux_carry_flag(value1, value2)
+        self.flags["C"] = False
+        self.flags["A"] = False
 
         self.cycles += 7
 
