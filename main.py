@@ -6,14 +6,14 @@ It provides a command-line interface for loading and running
 CP/M-80 programs on the Intel 8080 CPU.
 """
 
-import unittest
 from collections import deque
 
 import click
-from screen import Screen
+import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
 from xpire.memory import Memory
+from xpire.screen import Screen
 from xpire.utils import load_program_into_memory
 
 
@@ -58,16 +58,15 @@ def run(program_file: str) -> None:
     interrupts = deque()
 
     load_program_into_memory(memory, program_file)
-
-    # cpu.start()
     screen = Screen(224, 256, "Xpire", scale=3)
-    # cpu.event_handler.register("tick", screen.render)
 
-    # screen.run(cpu)
-
-    # cpu.join()
-    while True:
+    running = True
+    while running:
         if cpu.interrupts_enabled:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
             if cpu.cycles > 200000 / 60:
                 screen.render(cpu)
                 interrupts.extend((207, 215))
@@ -77,17 +76,6 @@ def run(program_file: str) -> None:
                 continue
 
         cpu.execute_instruction()
-
-
-@xpire.command()
-def test():
-    """
-    Run the Intel 8080 CPU tests.
-    """
-    loader = unittest.TestLoader()
-    testSuite = loader.discover("tests", pattern="test_*.py")
-    testRunner = unittest.TextTestRunner(verbosity=2)
-    testRunner.run(testSuite)
 
 
 if __name__ == "__main__":
