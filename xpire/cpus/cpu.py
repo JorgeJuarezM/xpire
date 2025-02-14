@@ -6,12 +6,9 @@ It provides methods to read and write memory cells, and to execute
 instructions.
 """
 
-import threading
-
 import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
-from xpire.events import EventHandler
 from xpire.exceptions import SystemHalt
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.memory import Memory
@@ -19,7 +16,7 @@ from xpire.registers.register import RegisterManager
 from xpire.utils import join_bytes
 
 
-class CPU(threading.Thread, AbstractCPU):
+class CPU(AbstractCPU):
     """
     CPU class for the CPU emulator.
 
@@ -44,10 +41,6 @@ class CPU(threading.Thread, AbstractCPU):
         Args:
             memory (Memory): The memory object to use for the CPU.
         """
-        threading.Thread.__init__(self)
-        self.close_event = threading.Event()
-
-        self.exception = None
         self.memory = memory
         self.registers = RegisterManager()
         self.flags = {}
@@ -57,41 +50,24 @@ class CPU(threading.Thread, AbstractCPU):
 
         self.cycles = 0x00
         self.interrupts_enabled = False
-        self.event_handler = EventHandler()
 
-    def run(self) -> None:
+    def execute_instruction(self) -> None:
         """
-        Execute the CPU instructions in a loop until a halt condition is met.
+        Execute the instruction at the current program counter.
 
-        This method repeatedly calls the `tick` method to execute instructions
-        until the `close_event` is set or an exception is raised.
-        """
-        while not self.close_event.is_set() and self.tick():
-            pass
-
-    def tick(self) -> bool:
-        """
-        Execute a single instruction and handle exceptions.
-
-        This method fetches and executes the next instruction. If an exception
-        occurs during execution, it checks if the exception is not a SystemHalt,
-        and stores it in the `exception` attribute. The method returns False if
-        an exception other than SystemHalt is raised, indicating an issue with
-        execution; otherwise, it returns True.
+        This method fetches a byte from memory, checks if the opcode is known,
+        and executes the associated instruction. If the opcode is unknown,
+        an exception is raised.
 
         Returns:
-            bool: True if the instruction executed successfully, False if an
-                exception was encountered.
+            None
         """
-        try:
-            self.execute_instruction()
-        except Exception as e:
-            if not isinstance(e, SystemHalt):
-                self.exception = e
+        opcode = self.fetch_byte()
+        manager.execute(opcode, self)
 
-            return False
-
-        return True
+    def execute_interrupt(self, opcode: int) -> None:
+        self.interrupts_enabled = False
+        manager.execute(opcode, self)
 
     @increment_program_counter()
     def fetch_byte(self) -> int:
@@ -169,24 +145,6 @@ class CPU(threading.Thread, AbstractCPU):
         """
         h_addr, l_addr = self.read_memory_word_bytes(addr)
         return join_bytes(h_addr, l_addr)
-
-    def execute_instruction(self) -> None:
-        """
-        Execute the instruction at the current program counter.
-
-        This method fetches a byte from memory, checks if the opcode is known,
-        and executes the associated instruction. If the opcode is unknown,
-        an exception is raised.
-
-        Returns:
-            None
-        """
-        opcode = self.fetch_byte()
-        manager.execute(opcode, self)
-
-    def execute_interrupt(self, opcode: int) -> None:
-        self.interrupts_enabled = False
-        manager.execute(opcode, self)
 
     def decrement_stack_pointer(self) -> None:
         """
