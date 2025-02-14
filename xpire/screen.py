@@ -75,7 +75,7 @@ class Screen:
         target.blit(text_surface, (5, 100))
 
         elapsed_time = time.perf_counter() - self.current_time
-        fps = math.floor(1 / elapsed_time)
+        fps = math.floor(1 / max(elapsed_time, 0.0001))
 
         time_surface = my_font.render(f"FPS: {fps}", False, (0xFF, 0xFF, 0xFF))
         target.blit(time_surface, (5, 120))
