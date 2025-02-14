@@ -3,6 +3,7 @@ import math
 import pygame
 
 from xpire.cpus.cpu import AbstractCPU
+import time
 
 
 class Screen:
@@ -27,6 +28,7 @@ class Screen:
         self.color_table = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
         self.video_data = []
         pygame.display.flip()
+        self.current_time = time.perf_counter()
 
     def resize(self) -> None:
         scaled = pygame.transform.scale(
@@ -70,3 +72,10 @@ class Screen:
         my_font = pygame.font.SysFont("Comic Sans MS", 18)
         text_surface = my_font.render(f"PC: 0x{cpu.PC:04X}", False, (0xFF, 0xFF, 0xFF))
         target.blit(text_surface, (5, 100))
+
+        elapsed_time = time.perf_counter() - self.current_time
+        fps = math.floor(1 / elapsed_time)
+
+        time_surface = my_font.render(f"FPS: {fps}", False, (0xFF, 0xFF, 0xFF))
+        target.blit(time_surface, (5, 120))
+        self.current_time = time.perf_counter()
