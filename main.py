@@ -15,6 +15,21 @@ from xpire.cpus.intel_8080 import Intel8080
 from xpire.memory import Memory
 from xpire.screen import Screen
 from xpire.utils import load_program_into_memory
+import time
+import threading
+import sys
+
+
+def clock(frequency: int):
+    initial_time = time.perf_counter()
+    period = 1 / frequency
+    cycles = 0
+    while True:
+        current_time = time.perf_counter()
+        ticks = int(current_time - initial_time) / period
+        while cycles < ticks:
+            yield cycles
+            cycles += 1
 
 
 @click.group()
@@ -61,13 +76,18 @@ def run(program_file: str) -> None:
     screen = Screen(224, 256, "Xpire", scale=3)
 
     running = True
+    clock_frequency = 2000000
+    screen_frequency = int(clock_frequency / 60)
+    clock_ticks = clock(clock_frequency)
     while running:
+        next(clock_ticks)
         if cpu.interrupts_enabled:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
 
-            if cpu.cycles > 200000 / 60:
+            if cpu.cycles > screen_frequency:
+                print(time.perf_counter())
                 screen.render(cpu)
                 interrupts.extend((207, 215))
                 interrupt = interrupts.popleft()
@@ -76,6 +96,14 @@ def run(program_file: str) -> None:
                 continue
 
         cpu.execute_instruction()
+
+
+@xpire.command()
+def step() -> None:
+    counter = 0
+    for step in clock():
+        counter += 1
+        print(counter)
 
 
 if __name__ == "__main__":
