@@ -1,13 +1,14 @@
 import math
+import time
 
 import pygame
 
 from xpire.cpus.cpu import AbstractCPU
-import time
 
 
 class Screen:
     def __init__(self, width: int, height: int, title: str, scale: int = 1):
+
         pygame.init()
         pygame.font.init()
 
