@@ -148,8 +148,8 @@ class CPU(threading.Thread, AbstractCPU):
         Returns:
             tuple[int, int]: The fetched word as a tuple of two values.
         """
-        h_addr = self.read_memory_byte(addr)
-        l_addr = self.read_memory_byte(addr + 0x01)
+        l_addr = self.read_memory_byte(addr)
+        h_addr = self.read_memory_byte(addr + 0x01)
         return h_addr, l_addr
 
     def read_memory_word(self, addr: int) -> int:
