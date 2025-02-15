@@ -919,7 +919,7 @@ class Intel8080(CPU):
         self.cycles += 11
 
     @manager.add_instruction(OPCodes.SUI)
-    def substract_immdiate_from_accumulator(self) -> None:
+    def substract_immediate_from_accumulator(self) -> None:
         i_value = self.fetch_byte()
         a_value = self.registers[Registers.A]
         result = a_value - i_value

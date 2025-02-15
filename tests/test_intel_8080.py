@@ -306,3 +306,53 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["P"], False)
         self.assertEqual(self.cpu.flags["C"], False)
         self.assertEqual(self.cpu.flags["A"], False)
+
+    def test_accumulator_and_immediate(self):
+        self.cpu.registers[Registers.A] = 0x14
+        self.cpu.PC = 0x0000
+        self.cpu.memory[0x0000] = 0x42
+
+        self.cpu.accumulator_and_immediate()
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0x00)
+        self.assertEqual(self.cpu.flags["S"], False)
+        self.assertEqual(self.cpu.flags["Z"], True)
+        self.assertEqual(self.cpu.flags["P"], True)
+        self.assertEqual(self.cpu.flags["C"], False)
+        self.assertEqual(self.cpu.flags["A"], False)
+
+    def test_jump_if_minus(self):
+        self.cpu.PC = 0x0000
+
+        self.cpu.flags["S"] = True
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.jump_if_minus()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+
+    def test_jump_if_not_minus(self):
+        self.cpu.PC = 0x0000
+
+        self.cpu.flags["S"] = False
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.jump_if_minus()
+
+        self.assertEqual(self.cpu.PC, 0x0002)  # PC + 2 (fetch word)
+
+    def test_substract_immediate_from_accumulator(self):
+        self.cpu.registers[Registers.A] = 0x14
+        self.cpu.PC = 0x0000
+        self.cpu.memory[0x0000] = 0x42
+
+        self.cpu.substract_immediate_from_accumulator()
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0xD2)
+        self.assertEqual(self.cpu.flags["S"], True)
+        self.assertEqual(self.cpu.flags["Z"], False)
+        self.assertEqual(self.cpu.flags["P"], True)
+        self.assertEqual(self.cpu.flags["C"], True)
+        self.assertEqual(self.cpu.flags["A"], True)
