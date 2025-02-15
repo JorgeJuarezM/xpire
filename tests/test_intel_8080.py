@@ -245,3 +245,64 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.memory[0x0000], 0xBE)
         self.assertEqual(self.cpu.memory[0x0001], 0x42)
+
+    def test_push_to_stack(self):
+        """
+        Test push to stack.
+
+        Pushes word on litle endian order.
+        """
+        self.cpu.registers[Registers.H] = 0x00
+        self.cpu.registers[Registers.L] = 0xFF
+
+        self.cpu.push_to_stack(Registers.H, Registers.L)
+
+        self.assertEqual(self.cpu.memory[self.cpu.SP], 0xFF)
+        self.assertEqual(self.cpu.memory[self.cpu.SP - 1], 0x00)
+        self.assertEqual(self.cpu.SP, 0xFFFE)
+
+    def test_add_register_to_accumulator(self):
+        self.cpu.registers[Registers.A] = 0x33
+        self.cpu.registers[Registers.C] = 0x0F
+
+        self.cpu.add_to_accumulator(Registers.C)
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0x42)
+        self.assertEqual(self.cpu.registers[Registers.C], 0x0F)
+
+        self.assertEqual(self.cpu.flags["S"], False)
+        self.assertEqual(self.cpu.flags["Z"], False)
+        self.assertEqual(self.cpu.flags["P"], True)
+        self.assertEqual(self.cpu.flags["C"], False)
+        self.assertEqual(self.cpu.flags["A"], True)
+
+    def test_exchange_sp_with_hl(self):
+
+        self.cpu.SP = 0xAABB
+
+        self.cpu.registers[Registers.H] = 0x00
+        self.cpu.registers[Registers.L] = 0xCC
+
+        self.cpu.memory[self.cpu.SP] = 0xDD
+        self.cpu.memory[self.cpu.SP + 1] = 0xDE
+
+        self.cpu.exchange_sp_hl()
+
+        self.assertEqual(self.cpu.registers[Registers.H], 0xDE)  # SP +1
+        self.assertEqual(self.cpu.registers[Registers.L], 0xDD)  # SP
+        self.assertEqual(self.cpu.memory[self.cpu.SP], 0xCC)  # L
+        self.assertEqual(self.cpu.memory[self.cpu.SP + 1], 0x00)  # H
+
+    def test_increment_memory_address_on_hl(self):
+        self.cpu.registers[Registers.H] = 0x00
+        self.cpu.registers[Registers.L] = 0x00
+        self.cpu.memory[0x0000] = 0x19
+
+        self.cpu.increment_memory_address()
+
+        self.assertEqual(self.cpu.memory[0x0000], 0x1A)
+        self.assertEqual(self.cpu.flags["S"], False)
+        self.assertEqual(self.cpu.flags["Z"], False)
+        self.assertEqual(self.cpu.flags["P"], False)
+        self.assertEqual(self.cpu.flags["C"], False)
+        self.assertEqual(self.cpu.flags["A"], False)
