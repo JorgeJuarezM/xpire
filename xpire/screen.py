@@ -41,7 +41,9 @@ class Screen:
         self.update(cpu)
         self.resize()
         self.print_debug_info(cpu, self.screen)
-        pygame.display.update()
+        # pygame.display.update()
+        pygame.display.flip()
+        self.clock.tick_busy_loop(self.fps)
 
     def render_pixel(self, pixel_index, x, y) -> None:
         pixel = self.video_data[pixel_index]
@@ -70,13 +72,20 @@ class Screen:
                 counter += 1
 
     def print_debug_info(self, cpu: AbstractCPU, target: pygame.Surface) -> None:
-        my_font = pygame.font.SysFont("Comic Sans MS", 18)
+        my_font = pygame.font.Font("space_invaders.ttf", 20)
+
         text_surface = my_font.render(f"PC: 0x{cpu.PC:04X}", False, (0xFF, 0xFF, 0xFF))
-        target.blit(text_surface, (5, 100))
 
-        elapsed_time = time.perf_counter() - self.current_time
-        fps = math.floor(1 / max(elapsed_time, 0.0001))
+        offset = 500
 
-        time_surface = my_font.render(f"FPS: {fps}", False, (0xFF, 0xFF, 0xFF))
-        target.blit(time_surface, (5, 120))
-        self.current_time = time.perf_counter()
+        target.blit(text_surface, (30, 0 + offset))
+
+        time_surface = my_font.render(
+            f"FPS: {self.clock.get_fps():.0f}", False, (0xFF, 0xFF, 0xFF)
+        )
+        target.blit(time_surface, (30, 50 + offset))
+
+        time_surface = my_font.render(
+            f"Time: {self.clock.get_time()}", False, (0xFF, 0xFF, 0xFF)
+        )
+        target.blit(time_surface, (30, 100 + offset))
