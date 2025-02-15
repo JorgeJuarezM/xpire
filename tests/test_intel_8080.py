@@ -432,3 +432,16 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["P"], True)
         self.assertEqual(self.cpu.flags["C"], True)
         self.assertEqual(self.cpu.flags["A"], True)
+
+    def test_substract_register_from_accumulator(self):
+        self.cpu.registers[Registers.A] = 0x14
+        self.cpu.registers[Registers.C] = 0x14
+
+        self.cpu.substract_register_from_accumulator(Registers.C)
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0x00)
+        self.assertEqual(self.cpu.flags["S"], False)
+        self.assertEqual(self.cpu.flags["Z"], True)
+        self.assertEqual(self.cpu.flags["P"], True)
+        self.assertEqual(self.cpu.flags["C"], False)
+        self.assertEqual(self.cpu.flags["A"], True)
