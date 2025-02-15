@@ -53,4 +53,3 @@ class Machine:
         while self.running:
             self.process_interruptions()
             self.cpu.execute_instruction()
-            self.clock.tick(self.clock_frequency)
