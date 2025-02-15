@@ -221,3 +221,15 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["P"], True)
         self.assertEqual(self.cpu.flags["C"], True)
         self.assertEqual(self.cpu.flags["A"], True)
+
+    def test_read_memory_word_bytes(self):
+        """
+        Test read memory word bytes.
+
+        Reads word on litle endian order.
+        """
+        self.cpu.PC = 0x0000
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.assertEqual(self.cpu.read_memory_word_bytes(0x0000), (0xBE, 0x42))
