@@ -9,7 +9,7 @@ from xpire.utils import load_program_into_memory
 
 class Machine:
     def __init__(self):
-        self.clock_frequency = 2100000  # 2MHz
+        self.clock_frequency = 2000000  # 2MHz
         self.screen_refresh_rate = 60  # 60Hz
         self.screen_refresh_interval = self.clock_frequency / self.screen_refresh_rate
 
