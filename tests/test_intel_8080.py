@@ -233,3 +233,15 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0001] = 0xBE
 
         self.assertEqual(self.cpu.read_memory_word_bytes(0x0000), (0xBE, 0x42))
+
+    def test_write_memory_word(self):
+        """
+        Test write memory word.
+
+        Writes word on litle endian order.
+        """
+        self.cpu.PC = 0x0000
+        self.cpu.write_memory_word(0x0000, 0x42, 0xBE)
+
+        self.assertEqual(self.cpu.memory[0x0000], 0xBE)
+        self.assertEqual(self.cpu.memory[0x0001], 0x42)
