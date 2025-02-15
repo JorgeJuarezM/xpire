@@ -1,6 +1,8 @@
 import unittest
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
+from xpire.exceptions import SystemHalt
+from xpire.machine import Machine
 from xpire.memory import Memory
 
 
@@ -445,3 +447,10 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["P"], True)
         self.assertEqual(self.cpu.flags["C"], False)
         self.assertEqual(self.cpu.flags["A"], True)
+
+    def test_machine_run(self):
+        machine = Machine()
+        machine.memory[0x0000] = 0x76  # HLT
+
+        with self.assertRaises(SystemHalt):
+            machine.run()
