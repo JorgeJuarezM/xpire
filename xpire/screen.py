@@ -41,7 +41,6 @@ class Screen:
         self.update(cpu)
         self.resize()
         self.print_debug_info(cpu, self.screen)
-        # pygame.display.update()
         pygame.display.flip()
         self.clock.tick_busy_loop(self.fps)
 

@@ -51,9 +51,5 @@ class Machine:
     def run(self):
         self.running = True
         while self.running:
-            # print(self.clock.get_rawtime())
             self.process_interruptions()
             self.cpu.execute_instruction()
-            # self.clock.tick_busy_loop(self.clock_frequency)
-            # self.clock.tick(self.screen_refresh_rate)
-            # self.clock.tick()
