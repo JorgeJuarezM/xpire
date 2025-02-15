@@ -73,8 +73,8 @@ class Intel8080(CPU):
         This method takes a 16-bit address and a 16-bit value, and stores the value in memory at the specified address.
         The value is stored in memory as a 16-bit value (i.e. high byte first, low byte second).
         """
-        self.write_memory_byte(address, high_byte)
-        self.write_memory_byte(address + 0x01, low_byte)
+        self.write_memory_byte(address, low_byte)
+        self.write_memory_byte(address + 0x01, high_byte)
 
     @increment_stack_pointer()
     def pop(self) -> tuple[int, int]:
@@ -318,6 +318,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.MOV_M_A, [Registers.A])
     @manager.add_instruction(OPCodes.MOV_M_B, [Registers.B])
+    @manager.add_instruction(OPCodes.MOV_M_C, [Registers.C])
     def move_register_to_hl_memory(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.write_memory_byte(address, self.registers[register])
@@ -359,6 +360,8 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.MOV_A_A, [Registers.A, Registers.A])
     @manager.add_instruction(OPCodes.MOV_L_B, [Registers.B, Registers.L])
     @manager.add_instruction(OPCodes.MOV_H_C, [Registers.C, Registers.H])
+    @manager.add_instruction(OPCodes.MOV_L_C, [Registers.C, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_H_L, [Registers.L, Registers.H])
     def move_register_to_register(self, src: int, dst: int) -> None:
         self.registers[dst] = self.registers[src]
         self.cycles += 5
@@ -549,6 +552,8 @@ class Intel8080(CPU):
 
         self.cycles += 10
 
+    @manager.add_instruction(OPCodes.ADD_B, [Registers.B])
+    @manager.add_instruction(OPCodes.ADD_C, [Registers.C])
     @manager.add_instruction(OPCodes.ADD_D, [Registers.D])
     @manager.add_instruction(OPCodes.ADD_L, [Registers.L])
     def add_to_accumulator(self, register: int) -> None:
@@ -726,7 +731,7 @@ class Intel8080(CPU):
 
         self.set_flags(result)
         self.flags["C"] = False
-        self.flags["A"] = False
+        self.set_aux_carry_flag(value1, value2)
 
         self.cycles += 7
 
@@ -735,10 +740,8 @@ class Intel8080(CPU):
         address = self.fetch_word()
         if self.flags["S"]:
             self.PC = address
-            self.cycles += 10
-            return
 
-        self.cycles += 5
+        self.cycles += 10
 
     @manager.add_instruction(OPCodes.ADI)
     def add_immediate_to_accumulator(self) -> None:
@@ -847,8 +850,8 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.XTHL)
     def exchange_sp_hl(self) -> None:
         h, l = self.registers[Registers.H], self.registers[Registers.L]
-        self.registers[Registers.H] = self.read_memory_byte(self.SP)
-        self.registers[Registers.L] = self.read_memory_byte(self.SP + 0x01)
+        self.registers[Registers.L] = self.read_memory_byte(self.SP)
+        self.registers[Registers.H] = self.read_memory_byte(self.SP + 0x01)
         self.write_memory_word(self.SP, h, l)
         self.cycles += 18
 
@@ -926,7 +929,12 @@ class Intel8080(CPU):
 
         self.set_flags(new_value)
         self.set_carry_flag(result)
-        self.set_aux_carry_flag(a_value, i_value)
+
+        # twos complement
+        x = (i_value ^ 0xFF) + 0x01
+
+        c = ((x & 0xF) + (a_value & 0xF)) > 0xF
+        self.flags["A"] = c
 
         self.cycles += 7
 
@@ -1058,3 +1066,90 @@ class Intel8080(CPU):
     def store_accumulator_to_mem_reg(self, r1: int, r2: int):
         address = join_bytes(self.registers[r1], self.registers[r2])
         self.write_memory_byte(address, self.registers[Registers.A])
+
+    @manager.add_instruction(OPCodes.INR_M)
+    def increment_memory_address(self):
+        h = self.registers[Registers.H]
+        l = self.registers[Registers.L]
+        value = self.read_memory_byte(join_bytes(h, l))
+        result = value + 0x01
+        new_value = result & 0xFF
+        self.write_memory_byte(join_bytes(h, l), new_value)
+
+        self.set_flags(new_value)
+
+        lsb = value & 0xF
+        self.flags["A"] = (lsb + 1) > 0xF
+
+        self.cycles += 10
+
+    @manager.add_instruction(OPCodes.CMP_B, [Registers.B])
+    @manager.add_instruction(OPCodes.CMP_H, [Registers.H])
+    def compare_register_with_accumulator(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        value = self.registers[register]
+        result = a_value - value
+
+        tc_val = (value ^ 0xFF) + 0x01
+        r = a_value + tc_val
+
+        self.set_flags(result & 0xFF)
+        self.set_carry_flag(result)
+        self.flags["P"] = (bin(r).count("1") % 2) == 0
+        lsb_a = a_value & 0xF
+        lsb_i = tc_val & 0xF
+        self.flags["A"] = (lsb_a + lsb_i) > 0xF
+
+        self.cycles += 4
+
+    @manager.add_instruction(OPCodes.CNC)
+    def call_if_not_carry(self):
+        address = self.fetch_word()
+        if not self.flags["C"]:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(OPCodes.CMP_M)
+    def compare_register_with_memory(self) -> None:
+        a_value = self.registers[Registers.A]
+        value = self.read_memory_byte(
+            join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        )
+        result = a_value - value
+
+        tc_val = (value ^ 0xFF) + 0x01
+        r = a_value + tc_val
+
+        self.set_flags(result & 0xFF)
+        self.set_carry_flag(result)
+        self.flags["P"] = (bin(r).count("1") % 2) == 0
+        lsb_a = a_value & 0xF
+        lsb_i = tc_val & 0xF
+        self.flags["A"] = (lsb_a + lsb_i) > 0xF
+
+        self.cycles += 7
+
+    @manager.add_instruction(OPCodes.SUB_A, [Registers.A])
+    def substract_register_from_accumulator(self, register: int) -> None:
+        i_value = self.registers[register]
+        a_value = self.registers[Registers.A]
+        result = a_value - i_value
+        new_value = result & 0xFF
+
+        self.registers[Registers.A] = new_value
+
+        self.set_flags(new_value)
+        self.set_carry_flag(result)
+
+        twos_complement = (i_value ^ 0xFF) + 0x01
+        lsb_1 = twos_complement & 0xF
+        lsb_2 = a_value & 0xF
+        ac = (lsb_1 + lsb_2) > 0xF
+        self.flags["A"] = ac
+
+        self.cycles += 4
