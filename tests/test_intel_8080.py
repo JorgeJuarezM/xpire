@@ -1,9 +1,23 @@
 import unittest
+from unittest.mock import patch
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
 from xpire.exceptions import SystemHalt
 from xpire.machine import Machine
 from xpire.memory import Memory
+
+
+class MockScreen:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def render(self, cpu):
+        pass
+
+
+class MockPygameEvent:
+    def get(self):
+        return []
 
 
 class TestIntel8080(unittest.TestCase):
@@ -448,9 +462,12 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["C"], False)
         self.assertEqual(self.cpu.flags["A"], True)
 
+    @patch("xpire.machine.Screen", MockScreen)
+    @patch("xpire.machine.pygame.event", MockPygameEvent())
     def test_machine_run(self):
         machine = Machine()
         machine.memory[0x0000] = 0x76  # HLT
-
+        machine.cpu.cycles = 40000
+        machine.cpu.interrupts_enabled = True
         with self.assertRaises(SystemHalt):
             machine.run()
