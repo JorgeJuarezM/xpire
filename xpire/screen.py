@@ -1,5 +1,4 @@
 import math
-import time
 
 import pygame
 
@@ -28,8 +27,6 @@ class Screen:
         pygame.display.set_caption(self.title)
         self.color_table = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
         self.video_data = []
-        pygame.display.flip()
-        self.current_time = time.perf_counter()
 
     def resize(self) -> None:
         scaled = pygame.transform.scale(
@@ -72,11 +69,9 @@ class Screen:
 
     def print_debug_info(self, cpu: AbstractCPU, target: pygame.Surface) -> None:
         my_font = pygame.font.Font("space_invaders.ttf", 20)
-
-        text_surface = my_font.render(f"PC: 0x{cpu.PC:04X}", False, (0xFF, 0xFF, 0xFF))
-
         offset = 500
 
+        text_surface = my_font.render(f"PC: 0x{cpu.PC:04X}", False, (0xFF, 0xFF, 0xFF))
         target.blit(text_surface, (30, 0 + offset))
 
         time_surface = my_font.render(
