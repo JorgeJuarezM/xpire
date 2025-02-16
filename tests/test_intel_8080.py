@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+import pygame
 from faker import Faker
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
@@ -20,8 +21,13 @@ class MockScreen:
 
 
 class MockPygameEvent:
+    def __init__(self, events=None):
+        if not events:
+            self.events = []
+        events = events
+
     def get(self):
-        return []
+        return self.events
 
 
 class TestIntel8080(unittest.TestCase):
@@ -480,3 +486,9 @@ class TestIntel8080(unittest.TestCase):
             machine.run()
 
         mock_load_program_into_memory.assert_called_once()
+
+    @patch("xpire.machine.pygame.event", MockPygameEvent([pygame.QUIT]))
+    def test_machine_process_input(self):
+        machine = Machine()
+        machine.process_input()
+        self.assertFalse(machine.running)
