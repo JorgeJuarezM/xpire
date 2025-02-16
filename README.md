@@ -9,3 +9,5 @@ Right now, the emulator is able to run simple 8080 binary programs. I will work 
 For future releases, i expect to emulate another CPU / Machines and make this project extensible enough to handle this.
 
 ## Feel free to contribute or contact me about this project jjuarez007@gmail.com
+
+![capture](https://github.com/user-attachments/assets/94029405-b52b-4fc6-9f11-d306d83e6898)
