@@ -1,10 +1,14 @@
 import unittest
 from unittest.mock import patch
 
+from faker import Faker
+
 from xpire.cpus.intel_8080 import Intel8080, Registers
 from xpire.exceptions import SystemHalt
 from xpire.machine import Machine
 from xpire.memory import Memory
+
+fake = Faker()
 
 
 class MockScreen:
@@ -464,10 +468,14 @@ class TestIntel8080(unittest.TestCase):
 
     @patch("xpire.machine.Screen", MockScreen)
     @patch("xpire.machine.pygame.event", MockPygameEvent())
-    def test_machine_run(self):
+    @patch("xpire.machine.load_program_into_memory")
+    def test_machine_run(self, mock_load_program_into_memory):
         machine = Machine()
+        machine.load_rom(fake.file_name())
         machine.memory[0x0000] = 0x76  # HLT
         machine.cpu.cycles = 40000
         machine.cpu.interrupts_enabled = True
         with self.assertRaises(SystemHalt):
             machine.run()
+
+        mock_load_program_into_memory.assert_called_once()
