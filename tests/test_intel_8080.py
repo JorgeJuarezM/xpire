@@ -470,6 +470,7 @@ class TestIntel8080(unittest.TestCase):
     @patch("xpire.machine.pygame.event", MockPygameEvent())
     @patch("xpire.machine.load_program_into_memory")
     def test_machine_run(self, mock_load_program_into_memory):
+        mock_load_program_into_memory.return_value = None
         machine = Machine()
         machine.load_rom(fake.file_name())
         machine.memory[0x0000] = 0x76  # HLT
