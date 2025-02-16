@@ -34,11 +34,11 @@ class Intel8080(CPU):
 
         self.out = {}
 
-        self.flags["Z"] = False  # Zero flag
-        self.flags["S"] = False  # Sign flag
-        self.flags["P"] = False  # Parity flag
-        self.flags["C"] = False  # Carry flag
-        self.flags["A"] = False  # Aux carry flag
+        # self.flags["Z"] = False  # Zero flag
+        # self.flags["S"] = False  # Sign flag
+        # self.flags["P"] = False  # Parity flag
+        # self.flags["C"] = False  # Carry flag
+        # self.flags["A"] = False  # Aux carry flag
 
         self.interrupts_enabled = False
 
@@ -87,22 +87,22 @@ class Intel8080(CPU):
         return self.read_memory_word_bytes(self.SP)
 
     def set_flags(self, value: int, mask: int = 0xFF) -> None:
-        self.flags["Z"] = value == 0x00
-        self.flags["S"] = bool(value & 0x80)
-        self.flags["P"] = self.check_parity(value, mask)
+        self.flags.Z = value == 0x00
+        self.flags.S = bool(value & 0x80)
+        self.flags.P = self.check_parity(value, mask)
 
     def check_parity(self, value: int, mask: int = 0xFF) -> bool:
         return (bin(value & mask).count("1") % 2) == 0
 
     def set_carry_flag(self, value: int, mask: int = 0xFF) -> None:
-        self.flags["C"] = value > mask or value < 0x00
+        self.flags.C = value > mask or value < 0x00
 
     def set_aux_carry_flag(self, a: int, b: int, mask: int = 0x0F) -> None:
         result = (a & mask) + (b & mask)
         if result > mask or result < 0x00:
-            self.flags["A"] = True
+            self.flags.A = True
         else:
-            self.flags["A"] = False
+            self.flags.A = False
 
     @manager.add_instruction(OPCodes.LDA)
     def load_memory_address_to_accumulator(self) -> None:
@@ -278,7 +278,7 @@ class Intel8080(CPU):
         self.registers[register] = new_value
 
         self.set_flags(new_value)
-        self.flags["A"] = ((result & 0xF) - 1) > 0xF
+        self.flags.A = ((result & 0xF) - 1) > 0xF
         self.cycles += 5
 
     @manager.add_instruction(OPCodes.INX_BC, [Registers.B, Registers.C])
@@ -327,7 +327,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.JNZ)
     def jump_if_not_zero(self) -> None:
         address = self.fetch_word()
-        if not self.flags["Z"]:
+        if not self.flags.Z:
             self.PC = address
 
         self.cycles += 10
@@ -378,10 +378,10 @@ class Intel8080(CPU):
 
         self.set_flags(result & 0xFF)
         self.set_carry_flag(result)
-        self.flags["P"] = (bin(r).count("1") % 2) == 0
+        self.flags.P = (bin(r).count("1") % 2) == 0
         lsb_a = a_value & 0xF
         lsb_i = tc_val & 0xF
-        self.flags["A"] = (lsb_a + lsb_i) > 0xF
+        self.flags.A = (lsb_a + lsb_i) > 0xF
 
         self.cycles += 7
 
@@ -456,7 +456,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RNC)
     def return_if_not_carry(self) -> None:
-        if not self.flags["C"]:
+        if not self.flags.C:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -466,7 +466,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RC)
     def return_if_carry(self) -> None:
-        if self.flags["C"]:
+        if self.flags.C:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -503,8 +503,8 @@ class Intel8080(CPU):
         self.registers[Registers.A] = result
 
         self.set_flags(result)
-        self.flags["C"] = False
-        self.flags["A"] = False
+        self.flags.C = False
+        self.flags.A = False
 
         self.cycles += 4
 
@@ -521,7 +521,7 @@ class Intel8080(CPU):
         self.registers[register] = result
 
         self.set_flags(result)
-        self.flags["C"] = False
+        self.flags.C = False
 
         self.cycles += 7
 
@@ -548,7 +548,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.JZ)
     def jump_if_zero(self) -> None:
         address = self.fetch_word()
-        if self.flags["Z"]:
+        if self.flags.Z:
             self.PC = address
 
         self.cycles += 10
@@ -580,7 +580,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.JPE)
     def jump_if_parity(self) -> None:
         address = self.fetch_word()
-        if self.flags.get("P"):
+        if self.flags.P:
             self.PC = address
             self.cycles += 10
             return
@@ -609,7 +609,7 @@ class Intel8080(CPU):
 
         Condition bits affected: Carry.
         """
-        carry = 1 if self.flags["C"] else 0
+        carry = 1 if self.flags.C else 0
         accumulator = self.registers[Registers.A] & 0xFF
 
         # Obtener el bit menos significativo (LSB) del acumulador
@@ -623,7 +623,7 @@ class Intel8080(CPU):
         accumulator = accumulator & 0xFF
 
         self.registers[Registers.A] = accumulator
-        self.flags["C"] = True if new_carry else False
+        self.flags.C = True if new_carry else False
 
         self.cycles += 4
 
@@ -651,7 +651,7 @@ class Intel8080(CPU):
         accumulator = accumulator & 0xFF
 
         self.registers[Registers.A] = accumulator
-        self.flags["C"] = True if new_carry else False
+        self.flags.C = True if new_carry else False
 
         self.cycles += 4
 
@@ -679,14 +679,14 @@ class Intel8080(CPU):
         accumulator = accumulator & 0xFF
 
         self.registers[Registers.A] = accumulator
-        self.flags["C"] = True if new_carry else False
+        self.flags.C = True if new_carry else False
 
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.JNC)
     def jump_if_not_carry(self) -> None:
         address = self.fetch_word()
-        if not self.flags["C"]:
+        if not self.flags.C:
             self.PC = address
 
         self.cycles += 10
@@ -694,32 +694,20 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.JC)
     def jump_if_carry(self) -> None:
         address = self.fetch_word()
-        if self.flags["C"]:
+        if self.flags.C:
             self.PC = address
 
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.PUSH_PSW)
     def push_processor_state_word(self) -> None:
-        flags_byte = self.flags.get("S") << 0x07
-        flags_byte |= self.flags.get("Z") << 0x06
-        flags_byte |= self.flags.get("A") << 0x04
-        flags_byte |= self.flags.get("P") << 0x02
-        flags_byte |= 0x02
-        flags_byte |= self.flags.get("C") << 0x00
-
-        self.push(self.registers[Registers.A], flags_byte)
+        self.push(self.registers[Registers.A], self.flags.get_flags())
         self.cycles += 11
 
     @manager.add_instruction(OPCodes.POP_PSW)
     def pop_processor_state_word(self) -> None:
         self.registers[Registers.A], flags_byte = self.pop()
-        self.flags["S"] = bool((flags_byte >> 0x07) & 0x01)
-        self.flags["Z"] = bool((flags_byte >> 0x06) & 0x01)
-        self.flags["A"] = bool((flags_byte >> 0x04) & 0x01)
-        self.flags["P"] = bool((flags_byte >> 0x02) & 0x01)
-        self.flags["C"] = bool((flags_byte >> 0x00) & 0x01)
-
+        self.flags.set_flags(flags_byte)
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.ANI)
@@ -731,7 +719,7 @@ class Intel8080(CPU):
         self.registers[Registers.A] = result
 
         self.set_flags(result)
-        self.flags["C"] = False
+        self.flags.C = False
         self.set_aux_carry_flag(value1, value2)
 
         self.cycles += 7
@@ -739,7 +727,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.JM)
     def jump_if_minus(self) -> None:
         address = self.fetch_word()
-        if self.flags["S"]:
+        if self.flags.S:
             self.PC = address
 
         self.cycles += 10
@@ -783,9 +771,9 @@ class Intel8080(CPU):
         result = value1 ^ value2
         self.registers[r1] = result
 
-        self.flags["C"] = False
+        self.flags.C = False
         self.set_flags(result)
-        self.flags["A"] = False
+        self.flags.A = False
 
         self.cycles += 4
 
@@ -810,7 +798,7 @@ class Intel8080(CPU):
         result = value1 & value2
         self.registers[r1] = result
 
-        self.flags["C"] = False
+        self.flags.C = False
         self.set_flags(result)
         self.set_aux_carry_flag(value1, value2)
 
@@ -818,13 +806,13 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.STC)
     def set_carry(self):
-        self.flags["C"] = True
+        self.flags.C = True
 
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.RZ)
     def return_if_zero(self) -> None:
-        if self.flags["Z"]:
+        if self.flags.Z:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -834,7 +822,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RNZ)
     def return_if_not_zero(self) -> None:
-        if not self.flags["Z"]:
+        if not self.flags.Z:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -875,14 +863,14 @@ class Intel8080(CPU):
 
         self.set_flags(new_value)
         lsb = result & 0xF
-        self.flags["A"] = lsb > 0xF
+        self.flags.A = lsb > 0xF
 
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.CZ)
     def call_if_zero(self) -> None:
         address = self.fetch_word()
-        if self.flags["Z"]:
+        if self.flags.Z:
             h, l = split_word(self.PC)
             self.push(h, l)
             self.PC = address
@@ -894,7 +882,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.CNZ)
     def call_if_not_zero(self) -> None:
         address = self.fetch_word()
-        if not self.flags["Z"]:
+        if not self.flags.Z:
             h, l = split_word(self.PC)
             self.push(h, l)
             self.PC = address
@@ -935,13 +923,13 @@ class Intel8080(CPU):
         x = (i_value ^ 0xFF) + 0x01
 
         c = ((x & 0xF) + (a_value & 0xF)) > 0xF
-        self.flags["A"] = c
+        self.flags.A = c
 
         self.cycles += 7
 
     @manager.add_instruction(OPCodes.SBI)
     def substract_immdiate_from_accumulator_with_borrow(self) -> None:
-        carry = 1 if self.flags["C"] else 0
+        carry = 1 if self.flags.C else 0
         i_value = self.fetch_byte()
         i_value += carry
         i_value &= 0xFF
@@ -958,7 +946,7 @@ class Intel8080(CPU):
         x = (i_value ^ 0xFF) + 0x01
 
         c = ((x & 0xF) + (a_value & 0xF)) > 0xF
-        self.flags["A"] = c
+        self.flags.A = c
 
         self.cycles += 7
 
@@ -977,7 +965,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RM)
     def return_if_minus(self) -> None:
-        if self.flags["S"]:
+        if self.flags.S:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -1004,7 +992,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.CPE)
     def call_if_parity_even(self) -> None:
         address = self.fetch_word()
-        if self.flags["P"]:
+        if self.flags.P:
             h, l = split_word(self.PC)
             self.push(h, l)
             self.PC = address
@@ -1015,7 +1003,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RP)
     def return_if_parity_even(self) -> None:
-        if self.flags["P"]:
+        if self.flags.P:
             h, l = self.pop()
             self.PC = join_bytes(h, l)
             self.cycles += 11
@@ -1059,7 +1047,7 @@ class Intel8080(CPU):
 
         self.set_flags(result)
         self.set_aux_carry_flag(value1, value2)
-        self.flags["C"] = False
+        self.flags.C = False
 
         self.cycles += 7
 
@@ -1080,7 +1068,7 @@ class Intel8080(CPU):
         self.set_flags(new_value)
 
         lsb = value & 0xF
-        self.flags["A"] = (lsb + 1) > 0xF
+        self.flags.A = (lsb + 1) > 0xF
 
         self.cycles += 10
 
@@ -1096,17 +1084,17 @@ class Intel8080(CPU):
 
         self.set_flags(result & 0xFF)
         self.set_carry_flag(result)
-        self.flags["P"] = (bin(r).count("1") % 2) == 0
+        self.flags.P = (bin(r).count("1") % 2) == 0
         lsb_a = a_value & 0xF
         lsb_i = tc_val & 0xF
-        self.flags["A"] = (lsb_a + lsb_i) > 0xF
+        self.flags.A = (lsb_a + lsb_i) > 0xF
 
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.CNC)
     def call_if_not_carry(self):
         address = self.fetch_word()
-        if not self.flags["C"]:
+        if not self.flags.C:
             h, l = split_word(self.PC)
             self.push(h, l)
             self.PC = address
@@ -1128,10 +1116,10 @@ class Intel8080(CPU):
 
         self.set_flags(result & 0xFF)
         self.set_carry_flag(result)
-        self.flags["P"] = (bin(r).count("1") % 2) == 0
+        self.flags.P = (bin(r).count("1") % 2) == 0
         lsb_a = a_value & 0xF
         lsb_i = tc_val & 0xF
-        self.flags["A"] = (lsb_a + lsb_i) > 0xF
+        self.flags.A = (lsb_a + lsb_i) > 0xF
 
         self.cycles += 7
 
@@ -1151,6 +1139,6 @@ class Intel8080(CPU):
         lsb_1 = twos_complement & 0xF
         lsb_2 = a_value & 0xF
         ac = (lsb_1 + lsb_2) > 0xF
-        self.flags["A"] = ac
+        self.flags.A = ac
 
         self.cycles += 4
