@@ -46,6 +46,7 @@ class Machine:
             self.cpu.cycles = 0
 
     def load_rom(self, program_path: str):
+        print(f"Loading program: {program_path}")
         load_program_into_memory(self.memory, program_path)
 
     def run(self):
