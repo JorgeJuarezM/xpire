@@ -26,7 +26,7 @@ class FlagsManager:
         P: Parity flag
         C: Carry flag
         """
-        self._flags = 0x02  # Second bit is always set
+        self.clear_flags()
 
     def get_flags(self):
         """
@@ -47,7 +47,7 @@ class FlagsManager:
         Returns:
             None
         """
-        self._flags = flags
+        self._flags = flags | 0x02  # Second bit is always set
 
     def add_flag(self, flag: int):
         """
@@ -85,6 +85,16 @@ class FlagsManager:
         """
 
         return bool(self._flags & flag)
+
+    def clear_flags(self):
+        """
+        Clear all flags except the second bit.
+
+        This method resets the flags to their default state with only the
+        second bit set, effectively clearing all other flags.
+        """
+
+        self._flags = 0x02  # Second bit is always set
 
     def set_flag(self, flag: int, value: bool):
         self.add_flag(flag) if value else self.remove_flag(flag)
