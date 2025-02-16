@@ -716,3 +716,126 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.SP, 0x0000)
         self.assertEqual(self.cpu.registers[Registers.A], 0x14)
         self.assertEqual(self.cpu.flags.get_flags(), 0xFF)
+
+    def test_set_carry_flag(self):
+        self.cpu.set_carry()
+        self.assertEqual(self.cpu.flags.C, True)
+        self.assertEqual(self.cpu.flags.S, False)
+        self.assertEqual(self.cpu.flags.Z, False)
+        self.assertEqual(self.cpu.flags.P, False)
+        self.assertEqual(self.cpu.flags.A, False)
+
+    def test_return_if_zero(self):
+        self.cpu.flags.Z = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_zero()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0x0002)
+
+    def test_return_if_zero_opposite(self):
+        self.cpu.flags.Z = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_zero()
+
+        self.assertEqual(self.cpu.PC, 0x0000)
+        self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_return_if_not_zero(self):
+        self.cpu.flags.Z = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_not_zero()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0x0002)
+
+    def test_return_if_not_zero_opposite(self):
+        self.cpu.flags.Z = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_not_zero()
+
+        self.assertEqual(self.cpu.PC, 0x0000)
+        self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_decrement_memory_byte(self):
+        self.cpu.memory[0x0000] = 0x14
+        self.cpu.decrement_memory_byte()
+
+        self.assertEqual(self.cpu.memory[0x0000], 0x13)
+        self.assertEqual(self.cpu.flags.S, False)
+        self.assertEqual(self.cpu.flags.Z, False)
+        self.assertEqual(self.cpu.flags.P, False)
+        self.assertEqual(self.cpu.flags.C, False)
+        self.assertEqual(self.cpu.flags.A, False)
+
+    def test_call_if_zero(self):
+        self.cpu.flags.Z = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_zero()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0xFFFE)
+
+    def test_call_if_zero_opposite(self):
+        self.cpu.flags.Z = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_zero()
+
+        self.assertEqual(self.cpu.PC, 0x0002)
+        self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_call_if_not_zero(self):
+        self.cpu.flags.Z = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_not_zero()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0xFFFE)
+
+    def test_call_if_not_zero_opposite(self):
+        self.cpu.flags.Z = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_not_zero()
+
+        self.assertEqual(self.cpu.PC, 0x0002)
+        self.assertEqual(self.cpu.SP, 0x0000)
