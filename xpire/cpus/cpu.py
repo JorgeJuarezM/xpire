@@ -25,7 +25,15 @@ class CPU(AbstractCPU):
     instructions.
     """
 
-    exception: Exception
+    PC: int
+    SP: int
+
+    halted: bool
+    interrupts_enabled: bool
+
+    cycles: int
+
+    memory: Memory
     registers: RegisterManager
 
     def __init__(self, memory: Memory) -> None:
@@ -50,6 +58,7 @@ class CPU(AbstractCPU):
 
         self.cycles = 0x00
         self.interrupts_enabled = False
+        self.halted = False
 
     def execute_instruction(self) -> None:
         """
@@ -66,7 +75,7 @@ class CPU(AbstractCPU):
             opcode = self.fetch_byte()
             manager.execute(opcode, self)
         except SystemHalt:
-            # If the exception is a SystemHalt, do nothing
+            self.halted = True
             return
 
     def execute_interrupt(self, opcode: int) -> None:

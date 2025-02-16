@@ -51,6 +51,6 @@ class Machine:
 
     def run(self):
         self.running = True
-        while self.running:
+        while self.running and not self.cpu.halted:
             self.process_interruptions()
             self.cpu.execute_instruction()
