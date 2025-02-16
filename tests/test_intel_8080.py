@@ -20,11 +20,20 @@ class MockScreen:
         pass
 
 
+class MockPygameEventType:
+    def __init__(self, event):
+        self.event = event
+
+    @property
+    def type(self):
+        return self.event
+
+
 class MockPygameEvent:
     def __init__(self, events=None):
         if not events:
-            self.events = []
-        self.events = events
+            events = []
+        self.events = [MockPygameEventType(event) for event in events]
 
     def get(self):
         return self.events
@@ -487,6 +496,7 @@ class TestIntel8080(unittest.TestCase):
 
         mock_load_program_into_memory.assert_called_once()
 
+    @patch("xpire.machine.Screen", MockScreen)
     @patch("xpire.machine.pygame.event", MockPygameEvent([pygame.QUIT]))
     def test_machine_process_input(self):
         machine = Machine()
