@@ -24,7 +24,7 @@ class MockPygameEvent:
     def __init__(self, events=None):
         if not events:
             self.events = []
-        events = events
+        self.events = events
 
     def get(self):
         return self.events
@@ -478,11 +478,11 @@ class TestIntel8080(unittest.TestCase):
     def test_machine_run(self, mock_load_program_into_memory):
         mock_load_program_into_memory.return_value = None
         machine = Machine()
+        machine.load_rom(fake.file_name())
         machine.memory[0x0000] = 0x76  # HLT
         machine.cpu.cycles = 40000
         machine.cpu.interrupts_enabled = True
         with self.assertRaises(SystemHalt):
-            machine.load_rom(fake.file_name())
             machine.run()
 
         mock_load_program_into_memory.assert_called_once()
