@@ -903,3 +903,29 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_call_if_parity_even(self):
+        self.cpu.flags.P = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_parity_even()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0xFFFE)
+
+    def test_call_if_parity_even_opposite(self):
+        self.cpu.flags.P = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.call_if_parity_even()
+
+        self.assertEqual(self.cpu.PC, 0x02)
+        self.assertEqual(self.cpu.SP, 0x0000)
