@@ -661,3 +661,58 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.P, False)
         self.assertEqual(self.cpu.flags.C, False)
         self.assertEqual(self.cpu.flags.A, False)
+
+    def test_jump_if_not_carry(self):
+        self.cpu.PC = 0x0000
+
+        self.cpu.flags.C = False
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.jump_if_not_carry()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+
+        self.cpu.PC = 0x0000
+        self.cpu.flags.clear_flags()
+        self.cpu.flags.C = True
+
+        self.cpu.jump_if_not_carry()
+
+        self.assertEqual(self.cpu.PC, 0x0002)
+
+    def test_jump_if_carry(self):
+        self.cpu.PC = 0x0000
+
+        self.cpu.flags.C = True
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.jump_if_carry()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+
+        self.cpu.PC = 0x0000
+        self.cpu.flags.clear_flags()
+        self.cpu.flags.C = False
+
+        self.cpu.jump_if_carry()
+
+        self.assertEqual(self.cpu.PC, 0x0002)
+
+    def test_push_and_pop_processor_state_word(self):
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+        self.cpu.registers[Registers.A] = 0x14
+        self.cpu.flags.set_flags(0xFF)
+
+        self.cpu.push_processor_state_word()
+        self.cpu.registers[Registers.A] = 0x20
+        self.cpu.flags.clear_flags()
+
+        self.cpu.pop_processor_state_word()
+
+        self.assertEqual(self.cpu.PC, 0x0000)
+        self.assertEqual(self.cpu.SP, 0x0000)
+        self.assertEqual(self.cpu.registers[Registers.A], 0x14)
+        self.assertEqual(self.cpu.flags.get_flags(), 0xFF)
