@@ -65,9 +65,9 @@ class CPU(AbstractCPU):
         try:
             opcode = self.fetch_byte()
             manager.execute(opcode, self)
-        except Exception as e:
-            if not isinstance(e, SystemHalt):
-                raise e
+        except SystemHalt:
+            # If the exception is a SystemHalt, do nothing
+            return
 
     def execute_interrupt(self, opcode: int) -> None:
         manager.execute(opcode, self)
