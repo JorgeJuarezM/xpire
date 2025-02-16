@@ -53,21 +53,25 @@ class CPU(AbstractCPU):
 
     def execute_instruction(self) -> None:
         """
-        Execute the instruction at the current program counter.
+        Execute a single instruction.
 
-        This method fetches a byte from memory, checks if the opcode is known,
-        and executes the associated instruction. If the opcode is unknown,
-        an exception is raised.
+        This method fetches and executes the next instruction. If an exception
+        occurs during execution, it checks if the exception is a SystemHalt.
+        If its not, it raises the exception.
 
         Returns:
             None
         """
-        opcode = self.fetch_byte()
-        manager.execute(opcode, self)
+        try:
+            opcode = self.fetch_byte()
+            manager.execute(opcode, self)
+        except Exception as e:
+            if not isinstance(e, SystemHalt):
+                raise e
 
     def execute_interrupt(self, opcode: int) -> None:
-        self.interrupts_enabled = False
         manager.execute(opcode, self)
+        self.interrupts_enabled = False
 
     @increment_program_counter()
     def fetch_byte(self) -> int:
