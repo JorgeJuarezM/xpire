@@ -2,6 +2,7 @@ autoflake==2.3.1
 black==25.1.0
 click==8.1.8
 coverage==7.6.10
+Faker==36.1.1
 isort==6.0.0
 pyflakes==3.2.0
 pygame==2.6.1
