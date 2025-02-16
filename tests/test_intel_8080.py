@@ -929,3 +929,15 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.PC, 0x02)
         self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_and_memory_to_accumulator(self):
+        self.cpu.registers[Registers.A] = 0xCC
+        self.cpu.memory[0x0000] = 0x0F
+        self.cpu.and_memory_to_accumulator()
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0x0C)
+        self.assertEqual(self.cpu.flags.S, False)
+        self.assertEqual(self.cpu.flags.Z, False)
+        self.assertEqual(self.cpu.flags.P, True)
+        self.assertEqual(self.cpu.flags.C, False)
+        self.assertEqual(self.cpu.flags.A, True)
