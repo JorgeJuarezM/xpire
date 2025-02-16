@@ -34,12 +34,6 @@ class Intel8080(CPU):
 
         self.out = {}
 
-        # self.flags["Z"] = False  # Zero flag
-        # self.flags["S"] = False  # Sign flag
-        # self.flags["P"] = False  # Parity flag
-        # self.flags["C"] = False  # Carry flag
-        # self.flags["A"] = False  # Aux carry flag
-
         self.interrupts_enabled = False
 
     def write_memory_byte(self, address, value) -> None:
