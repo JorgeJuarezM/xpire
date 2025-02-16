@@ -1,7 +1,41 @@
 import unittest
+from unittest.mock import patch
+
+import pygame
+from faker import Faker
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
+from xpire.machine import Machine
 from xpire.memory import Memory
+
+fake = Faker()
+
+
+class MockScreen:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def render(self, cpu):
+        pass
+
+
+class MockPygameEventType:
+    def __init__(self, event):
+        self.event = event
+
+    @property
+    def type(self):
+        return self.event
+
+
+class MockPygameEvent:
+    def __init__(self, events=None):
+        if not events:
+            events = []
+        self.events = [MockPygameEventType(event) for event in events]
+
+    def get(self):
+        return self.events
 
 
 class TestIntel8080(unittest.TestCase):
@@ -445,3 +479,25 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags["P"], True)
         self.assertEqual(self.cpu.flags["C"], False)
         self.assertEqual(self.cpu.flags["A"], True)
+
+    @patch("xpire.machine.Screen", MockScreen)
+    @patch("xpire.machine.pygame.event", MockPygameEvent())
+    @patch("xpire.machine.load_program_into_memory")
+    def test_machine_run(self, mock_load_program_into_memory):
+        mock_load_program_into_memory.return_value = None
+        machine = Machine()
+        machine.load_rom(fake.file_name())
+        machine.memory[0x0000] = 0x76  # HLT
+        machine.cpu.cycles = 40000
+        machine.cpu.interrupts_enabled = True
+        machine.run()
+
+        self.assertTrue(machine.cpu.halted)
+        mock_load_program_into_memory.assert_called_once()
+
+    @patch("xpire.machine.Screen", MockScreen)
+    @patch("xpire.machine.pygame.event", MockPygameEvent([pygame.QUIT]))
+    def test_machine_process_input(self):
+        machine = Machine()
+        machine.process_input()
+        self.assertFalse(machine.running)

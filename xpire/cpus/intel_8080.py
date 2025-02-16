@@ -338,30 +338,31 @@ class Intel8080(CPU):
         self.write_memory_byte(address, self.fetch_byte())
         self.cycles += 10
 
+    @manager.add_instruction(OPCodes.MOV_A_A, [Registers.A, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_B, [Registers.B, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_C, [Registers.C, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_D, [Registers.D, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_E, [Registers.E, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_B_D, [Registers.D, Registers.B])
     @manager.add_instruction(OPCodes.MOV_A_H, [Registers.H, Registers.A])
     @manager.add_instruction(OPCodes.MOV_A_L, [Registers.L, Registers.A])
     @manager.add_instruction(OPCodes.MOV_B_A, [Registers.A, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_B_H, [Registers.H, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_C_A, [Registers.A, Registers.C])
-    @manager.add_instruction(OPCodes.MOV_D_A, [Registers.A, Registers.D])
-    @manager.add_instruction(OPCodes.MOV_E_A, [Registers.A, Registers.E])
-    @manager.add_instruction(OPCodes.MOV_H_A, [Registers.A, Registers.H])
-    @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
     @manager.add_instruction(OPCodes.MOV_B_C, [Registers.C, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_C_C, [Registers.C, Registers.C])
-    @manager.add_instruction(OPCodes.MOV_E_C, [Registers.C, Registers.E])
+    @manager.add_instruction(OPCodes.MOV_B_D, [Registers.D, Registers.B])
+    @manager.add_instruction(OPCodes.MOV_B_H, [Registers.H, Registers.B])
     @manager.add_instruction(OPCodes.MOV_B_L, [Registers.L, Registers.B])
+    @manager.add_instruction(OPCodes.MOV_C_A, [Registers.A, Registers.C])
+    @manager.add_instruction(OPCodes.MOV_C_C, [Registers.C, Registers.C])
+    @manager.add_instruction(OPCodes.MOV_D_A, [Registers.A, Registers.D])
     @manager.add_instruction(OPCodes.MOV_D_C, [Registers.C, Registers.D])
-    @manager.add_instruction(OPCodes.MOV_A_A, [Registers.A, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_L_B, [Registers.B, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_E_A, [Registers.A, Registers.E])
+    @manager.add_instruction(OPCodes.MOV_E_B, [Registers.B, Registers.E])
+    @manager.add_instruction(OPCodes.MOV_E_C, [Registers.C, Registers.E])
+    @manager.add_instruction(OPCodes.MOV_H_A, [Registers.A, Registers.H])
     @manager.add_instruction(OPCodes.MOV_H_C, [Registers.C, Registers.H])
-    @manager.add_instruction(OPCodes.MOV_L_C, [Registers.C, Registers.L])
     @manager.add_instruction(OPCodes.MOV_H_L, [Registers.L, Registers.H])
+    @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_L_B, [Registers.B, Registers.L])
+    @manager.add_instruction(OPCodes.MOV_L_C, [Registers.C, Registers.L])
     def move_register_to_register(self, src: int, dst: int) -> None:
         self.registers[dst] = self.registers[src]
         self.cycles += 5
@@ -765,7 +766,7 @@ class Intel8080(CPU):
 
         self.cycles += 7
 
-    @manager.add_instruction(OPCodes.XRA, [Registers.A, Registers.A])
+    @manager.add_instruction(OPCodes.XRA_A, [Registers.A, Registers.A])
     @manager.add_instruction(OPCodes.XRA_B, [Registers.A, Registers.B])
     def apply_xor_to_registers(self, r1: int, r2: int) -> None:
         """
