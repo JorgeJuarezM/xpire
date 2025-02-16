@@ -839,3 +839,67 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.PC, 0x0002)
         self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_substract_immdiate_from_accumulator_with_borrow(self):
+        self.cpu.registers[Registers.A] = 0x14
+        self.cpu.memory[0x0000] = 0x21
+        self.cpu.substract_immediate_from_accumulator_with_borrow()
+
+        self.assertEqual(self.cpu.registers[Registers.A], 0xF3)
+        self.assertEqual(self.cpu.flags.S, True)
+        self.assertEqual(self.cpu.flags.Z, False)
+        self.assertEqual(self.cpu.flags.P, True)
+        self.assertEqual(self.cpu.flags.C, True)
+        self.assertEqual(self.cpu.flags.A, True)
+
+    def test_return_if_minus(self):
+        self.cpu.flags.S = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_minus()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0x0002)
+
+    def test_return_if_minus_opposite(self):
+        self.cpu.flags.S = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_minus()
+
+        self.assertEqual(self.cpu.PC, 0x0000)
+        self.assertEqual(self.cpu.SP, 0x0000)
+
+    def test_return_if_parity_event(self):
+        self.cpu.flags.P = True
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_parity_even()
+
+        self.assertEqual(self.cpu.PC, 0xBE42)
+        self.assertEqual(self.cpu.SP, 0x0002)
+
+    def test_return_if_parity_opposite(self):
+        self.cpu.flags.P = False
+        self.cpu.PC = 0x0000
+        self.cpu.SP = 0x0000
+
+        self.cpu.memory[0x0000] = 0x42
+        self.cpu.memory[0x0001] = 0xBE
+
+        self.cpu.return_if_parity_even()
+
+        self.assertEqual(self.cpu.PC, 0x0000)
+        self.assertEqual(self.cpu.SP, 0x0000)

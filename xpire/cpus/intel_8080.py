@@ -922,7 +922,7 @@ class Intel8080(CPU):
         self.cycles += 7
 
     @manager.add_instruction(OPCodes.SBI)
-    def substract_immdiate_from_accumulator_with_borrow(self) -> None:
+    def substract_immediate_from_accumulator_with_borrow(self) -> None:
         carry = 1 if self.flags.C else 0
         i_value = self.fetch_byte()
         i_value += carry
