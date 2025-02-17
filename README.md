@@ -10,4 +10,6 @@ For future releases, i expect to emulate another CPU / Machines and make this pr
 
 ## Feel free to contribute or contact me about this project jjuarez007@gmail.com
 
-<img src="https://github.com/user-attachments/assets/94029405-b52b-4fc6-9f11-d306d83e6898" width="450px"/>
+
+https://github.com/user-attachments/assets/79b43232-25ed-473c-aa20-df3f69df9975
+
