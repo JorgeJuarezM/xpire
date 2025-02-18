@@ -86,5 +86,5 @@ def get_complement_one(value: int) -> int:
     return value ^ 0xFF
 
 
-def get_complement_two(value: int) -> int:
-    return get_complement_one(value) + 1
+def get_twos_complement(value: int) -> int:
+    return get_complement_one(value) + 0x01
