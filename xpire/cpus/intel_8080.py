@@ -1132,5 +1132,5 @@ class Intel8080(CPU):
 
         result = self.substract_twos_complement(a_value, reg_value)
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
-        self.registers[Registers.A] = result
+        self.registers[Registers.A] = result & 0xFF
         self.cycles += 4
