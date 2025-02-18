@@ -72,3 +72,19 @@ def increment_bytes_pair(high_byte: int, low_byte: int) -> tuple[int, int]:
     value += 0x01
     value = reset_value_if_overflow(value, 0xFFFF)
     return split_word(value)
+
+
+def get_ls_nib(value: int) -> int:
+    return value & 0x0F
+
+
+def get_ms_nib(value: int) -> int:
+    return (value >> 0x04) & 0x0F
+
+
+def get_complement_one(value: int) -> int:
+    return value ^ 0xFF
+
+
+def get_complement_two(value: int) -> int:
+    return get_complement_one(value) + 1
