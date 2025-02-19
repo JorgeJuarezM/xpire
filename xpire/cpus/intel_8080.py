@@ -7,7 +7,7 @@ from xpire.cpus.cpu import CPU
 from xpire.decorators import increment_stack_pointer
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.registers.inter_8080 import Registers
-from xpire.utils import join_bytes, split_word
+from xpire.utils import get_ls_nib, get_twos_complement, join_bytes, split_word
 
 
 class Intel8080(CPU):
@@ -97,6 +97,37 @@ class Intel8080(CPU):
             self.flags.A = True
         else:
             self.flags.A = False
+
+    def substract_with_twos_complement(self, v1: int, v2: int) -> int:
+        compl = get_twos_complement(v2)
+        result = v1 + compl
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.A = (get_ls_nib(v1) + get_ls_nib(compl)) > 0x0F
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        return result
+
+    def decrement_byte_value(self, value: int) -> int:
+        result = value - 0x01
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.A = get_ls_nib(value) == 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        return result
+
+    def compare_with_twos_complement(self, v1: int, v2: int) -> int:
+        compl = get_twos_complement(v2)
+        result = v1 + compl
+
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.S = (result & 0x80) != 0
+        self.flags.A = (get_ls_nib(v1) + get_ls_nib(compl)) > 0x0F
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.C = result <= 0xFF
 
     @manager.add_instruction(OPCodes.LDA)
     def load_memory_address_to_accumulator(self) -> None:
@@ -363,20 +394,16 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.CPI_A, [Registers.A])
     def compare_register_with_immediate(self, register: int) -> None:
-        value = self.fetch_byte()
-        a_value = self.registers[register]
-        result = a_value - value
+        """
+        The byte of immediate data is compared to the contents of the accumulator.
+        The comparison is performed by internally subtracting the data from the
+        accumulator using two's complement arithmetic, leaving the accumulator
+        unchanged but setting the condition bits by the result.
 
-        tc_val = (value ^ 0xFF) + 0x01
-        r = a_value + tc_val
-
-        self.set_flags(result & 0xFF)
-        self.set_carry_flag(result)
-        self.flags.P = (bin(r).count("1") % 2) == 0
-        lsb_a = a_value & 0xF
-        lsb_i = tc_val & 0xF
-        self.flags.A = (lsb_a + lsb_i) > 0xF
-
+        Since a subtract operation is performed, the Carry bit will be set if
+        there is no carry out of bit 7.
+        """
+        self.compare_with_twos_complement(self.registers[register], self.fetch_byte())
         self.cycles += 7
 
     @manager.add_instruction(OPCodes.DAD_DE, [Registers.D, Registers.E])
@@ -445,7 +472,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.OUT)
     def out_to_port(self) -> None:
         port = self.fetch_byte()
-        print(f"Port: {port} Value: {chr(self.registers[Registers.A])}")
+        print(f"OUT: Port: {port}, Value: {self.registers[Registers.A]}")
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.RNC)
@@ -827,7 +854,7 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.IN)
     def input(self) -> int:
         port = self.fetch_byte()
-        print(f"Port: {port} Value: {chr(self.registers[Registers.A])}")
+        print(f"IN Port: {port}, Value: {self.registers[Registers.A]}")
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.XTHL)
@@ -848,16 +875,12 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.DCR_M)
     def decrement_memory_byte(self) -> None:
-        h = self.registers[Registers.H]
-        l = self.registers[Registers.L]
-        value = self.read_memory_byte(join_bytes(h, l))
-        result = value - 0x01
-        new_value = result & 0xFF
-        self.write_memory_byte(join_bytes(h, l), new_value)
-
-        self.set_flags(new_value)
-        lsb = result & 0xF
-        self.flags.A = lsb > 0xF
+        address = join_bytes(
+            self.registers[Registers.H],
+            self.registers[Registers.L],
+        )
+        result = self.decrement_byte_value(self.read_memory_byte(address))
+        self.write_memory_byte(address, result)
 
         self.cycles += 10
 
@@ -1052,37 +1075,25 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.INR_M)
     def increment_memory_address(self):
-        h = self.registers[Registers.H]
-        l = self.registers[Registers.L]
-        value = self.read_memory_byte(join_bytes(h, l))
-        result = value + 0x01
-        new_value = result & 0xFF
-        self.write_memory_byte(join_bytes(h, l), new_value)
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        m_value = self.read_memory_byte(address)
+        result = m_value + 0x01
+        self.write_memory_byte(address, result)
 
-        self.set_flags(new_value)
-
-        lsb = value & 0xF
-        self.flags.A = (lsb + 1) > 0xF
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.A = (get_ls_nib(m_value) + 0x01) > 0x0F
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
 
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.CMP_B, [Registers.B])
+    @manager.add_instruction(OPCodes.CMP_C, [Registers.C])
     @manager.add_instruction(OPCodes.CMP_H, [Registers.H])
     def compare_register_with_accumulator(self, register: int) -> None:
-        a_value = self.registers[Registers.A]
-        value = self.registers[register]
-        result = a_value - value
-
-        tc_val = (value ^ 0xFF) + 0x01
-        r = a_value + tc_val
-
-        self.set_flags(result & 0xFF)
-        self.set_carry_flag(result)
-        self.flags.P = (bin(r).count("1") % 2) == 0
-        lsb_a = a_value & 0xF
-        lsb_i = tc_val & 0xF
-        self.flags.A = (lsb_a + lsb_i) > 0xF
-
+        self.compare_with_twos_complement(
+            self.registers[Registers.A], self.registers[register]
+        )
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.CNC)
@@ -1099,40 +1110,25 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.CMP_M)
     def compare_register_with_memory(self) -> None:
-        a_value = self.registers[Registers.A]
-        value = self.read_memory_byte(
-            join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.compare_with_twos_complement(
+            self.registers[Registers.A], self.read_memory_byte(address)
         )
-        result = a_value - value
-
-        tc_val = (value ^ 0xFF) + 0x01
-        r = a_value + tc_val
-
-        self.set_flags(result & 0xFF)
-        self.set_carry_flag(result)
-        self.flags.P = (bin(r).count("1") % 2) == 0
-        lsb_a = a_value & 0xF
-        lsb_i = tc_val & 0xF
-        self.flags.A = (lsb_a + lsb_i) > 0xF
-
         self.cycles += 7
 
     @manager.add_instruction(OPCodes.SUB_A, [Registers.A])
     def substract_register_from_accumulator(self, register: int) -> None:
-        i_value = self.registers[register]
-        a_value = self.registers[Registers.A]
-        result = a_value - i_value
-        new_value = result & 0xFF
+        """
+        The specified byte is subtracted from the accumulator using
+        two's complement arithmetic.
 
-        self.registers[Registers.A] = new_value
-
-        self.set_flags(new_value)
-        self.set_carry_flag(result)
-
-        twos_complement = (i_value ^ 0xFF) + 0x01
-        lsb_1 = twos_complement & 0xF
-        lsb_2 = a_value & 0xF
-        ac = (lsb_1 + lsb_2) > 0xF
-        self.flags.A = ac
-
+        If there is no carry out of the high-order bit position, indicating that
+        a borrow occurred, the Carry bit is set; otherwise it is reset.
+        """
+        result = self.substract_with_twos_complement(
+            self.registers[Registers.A],
+            self.registers[register],
+        )
+        self.flags.C = result <= 0xFF
+        self.registers[Registers.A] = result & 0xFF
         self.cycles += 4
