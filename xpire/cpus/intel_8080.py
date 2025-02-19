@@ -121,8 +121,8 @@ class Intel8080(CPU):
 
         self.flags.S = (result & 0x80) != 0x00
         self.flags.Z = (result & 0xFF) == 0x00
-        self.flags.A = (get_ls_nib(value) - 0x01) > 0x0F
-        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0x00
+        self.flags.A = get_ls_nib(value) == 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
 
         return result
 

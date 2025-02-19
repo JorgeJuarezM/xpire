@@ -76,13 +76,8 @@ class CPU(AbstractCPU):
         """
         try:
             opcode = self.fetch_byte()
-            if opcode == 0xD3:
-                print(f"Before Instruction: ================= {self.flags.P}")
             manager.execute(opcode, self)
-            if opcode == 0xD3:
-                print(f"After Instruction: ================= {self.flags.P}")
         except SystemHalt:
-            print("System Halted: Exiting...")
             self.halted = True
             return
 
