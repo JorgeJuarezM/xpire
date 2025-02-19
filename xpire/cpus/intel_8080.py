@@ -80,13 +80,6 @@ class Intel8080(CPU):
         """
         return self.read_memory_word_bytes(self.SP)
 
-    # def set_comparition_flags(self, value: int, t_comp: int, result: int) -> None:
-    #     self.flags.Z = (result & 0xFF) == 0x00
-    #     self.flags.S = (result & 0x80) != 0
-    #     self.flags.C = result <= 0xFF
-    #     self.flags.A = (get_ls_nib(value) + get_ls_nib(t_comp)) > 0x0F
-    #     self.flags.P = (bin(result).count("1") % 2) == 0
-
     def set_flags(self, value: int, mask: int = 0xFF) -> None:
         self.flags.Z = value == 0x00
         self.flags.S = bool(value & 0x80)
