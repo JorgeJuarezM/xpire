@@ -126,7 +126,7 @@ class Intel8080(CPU):
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.S = (result & 0x80) != 0
         self.flags.A = (get_ls_nib(v1) + get_ls_nib(compl)) > 0x0F
-        self.flags.P = (bin(result).count("1") % 2) == 0
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.C = result <= 0xFF
 
     @manager.add_instruction(OPCodes.LDA)
@@ -1088,6 +1088,7 @@ class Intel8080(CPU):
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.CMP_B, [Registers.B])
+    @manager.add_instruction(OPCodes.CMP_C, [Registers.C])
     @manager.add_instruction(OPCodes.CMP_H, [Registers.H])
     def compare_register_with_accumulator(self, register: int) -> None:
         self.compare_with_twos_complement(
@@ -1113,7 +1114,6 @@ class Intel8080(CPU):
         self.compare_with_twos_complement(
             self.registers[Registers.A], self.read_memory_byte(address)
         )
-
         self.cycles += 7
 
     @manager.add_instruction(OPCodes.SUB_A, [Registers.A])

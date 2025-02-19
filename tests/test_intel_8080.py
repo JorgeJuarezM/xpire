@@ -39,9 +39,12 @@ class MockPygameEvent:
 
 
 class TestIntel8080(unittest.TestCase):
+
+    @patch("xpire.machine.Screen", MockScreen)
     def setUp(self):
         memory = Memory()
         self.cpu = Intel8080(memory=memory)
+        self.machine = Machine()
 
     def test_fetch_word(self):
         """
@@ -392,16 +395,25 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.A, True)
 
     def test_compare_register_with_accumulator(self):
-        self.cpu.registers[Registers.A] = 0x14
-        self.cpu.registers[Registers.C] = 0x14
+        self.machine.memory[0x0000] = 0x0E  # MVI C, 14h
+        self.machine.memory[0x0001] = 0x14
+        self.machine.memory[0x0002] = 0x3E  # MVI A, 14h
+        self.machine.memory[0x0003] = 0x14
+        self.machine.memory[0x0004] = 0xB9  # CMP C
+        self.machine.memory[0x0005] = 0x76  # HLT
 
-        self.cpu.compare_register_with_accumulator(Registers.C)
+        self.machine.cpu.PC = 0x0000
 
-        self.assertEqual(self.cpu.flags.S, False)
-        self.assertEqual(self.cpu.flags.Z, True)
-        self.assertEqual(self.cpu.flags.P, False)
-        self.assertEqual(self.cpu.flags.C, False)
-        self.assertEqual(self.cpu.flags.A, True)
+        self.machine.run()
+
+        self.assertEqual(self.machine.cpu.registers[Registers.C], 0x14)
+        self.assertEqual(self.machine.cpu.registers[Registers.A], 0x14)
+
+        self.assertEqual(self.machine.cpu.flags.S, False)
+        self.assertEqual(self.machine.cpu.flags.Z, True)
+        self.assertEqual(self.machine.cpu.flags.P, True)
+        self.assertEqual(self.machine.cpu.flags.C, False)
+        self.assertEqual(self.machine.cpu.flags.A, True)
 
     def test_compare_register_with_accumulator_opposite(self):
         self.cpu.registers[Registers.A] = 0x14
@@ -442,17 +454,30 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.SP, 0x0000)
 
     def test_compare_register_with_memory(self):
-        self.cpu.registers[Registers.A] = 0x14
-        self.cpu.PC = 0x0000
-        self.cpu.memory[0x0000] = 0x14
+        self.machine.memory[0x0000] = 0x26  # MVI H, FFh
+        self.machine.memory[0x0001] = 0xFF
+        self.machine.memory[0x0002] = 0x2E  # MVI L, FFh
+        self.machine.memory[0x0003] = 0xFF
+        self.machine.memory[0x0004] = 0x3E  # MVI A, 14h
+        self.machine.memory[0x0005] = 0x14
+        self.machine.memory[0x0006] = 0x32  # STA FFFFh
+        self.machine.memory[0x0007] = 0xFF
+        self.machine.memory[0x0008] = 0xFF
+        self.machine.memory[0x0009] = 0xBE  # CMP M
+        self.machine.memory[0x000A] = 0x76  # HLT
 
-        self.cpu.compare_register_with_memory()
+        self.machine.PC = 0x0000
+        self.machine.run()
 
-        self.assertEqual(self.cpu.flags.S, False)
-        self.assertEqual(self.cpu.flags.Z, True)
-        self.assertEqual(self.cpu.flags.P, False)
-        self.assertEqual(self.cpu.flags.C, False)
-        self.assertEqual(self.cpu.flags.A, True)
+        self.assertEqual(self.machine.cpu.registers[Registers.A], 0x14)
+        self.assertEqual(self.machine.cpu.registers[Registers.H], 0xFF)
+        self.assertEqual(self.machine.cpu.registers[Registers.L], 0xFF)
+
+        self.assertEqual(self.machine.cpu.flags.S, False)
+        self.assertEqual(self.machine.cpu.flags.Z, True)
+        self.assertEqual(self.machine.cpu.flags.P, True)
+        self.assertEqual(self.machine.cpu.flags.C, False)
+        self.assertEqual(self.machine.cpu.flags.A, True)
 
     def test_compare_register_with_memory_opposite(self):
         self.cpu.registers[Registers.A] = 0x14
@@ -533,16 +558,20 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.PC, 0x0002)
 
     def test_compare_register_with_immediate(self):
-        self.cpu.registers[Registers.A] = 0x14
-        self.cpu.memory[0x0000] = 0x14
+        self.machine.memory[0x0000] = 0x3E  # MVI A, 14h
+        self.machine.memory[0x0001] = 0x14
+        self.machine.memory[0x0002] = 0xFE  # CPI 14h
+        self.machine.memory[0x0003] = 0x14
+        self.machine.memory[0x0004] = 0x76  # HLT
 
-        self.cpu.compare_register_with_immediate(Registers.A)
+        self.machine.PC = 0x0000
+        self.machine.run()
 
-        self.assertEqual(self.cpu.flags.S, False)
-        self.assertEqual(self.cpu.flags.Z, True)
-        self.assertEqual(self.cpu.flags.P, False)
-        self.assertEqual(self.cpu.flags.C, False)
-        self.assertEqual(self.cpu.flags.A, True)
+        self.assertEqual(self.machine.cpu.flags.S, False)
+        self.assertEqual(self.machine.cpu.flags.Z, True)
+        self.assertEqual(self.machine.cpu.flags.P, True)
+        self.assertEqual(self.machine.cpu.flags.C, False)
+        self.assertEqual(self.machine.cpu.flags.A, True)
 
     def test_return_if_not_carry(self):
         self.cpu.flags.C = False
