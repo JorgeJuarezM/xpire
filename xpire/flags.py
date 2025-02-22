@@ -28,13 +28,14 @@ class FlagsManager:
         """
         self.clear_flags()
 
-    def get_flags(self):
+    def get_flags(self) -> int:
         """
         Get the flags as a 8-bit integer.
 
         Returns:
             int: The flags as a 8-bit integer.
         """
+        # return (self._flags & 0xD7) | 0x02
         return self._flags
 
     def set_flags(self, flags: int):
@@ -47,7 +48,8 @@ class FlagsManager:
         Returns:
             None
         """
-        self._flags = flags | 0x02  # Second bit is always set
+        self._flags = flags
+        # self._flags = (self._flags & 0xD7) | 0x02
 
     def add_flag(self, flag: int):
         """
@@ -60,6 +62,7 @@ class FlagsManager:
             None
         """
         self._flags |= flag
+        # self._flags = (self._flags & 0xD7) | 0x02
 
     def remove_flag(self, flag: int):
         """
@@ -72,6 +75,7 @@ class FlagsManager:
             None
         """
         self._flags &= ~flag
+        # self._flags = (self._flags & 0xD7) | 0x02
 
     def check_flag(self, flag: int):
         """
@@ -94,7 +98,8 @@ class FlagsManager:
         second bit set, effectively clearing all other flags.
         """
 
-        self._flags = 0x02  # Second bit is always set
+        self._flags = 0x02
+        # self._flags = (self._flags & 0xD7) | 0x02
 
     def set_flag(self, flag: int, value: bool):
         self.add_flag(flag) if value else self.remove_flag(flag)
