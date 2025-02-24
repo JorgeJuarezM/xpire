@@ -2,7 +2,7 @@
 Intel 8080 CPU implementation.
 """
 
-from xpire.cpus.cpu import CPU
+from xpire.cpus.cpu import CPU, logger
 from xpire.decorators import increment_stack_pointer
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.registers.inter_8080 import Registers
@@ -87,8 +87,13 @@ class Intel8080(CPU):
         self.registers[register] = self.fetch_byte()
         self.cycles += 7
 
-    @manager.add_instruction(0x3C, [Registers.A])
+    @manager.add_instruction(0x04, [Registers.B])
     @manager.add_instruction(0x0C, [Registers.C])
+    @manager.add_instruction(0x14, [Registers.D])
+    @manager.add_instruction(0x1C, [Registers.E])
+    @manager.add_instruction(0x24, [Registers.H])
+    @manager.add_instruction(0x2C, [Registers.L])
+    @manager.add_instruction(0x3C, [Registers.A])
     def inr_reg(self, register: int) -> None:
         reg_value = self.registers[register]
         new_value = (reg_value + 0x01) & 0xFF
@@ -98,6 +103,8 @@ class Intel8080(CPU):
         self.flags.Z = (new_value & 0xFF) == 0
         self.flags.P = bin(new_value & 0xFF).count("1") % 2 == 0
         self.flags.A = (get_ls_nib(reg_value) + 0x01) > 0x0F
+
+        # print(f"INR {register} --> {hex(reg_value)} --> {hex(new_value)}")
 
         self.cycles += 5
 
@@ -132,7 +139,9 @@ class Intel8080(CPU):
         self.PC = address
 
     @manager.add_instruction(0xF5)
-    def push_processor_state_word(self) -> None:
+    def push_psw(self) -> None:
+        flags = self.flags.get_flags()
+        logger.info("PUSH FLAGS: %s", hex(flags))
         self.push(self.registers[Registers.A], self.flags.get_flags())
         self.cycles += 11
 
@@ -151,11 +160,13 @@ class Intel8080(CPU):
         result = value1 ^ value2
         self.registers[r1] = result
 
-        self.flags.C = False
         self.flags.S = (result & 0x80) != 0
         self.flags.Z = (result & 0xFF) == 0
         self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
         self.flags.A = False
+        self.flags.C = False
+
+        # print(f"XRA {r1} --> {hex(value1)} --> {hex(value2)} --> {hex(result)}")
 
         self.cycles += 4
 
@@ -191,10 +202,13 @@ class Intel8080(CPU):
 
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.S = (result & 0x80) != 0
-        self.flags.A = (get_ls_nib(reg_value) + get_ls_nib(compl)) > 0x0F
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+
+        self.flags.A = (get_ls_nib(reg_value) + get_ls_nib(compl)) > 0x0F
         self.flags.C = result <= 0xFF
         self.cycles += 7
+
+        # print(f"CPI {hex(reg_value)} + {hex(compl)} = {hex(result)} --> {self.flags.A}")
 
     @manager.add_instruction(0xC2)
     def jnz(self) -> None:
@@ -230,6 +244,9 @@ class Intel8080(CPU):
 
         # print(">>>" + hex(self.flags.get_flags()))
 
+        # print(
+        #     f"ORA {hex(self.registers[register])} --> {hex(self.registers[Registers.A])} --> {hex(result)} --> {self.flags.A}"
+        # )
         self.cycles += 4
 
     @manager.add_instruction(0xF1)
@@ -237,6 +254,7 @@ class Intel8080(CPU):
         self.registers[Registers.A], flags_byte = self.pop()
         self.flags.set_flags(flags_byte)
         self.cycles += 10
+        logger.info("POP FLAGS: %s", hex(flags_byte))
 
     @manager.add_instruction(0xC1, [Registers.B, Registers.C])
     @manager.add_instruction(0xD1, [Registers.D, Registers.E])
@@ -255,6 +273,7 @@ class Intel8080(CPU):
         self.cycles += 18
 
     @manager.add_instruction(0x03, [Registers.B, Registers.C])
+    @manager.add_instruction(0x13, [Registers.D, Registers.E])
     @manager.add_instruction(0x23, [Registers.H, Registers.L])
     def inx_reg16(self, h: int, l: int) -> None:
         value = join_bytes(self.registers[h], self.registers[l])
@@ -266,12 +285,55 @@ class Intel8080(CPU):
         self.registers[l] = low
         self.cycles += 5
 
+    @manager.add_instruction(0x40, [Registers.B, Registers.B])
+    @manager.add_instruction(0x41, [Registers.C, Registers.B])
+    @manager.add_instruction(0x42, [Registers.D, Registers.B])
+    @manager.add_instruction(0x43, [Registers.E, Registers.B])
+    @manager.add_instruction(0x44, [Registers.H, Registers.B])
+    @manager.add_instruction(0x45, [Registers.L, Registers.B])
+    @manager.add_instruction(0x47, [Registers.A, Registers.B])
+    @manager.add_instruction(0x48, [Registers.B, Registers.C])
+    @manager.add_instruction(0x49, [Registers.C, Registers.C])
+    @manager.add_instruction(0x4A, [Registers.D, Registers.C])
+    @manager.add_instruction(0x4B, [Registers.E, Registers.C])
+    @manager.add_instruction(0x4C, [Registers.H, Registers.C])
+    @manager.add_instruction(0x4D, [Registers.L, Registers.C])
+    @manager.add_instruction(0x4F, [Registers.A, Registers.C])
+    @manager.add_instruction(0x50, [Registers.B, Registers.D])
+    @manager.add_instruction(0x51, [Registers.C, Registers.D])
+    @manager.add_instruction(0x52, [Registers.D, Registers.D])
+    @manager.add_instruction(0x53, [Registers.E, Registers.D])
+    @manager.add_instruction(0x54, [Registers.H, Registers.D])
+    @manager.add_instruction(0x55, [Registers.L, Registers.D])
+    @manager.add_instruction(0x57, [Registers.A, Registers.D])
+    @manager.add_instruction(0x58, [Registers.B, Registers.E])
+    @manager.add_instruction(0x59, [Registers.C, Registers.E])
+    @manager.add_instruction(0x5A, [Registers.D, Registers.E])
+    @manager.add_instruction(0x5B, [Registers.E, Registers.E])
+    @manager.add_instruction(0x5C, [Registers.H, Registers.E])
+    @manager.add_instruction(0x5D, [Registers.L, Registers.E])
     @manager.add_instruction(0x5F, [Registers.A, Registers.E])
+    @manager.add_instruction(0x60, [Registers.B, Registers.H])
+    @manager.add_instruction(0x61, [Registers.C, Registers.H])
+    @manager.add_instruction(0x62, [Registers.D, Registers.H])
+    @manager.add_instruction(0x63, [Registers.E, Registers.H])
+    @manager.add_instruction(0x64, [Registers.H, Registers.H])
+    @manager.add_instruction(0x65, [Registers.L, Registers.H])
+    @manager.add_instruction(0x67, [Registers.A, Registers.H])
+    @manager.add_instruction(0x68, [Registers.B, Registers.L])
+    @manager.add_instruction(0x69, [Registers.C, Registers.L])
+    @manager.add_instruction(0x6A, [Registers.D, Registers.L])
+    @manager.add_instruction(0x6B, [Registers.E, Registers.L])
+    @manager.add_instruction(0x6C, [Registers.H, Registers.L])
+    @manager.add_instruction(0x6D, [Registers.L, Registers.L])
+    @manager.add_instruction(0x6F, [Registers.A, Registers.L])
     @manager.add_instruction(0x78, [Registers.B, Registers.A])
     @manager.add_instruction(0x79, [Registers.C, Registers.A])
     @manager.add_instruction(0x7A, [Registers.D, Registers.A])
+    @manager.add_instruction(0x7B, [Registers.E, Registers.A])
     @manager.add_instruction(0x7C, [Registers.H, Registers.A])
     @manager.add_instruction(0x7D, [Registers.L, Registers.A])
+    @manager.add_instruction(0x7F, [Registers.A, Registers.A])
     def mov_reg_reg(self, src: int, dst: int) -> None:
         self.registers[dst] = self.registers[src]
         self.cycles += 5
@@ -284,22 +346,32 @@ class Intel8080(CPU):
 
         self.cycles += 10
 
+    @manager.add_instruction(0x05, [Registers.B])
     @manager.add_instruction(0x0D, [Registers.C])
+    @manager.add_instruction(0x15, [Registers.D])
+    @manager.add_instruction(0x1D, [Registers.E])
+    @manager.add_instruction(0x25, [Registers.H])
+    @manager.add_instruction(0x2D, [Registers.L])
+    @manager.add_instruction(0x3D, [Registers.A])
     def dcr_reg(self, register: int) -> None:
         reg_value = self.registers[register]
         result = reg_value - 0x01
         new_value = result & 0xFF
         self.registers[register] = new_value
 
-        self.flags.Z = (new_value & 0xFF) == 0
-        self.flags.S = (new_value & 0x80) != 0
-        self.flags.P = bin(new_value & 0xFF).count("1") % 2 == 0
-        self.flags.A = get_ls_nib(reg_value) == 0x00
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.S = (result & 0x80) != 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        # self.flags.A = get_ls_nib(reg_value) == 0x00
+        # self.flags.A = True
+        # print(f"DCR {register} --> {hex(reg_value)} --> {hex(new_value)}")
+        self.flags.A = not ((result & 0xF) == 0xF)
 
         self.cycles += 5
 
     @manager.add_instruction(0x09, [Registers.B, Registers.C])
     @manager.add_instruction(0x19, [Registers.D, Registers.E])
+    @manager.add_instruction(0x29, [Registers.H, Registers.L])
     def dad_reg16(self, h: int, l: int) -> None:
         h_value = self.registers[h]
         l_value = self.registers[l]
@@ -342,6 +414,8 @@ class Intel8080(CPU):
 
         self.cycles += 5
 
+    @manager.add_instruction(0x0B, [Registers.B, Registers.C])
+    @manager.add_instruction(0x1B, [Registers.D, Registers.E])
     @manager.add_instruction(0x2B, [Registers.H, Registers.L])
     def dcx_reg16(self, h: int, l: int):
         value = join_bytes(self.registers[h], self.registers[l])
@@ -417,14 +491,21 @@ class Intel8080(CPU):
     @manager.add_instruction(0xB8, [Registers.B])
     def cmp_reg(self, register: int) -> None:
         a_value = self.registers[Registers.A]
-        compl = get_twos_complement(self.registers[register])
+        reg_value = self.registers[register]
+        compl = get_twos_complement(reg_value)
         result = a_value + compl
 
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.S = (result & 0x80) != 0
-        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.C = result <= 0xFF
+
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+
+        # print(
+        #     f"CMP {register} --> A: {hex(a_value)} --> Reg: {hex(reg_value)} --> Comp: {hex(compl)} --> {hex(result)}",
+        #     self.flags.A,
+        # )
         self.cycles += 4
 
     @manager.add_instruction(0xBE)
@@ -440,6 +521,11 @@ class Intel8080(CPU):
         self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.C = result <= 0xFF
+
+        # print(
+        #     f"CMP M --> A: {hex(a_value)} --> Mem: {hex(self.read_memory_byte(address))} --> Comp: {hex(compl)} --> {hex(result)}",
+        #     self.flags.A,
+        # )
 
         self.cycles += 7
 
@@ -488,12 +574,199 @@ class Intel8080(CPU):
         self.flags.A = (get_ls_nib(value1) + get_ls_nib(value2)) > 0x0F
         self.flags.C = False
 
+        # print(
+        #     f"ANI {hex(value2)} --> A: {hex(value1)} --> Result: {hex(result)}",
+        #     self.flags.A,
+        # )
+
         self.cycles += 7
 
     @manager.add_instruction(0xC7)
     def rst_0(self):
-        if self.interrupts_enabled:
-            h, l = split_word(self.PC)
-            self.push(h, l)
-            self.PC = 0x0000
-            self.interrupts_enabled = False
+        # if self.interrupts_enabled:
+        h, l = split_word(self.PC)
+        self.push(h, l)
+        self.PC = 0x0000
+        self.interrupts_enabled = False
+
+    @manager.add_instruction(0x07)
+    def rotate_left_accumulator(self) -> None:
+        accumulator = self.registers[Registers.A] & 0xFF
+
+        # Obtener el bit menos significativo (LSB) del acumulador
+        new_carry = accumulator & 0x80
+
+        # Rotar el acumulador a la izquierda
+        # El bit de carry se convierte en el bit menos significativo (LSB)
+        accumulator = (accumulator << 1) | (new_carry >> 7)
+
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        accumulator = accumulator & 0xFF
+
+        self.registers[Registers.A] = accumulator
+        self.flags.C = True if new_carry else False
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x17)
+    def ral_carry(self):
+        carry = 1 if self.flags.C else 0
+        a_value = self.registers[Registers.A]
+        new_carry = a_value & 0x80
+
+        # Rotar el acumulador a la izquierda
+        # El bit de carry se convierte en el bit menos significativo (LSB)
+        a_value = (a_value << 1) | (carry >> 7)
+
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        a_value = a_value & 0xFF
+
+        self.registers[Registers.A] = a_value
+        self.flags.C = True if new_carry else False
+
+    @manager.add_instruction(0x1F)
+    def rar(self) -> None:
+        carry = 1 if self.flags.C else 0
+        accumulator = self.registers[Registers.A] & 0xFF
+
+        # Obtener el bit menos significativo (LSB) del acumulador
+        new_carry = accumulator & 0x01
+
+        # Rotar el acumulador a la derecha
+        # El bit de carry se convierte en el bit más significativo (MSB)
+        accumulator = (accumulator >> 1) | (carry << 7)
+
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        accumulator = accumulator & 0xFF
+
+        self.registers[Registers.A] = accumulator
+        self.flags.C = True if new_carry else False
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x27)
+    def daa(self):
+        accumulator = self.registers[Registers.A]
+        carry = 1 if self.flags.C else 0
+        half_carry = 1 if self.flags.A else 0
+
+        lsb = accumulator & 0x0F
+        if half_carry or lsb > 9:
+            accumulator = (accumulator + 0x06) & 0xFF
+            self.flags.A = lsb > 0xF
+
+        msb = accumulator >> 4
+        if carry or msb > 9:
+            accumulator = (accumulator + 0x60) & 0xFF
+            self.flags.C = (msb + 0x60) > 0x0F
+        else:
+            self.flags.C = False
+
+        self.registers[Registers.A] = accumulator & 0xFF
+        self.flags.Z = (accumulator & 0xFF) == 0x00
+        self.flags.S = (accumulator & 0x80) != 0x00
+        self.flags.P = (bin(accumulator & 0xFF).count("1") % 2) == 0
+
+    @manager.add_instruction(0x2F)
+    def cma(self) -> None:
+        value = self.registers[Registers.A]
+        value ^= 0xFF
+        self.registers[Registers.A] = value
+        self.cycles += 4
+
+    @manager.add_instruction(0x37)
+    def set_carry(self):
+        self.flags.C = True
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x3F)
+    def cmc(self):
+        self.flags.C = not self.flags.C
+
+    @manager.add_instruction(0x80, [Registers.B])
+    @manager.add_instruction(0x81, [Registers.C])
+    @manager.add_instruction(0x82, [Registers.D])
+    @manager.add_instruction(0x83, [Registers.E])
+    @manager.add_instruction(0x84, [Registers.H])
+    @manager.add_instruction(0x85, [Registers.L])
+    @manager.add_instruction(0x87, [Registers.A])
+    def add_reg(self, register: int) -> None:
+        value_1 = self.registers[Registers.A]
+        value_2 = self.registers[register]
+        result = value_1 + value_2
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(value_1) + get_ls_nib(value_2)) > 0x0F
+        self.flags.C = result > 0xFF or result < 0x00
+
+        self.registers[Registers.A] = result & 0xFF
+        self.cycles += 4
+
+    @manager.add_instruction(0x88, [Registers.B])
+    @manager.add_instruction(0x89, [Registers.C])
+    @manager.add_instruction(0x8A, [Registers.D])
+    @manager.add_instruction(0x8B, [Registers.E])
+    @manager.add_instruction(0x8C, [Registers.H])
+    @manager.add_instruction(0x8D, [Registers.L])
+    @manager.add_instruction(0x8F, [Registers.A])
+    def adc_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+        reg_value += 1 if self.flags.C else 0
+        result = a_value + reg_value
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(reg_value)) > 0x0F
+        self.flags.C = result > 0xFF or result < 0x00
+
+        self.registers[Registers.A] = result & 0xFF
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x90, [Registers.B])
+    @manager.add_instruction(0x91, [Registers.C])
+    @manager.add_instruction(0x92, [Registers.D])
+    @manager.add_instruction(0x93, [Registers.E])
+    @manager.add_instruction(0x94, [Registers.H])
+    @manager.add_instruction(0x95, [Registers.L])
+    @manager.add_instruction(0x97, [Registers.A])
+    def sub_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+        compl = get_twos_complement(reg_value)
+        result = a_value + compl
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+        self.flags.C = result <= 0xFF
+
+        self.registers[Registers.A] = result & 0xFF
+        self.cycles += 4
+
+    @manager.add_instruction(0xA0, [Registers.B])
+    @manager.add_instruction(0xA1, [Registers.B])
+    @manager.add_instruction(0xA2, [Registers.B])
+    @manager.add_instruction(0xA3, [Registers.B])
+    @manager.add_instruction(0xA4, [Registers.B])
+    @manager.add_instruction(0xA5, [Registers.B])
+    @manager.add_instruction(0xA7, [Registers.B])
+    def ana_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        value2 = self.registers[register]
+        result = a_value & value2
+        self.registers[Registers.A] = result
+
+        self.flags.S = (result & 0x80) != 0
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        self.flags.A = False
+        self.flags.C = False
+
+        self.cycles += 4
