@@ -79,9 +79,12 @@ class Intel8080(CPU):
         """
         return self.read_memory_word_bytes(self.SP)
 
+    @manager.add_instruction(0x06, [Registers.B])
     @manager.add_instruction(0x0E, [Registers.C])
     @manager.add_instruction(0x16, [Registers.D])
     @manager.add_instruction(0x1E, [Registers.E])
+    @manager.add_instruction(0x26, [Registers.H])
+    @manager.add_instruction(0x2E, [Registers.L])
     @manager.add_instruction(0x3E, [Registers.A])
     def mvi_reg_d8(self, register: int) -> callable:
         self.registers[register] = self.fetch_byte()
@@ -152,6 +155,12 @@ class Intel8080(CPU):
         self.push(self.registers[h], self.registers[l])
         self.cycles += 11
 
+    @manager.add_instruction(0xA8, [Registers.A, Registers.B])
+    @manager.add_instruction(0xA9, [Registers.A, Registers.C])
+    @manager.add_instruction(0xAA, [Registers.A, Registers.D])
+    @manager.add_instruction(0xAB, [Registers.A, Registers.E])
+    @manager.add_instruction(0xAC, [Registers.A, Registers.H])
+    @manager.add_instruction(0xAD, [Registers.A, Registers.L])
     @manager.add_instruction(0xAF, [Registers.A, Registers.A])
     def xra(self, r1: int, r2: int) -> None:
         value1 = self.registers[r1]
@@ -188,6 +197,8 @@ class Intel8080(CPU):
     @manager.add_instruction(0x4E, [Registers.C])
     @manager.add_instruction(0x56, [Registers.D])
     @manager.add_instruction(0x5E, [Registers.E])
+    @manager.add_instruction(0x66, [Registers.H])
+    @manager.add_instruction(0x6E, [Registers.L])
     @manager.add_instruction(0x7E, [Registers.A])
     def mov_reg_m(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
@@ -230,6 +241,12 @@ class Intel8080(CPU):
         self.registers[Registers.A] = self.read_memory_byte(address)
         self.cycles += 13
 
+    @manager.add_instruction(0xB0, [Registers.B])
+    @manager.add_instruction(0xB1, [Registers.C])
+    @manager.add_instruction(0xB2, [Registers.D])
+    @manager.add_instruction(0xB3, [Registers.E])
+    @manager.add_instruction(0xB4, [Registers.H])
+    @manager.add_instruction(0xB5, [Registers.L])
     @manager.add_instruction(0xB7, [Registers.A])
     def ora_reg(self, register: int) -> None:
         # print("<<<" + hex(self.flags.get_flags()))
@@ -365,7 +382,8 @@ class Intel8080(CPU):
         # self.flags.A = get_ls_nib(reg_value) == 0x00
         # self.flags.A = True
         # print(f"DCR {register} --> {hex(reg_value)} --> {hex(new_value)}")
-        self.flags.A = not ((result & 0xF) == 0xF)
+        # self.flags.A = not ((result & 0xF) == 0xF)
+        self.flags.A = (get_ls_nib(reg_value) - 1) > 0x0F
 
         self.cycles += 5
 
@@ -453,6 +471,8 @@ class Intel8080(CPU):
     @manager.add_instruction(0x71, [Registers.C])
     @manager.add_instruction(0x72, [Registers.D])
     @manager.add_instruction(0x73, [Registers.E])
+    @manager.add_instruction(0x74, [Registers.H])
+    @manager.add_instruction(0x75, [Registers.L])
     @manager.add_instruction(0x77, [Registers.A])
     def mov_m_reg(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
@@ -489,6 +509,12 @@ class Intel8080(CPU):
             self.PC = address
 
     @manager.add_instruction(0xB8, [Registers.B])
+    @manager.add_instruction(0xB9, [Registers.C])
+    @manager.add_instruction(0xBA, [Registers.D])
+    @manager.add_instruction(0xBB, [Registers.E])
+    @manager.add_instruction(0xBC, [Registers.H])
+    @manager.add_instruction(0xBD, [Registers.L])
+    @manager.add_instruction(0xBF, [Registers.A])
     def cmp_reg(self, register: int) -> None:
         a_value = self.registers[Registers.A]
         reg_value = self.registers[register]
@@ -700,7 +726,7 @@ class Intel8080(CPU):
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.A = (get_ls_nib(value_1) + get_ls_nib(value_2)) > 0x0F
-        self.flags.C = result > 0xFF or result < 0x00
+        self.flags.C = result > 0xFF
 
         self.registers[Registers.A] = result & 0xFF
         self.cycles += 4
@@ -722,7 +748,7 @@ class Intel8080(CPU):
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.A = (get_ls_nib(a_value) + get_ls_nib(reg_value)) > 0x0F
-        self.flags.C = result > 0xFF or result < 0x00
+        self.flags.C = result > 0xFF
 
         self.registers[Registers.A] = result & 0xFF
 
@@ -751,17 +777,490 @@ class Intel8080(CPU):
         self.cycles += 4
 
     @manager.add_instruction(0xA0, [Registers.B])
-    @manager.add_instruction(0xA1, [Registers.B])
-    @manager.add_instruction(0xA2, [Registers.B])
-    @manager.add_instruction(0xA3, [Registers.B])
-    @manager.add_instruction(0xA4, [Registers.B])
-    @manager.add_instruction(0xA5, [Registers.B])
-    @manager.add_instruction(0xA7, [Registers.B])
+    @manager.add_instruction(0xA1, [Registers.C])
+    @manager.add_instruction(0xA2, [Registers.D])
+    @manager.add_instruction(0xA3, [Registers.E])
+    @manager.add_instruction(0xA4, [Registers.H])
+    @manager.add_instruction(0xA5, [Registers.L])
+    @manager.add_instruction(0xA7, [Registers.A])
     def ana_reg(self, register: int) -> None:
         a_value = self.registers[Registers.A]
         value2 = self.registers[register]
         result = a_value & value2
         self.registers[Registers.A] = result
+
+        # print(result, result & 0x80)
+
+        self.flags.S = (result & 0x80) != 0
+        # self.flags.S = (result & (0xFF - (0xFF >> 1))) != 0
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        # self.flags.A = False
+        self.flags.C = False
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(value2)) > 0xF
+
+        self.cycles += 4
+
+    @manager.add_instruction(0xDC)
+    def cc(self):
+        address = self.fetch_word()
+        if self.flags.C:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xD4)
+    def cnc(self):
+        address = self.fetch_word()
+        if not self.flags.C:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xD8)
+    def rc(self) -> None:
+        if self.flags.C:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xD0)
+    def rnc(self) -> None:
+        if not self.flags.C:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xDA)
+    def jc(self) -> None:
+        address = self.fetch_word()
+        if self.flags.C:
+            # h, l = split_word(self.PC)
+            # self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xEC)
+    def cpe_addr(self) -> None:
+        address = self.fetch_word()
+        if self.flags.P:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xE4)
+    def cpo_addr(self) -> None:
+        address = self.fetch_word()
+        if not self.flags.P:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xE8)
+    def rpe(self) -> None:
+        if self.flags.P:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xE0)
+    def rpo(self) -> None:
+        if not self.flags.P:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xE2)
+    def jpo(self) -> None:
+        address = self.fetch_word()
+        if not self.flags.P:
+            # h, l = split_word(self.PC)
+            # self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xCC)
+    def cz_addr(self) -> None:
+        address = self.fetch_word()
+        if self.flags.Z:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xC8)
+    def rz(self) -> None:
+        if self.flags.Z:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xC0)
+    def rnz(self) -> None:
+        if not self.flags.Z:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xFC)
+    def cm_addr(self) -> None:
+        address = self.fetch_word()
+        if self.flags.S:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xF4)
+    def cp_addr(self) -> None:
+        address = self.fetch_word()
+        if not self.flags.S:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xF8)
+    def rm(self) -> None:
+        if self.flags.S:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xF0)
+    def rp(self) -> None:
+        if not self.flags.S:
+            h, l = self.pop()
+            self.PC = join_bytes(h, l)
+            self.cycles += 11
+            return
+
+        self.cycles += 5
+
+    @manager.add_instruction(0xE9)
+    def pchl(self) -> None:
+        self.PC = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.cycles += 5
+
+    @manager.add_instruction(0xF9)
+    def sphl(self) -> None:
+        self.SP = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.cycles += 5
+
+    @manager.add_instruction(0xC6)
+    def adi_d8(self) -> None:
+        value1 = self.registers[Registers.A]
+        value2 = self.fetch_byte()
+
+        result = value1 + value2
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.C = result > 0xFF or result < 0x00
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.S = result & 0x80 != 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        self.flags.A = (get_ls_nib(value1) + get_ls_nib(value2)) > 0x0F
+
+        self.cycles += 7
+
+    @manager.add_instruction(0xCE)
+    def aci_d8(self):
+        value1 = self.registers[Registers.A]
+        value2 = self.fetch_byte()
+
+        result = value1 + value2 + self.flags.C
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.C = result > 0xFF
+        self.flags.Z = self.registers[Registers.A] == 0
+        self.flags.S = self.registers[Registers.A] & 0x80 != 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        self.flags.A = (get_ls_nib(value1) + get_ls_nib(value2) + self.flags.C) > 0x0F
+
+        self.cycles += 7
+
+    @manager.add_instruction(0xD6)
+    def sui_d8(self):
+        a_value = self.registers[Registers.A]
+        i_value = self.fetch_byte()
+
+        compl = get_twos_complement(i_value)
+
+        result = a_value + compl
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.C = result <= 0xFF
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+
+        self.cycles += 7
+
+    @manager.add_instruction(0xDE)
+    def sbi_d8(self):
+        a_value = self.registers[Registers.A]
+        i_value = self.fetch_byte()
+
+        i_value += 1 if self.flags.C else 0
+        compl = get_twos_complement(i_value)
+
+        result = a_value + compl
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(i_value)) > 0x0F
+        self.flags.C = result <= 0xFF
+
+        self.cycles += 7
+
+    @manager.add_instruction(0xF6)
+    def ori_d8(self):
+        value1 = self.registers[Registers.A]
+        value2 = self.fetch_byte()
+
+        result = value1 | value2
+        self.registers[Registers.A] = result
+
+        self.flags.S = (result & 0x80) != 0
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        # self.flags.A = (get_ls_nib(value1) + get_ls_nib(value2)) > 0x0F
+        self.flags.A = False
+        self.flags.C = False
+
+        self.cycles += 7
+
+    @manager.add_instruction(0xEE)
+    def xri_d8(self):
+        value1 = self.registers[Registers.A]
+        value2 = self.fetch_byte()
+
+        result = value1 ^ value2
+        self.registers[Registers.A] = result
+
+        self.flags.S = (result & 0x80) != 0
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        # self.flags.A = (get_ls_nib(value1) + get_ls_nib(value2)) > 0x0F
+        self.flags.A = False
+        self.flags.C = False
+
+        self.cycles += 7
+
+    @manager.add_instruction(0x98, [Registers.B])
+    @manager.add_instruction(0x99, [Registers.C])
+    @manager.add_instruction(0x9A, [Registers.D])
+    @manager.add_instruction(0x9B, [Registers.E])
+    @manager.add_instruction(0x9C, [Registers.H])
+    @manager.add_instruction(0x9D, [Registers.L])
+    @manager.add_instruction(0x9F, [Registers.A])
+    def sbb_reg(self, register: int):
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+
+        reg_value += 1 if self.flags.C else 0
+        compl = get_twos_complement(reg_value)
+
+        result = a_value + compl
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        self.flags.C = result <= 0xFF
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x86)
+    def add_m(self) -> None:
+        value_1 = self.registers[Registers.A]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+        result = value_1 + value_2
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(value_1) + get_ls_nib(value_2)) > 0x0F
+        self.flags.C = result > 0xFF
+
+        self.registers[Registers.A] = result & 0xFF
+        self.cycles += 4
+
+    @manager.add_instruction(0x96)
+    def sub_m(self) -> None:
+        a_value = self.registers[Registers.A]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        compl = get_twos_complement(value_2)
+        result = a_value + compl
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+        self.flags.C = result <= 0xFF
+
+        self.registers[Registers.A] = result & 0xFF
+        self.cycles += 4
+
+    @manager.add_instruction(0x8E)
+    def adc_m(self) -> None:
+        a_value = self.registers[Registers.A]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        value_2 += 1 if self.flags.C else 0
+        result = a_value + value_2
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(value_2)) > 0x0F
+        self.flags.C = result > 0xFF
+
+        self.registers[Registers.A] = result & 0xFF
+
+        self.cycles += 4
+
+    @manager.add_instruction(0x9E)
+    def sbb_m(self):
+        a_value = self.registers[Registers.A]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        value_2 += 1 if self.flags.C else 0
+        compl = get_twos_complement(value_2)
+
+        result = a_value + compl
+        self.registers[Registers.A] = result & 0xFF
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        self.flags.C = result <= 0xFF
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
+
+        self.cycles += 4
+
+    @manager.add_instruction(0xA6)
+    def ana_m(self) -> None:
+        a_value = self.registers[Registers.A]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        result = a_value & value_2
+        self.registers[Registers.A] = result
+
+        # print(result, result & 0x80)
+
+        self.flags.S = (result & 0x80) != 0
+        # self.flags.S = (result & (0xFF - (0xFF >> 1))) != 0
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        # self.flags.A = False
+        self.flags.C = False
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(value_2)) > 0xF
+
+        self.cycles += 4
+
+    @manager.add_instruction(0xB6)
+    def ora_m(self) -> None:
+        # print("<<<" + hex(self.flags.get_flags()))
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        result = self.registers[Registers.A] | value_2
+        self.registers[Registers.A] = result
+
+        self.flags.S = (result & 0x80) != 0
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        self.flags.C = False
+        self.flags.A = False
+
+        # print(">>>" + hex(self.flags.get_flags()))
+
+        # print(
+        #     f"ORA {hex(self.registers[register])} --> {hex(self.registers[Registers.A])} --> {hex(result)} --> {self.flags.A}"
+        # )
+        self.cycles += 4
+
+    @manager.add_instruction(0xAE, [Registers.A])
+    def xra_m(self, r1: int) -> None:
+        value1 = self.registers[r1]
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        result = value1 ^ value_2
+        self.registers[r1] = result
 
         self.flags.S = (result & 0x80) != 0
         self.flags.Z = (result & 0xFF) == 0
@@ -769,4 +1268,71 @@ class Intel8080(CPU):
         self.flags.A = False
         self.flags.C = False
 
+        # print(f"XRA {r1} --> {hex(value1)} --> {hex(value2)} --> {hex(result)}")
+
         self.cycles += 4
+
+    @manager.add_instruction(0x36)
+    def mvi_m(self):
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.write_memory_byte(address, self.fetch_byte())
+        self.cycles += 7
+
+    @manager.add_instruction(0x34)
+    def inr_m(self) -> None:
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        new_value = (value_2 + 0x01) & 0xFF
+
+        self.write_memory_byte(address, new_value)
+
+        self.flags.S = (new_value & 0x80) != 0
+        self.flags.Z = (new_value & 0xFF) == 0
+        self.flags.P = bin(new_value & 0xFF).count("1") % 2 == 0
+        self.flags.A = (get_ls_nib(value_2) + 0x01) > 0x0F
+
+        # print(f"INR {register} --> {hex(reg_value)} --> {hex(new_value)}")
+
+        self.cycles += 5
+
+    @manager.add_instruction(0x35)
+    def dcr_m(self) -> None:
+
+        address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        value_2 = self.read_memory_byte(address)
+
+        result = value_2 - 0x01
+        new_value = result & 0xFF
+        self.write_memory_byte(address, new_value)
+
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.S = (result & 0x80) != 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+        # self.flags.A = get_ls_nib(reg_value) == 0x00
+        # self.flags.A = True
+        # print(f"DCR {register} --> {hex(reg_value)} --> {hex(new_value)}")
+        # self.flags.A = not ((result & 0xF) == 0xF)
+        self.flags.A = (get_ls_nib(value_2) - 1) > 0x0F
+
+        self.cycles += 5
+
+    @manager.add_instruction(0x1A, [Registers.D, Registers.E])
+    @manager.add_instruction(0x0A, [Registers.B, Registers.C])
+    def load_address_from_register_to_accumulator(self, h: int, l: int) -> None:
+        address_l = self.registers[l]
+        address_h = self.registers[h]
+        address = join_bytes(address_h, address_l)
+        self.registers[Registers.A] = self.read_memory_byte(address)
+        self.cycles += 7
+
+    @manager.add_instruction(0x12, [Registers.D, Registers.E])
+    @manager.add_instruction(0x02, [Registers.B, Registers.C])
+    def store_accumulator_to_mem_reg(self, r1: int, r2: int):
+        address = join_bytes(self.registers[r1], self.registers[r2])
+        self.write_memory_byte(address, self.registers[Registers.A])
+
+    @manager.add_instruction(0x3B)
+    def dcx_sp(self):
+        self.SP = (self.SP - 0x01) & 0xFFFF
