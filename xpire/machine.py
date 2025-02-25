@@ -2,7 +2,6 @@ import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
 from xpire.devices.taito_arcade import FlipFlopD
-from xpire.memory import Memory
 from xpire.screen import Screen
 from xpire.utils import load_program_into_memory
 
@@ -15,8 +14,7 @@ class Machine:
 
         self.flipflop = FlipFlopD()
         self.clock = pygame.time.Clock()
-        self.memory = Memory(size=0xFFFF)
-        self.cpu = Intel8080(memory=self.memory)
+        self.cpu = Intel8080()
         self.screen = Screen(width=224, height=256, title="Xpire", scale=3)
         self.running = False
 
@@ -47,7 +45,7 @@ class Machine:
 
     def load_rom(self, program_path: str):
         print(f"Loading program: {program_path}")
-        load_program_into_memory(self.memory, program_path)
+        load_program_into_memory(self.cpu.memory, program_path)
 
     def run(self):
         self.running = True

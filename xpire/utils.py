@@ -2,10 +2,8 @@
 Utility functions for the CPU emulator.
 """
 
-from xpire.memory import Memory
 
-
-def load_program_into_memory(memory: Memory, program_path: str):
+def load_program_into_memory(memory: bytearray, program_path: str):
     """
     Load a program into memory from a file.
 
@@ -20,7 +18,7 @@ def load_program_into_memory(memory: Memory, program_path: str):
     with open(program_path, "rb") as f:
         i = 0
         while opcode := f.read(1):
-            memory.memory[i] = int(opcode.hex(), 16)
+            memory[i] = int(opcode.hex(), 16)
             i += 1
 
 
