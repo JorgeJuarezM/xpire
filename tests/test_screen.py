@@ -6,7 +6,6 @@ import math
 import unittest
 
 from xpire.cpus.cpu import CPU
-from xpire.memory import Memory
 from xpire.screen import Screen
 
 WHITE_COLOR = (255, 255, 255, 255)
@@ -21,8 +20,7 @@ class TestIntel8080(unittest.TestCase):
         """
         Set up the test environment.
         """
-        self.memory = Memory()
-        self.cpu = CPU(memory=self.memory)
+        self.cpu = CPU()
 
     def test_screen(self):
         """
@@ -30,7 +28,7 @@ class TestIntel8080(unittest.TestCase):
         """
 
         for i in range(0x2400, 0x4000):
-            self.memory[i] = 0xFF if i % 2 == 0 else 0x00
+            self.cpu.memory[i] = 0xFF if i % 2 == 0 else 0x00
 
         screen = Screen(width=224, height=256, title="Xpire", scale=3)
         screen.color_table = [WHITE_COLOR]

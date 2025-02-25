@@ -46,7 +46,7 @@ class CPU(AbstractCPU):
 
         The CPU object starts a new thread to execute instructions.
         """
-        self.memory = bytearray(0xFFFF)
+        self.memory = bytearray(0x10000)
         self.registers = RegisterManager()
         self.flags = {}
 

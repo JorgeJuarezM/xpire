@@ -46,7 +46,7 @@ class Machine:
         try:
             with open(program_path, "rb") as f:
                 self.cpu.memory = bytearray(f.read())
-            self.cpu.memory += bytearray(0xFFFF - len(self.cpu.memory))
+            self.cpu.memory += bytearray(0x10000 - len(self.cpu.memory))
         except FileNotFoundError:
             print(f"ROM not found: {program_path}")
 
