@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -6,7 +7,6 @@ from faker import Faker
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
 from xpire.machine import Machine
-from xpire.memory import Memory
 
 fake = Faker()
 
@@ -42,8 +42,7 @@ class TestIntel8080(unittest.TestCase):
 
     @patch("xpire.machine.Screen", MockScreen)
     def setUp(self):
-        memory = Memory()
-        self.cpu = Intel8080(memory=memory)
+        self.cpu = Intel8080()
         self.machine = Machine()
 
     def test_fetch_word(self):
@@ -395,12 +394,12 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.A, True)
 
     def test_compare_register_with_accumulator(self):
-        self.machine.memory[0x0000] = 0x0E  # MVI C, 14h
-        self.machine.memory[0x0001] = 0x14
-        self.machine.memory[0x0002] = 0x3E  # MVI A, 14h
-        self.machine.memory[0x0003] = 0x14
-        self.machine.memory[0x0004] = 0xB9  # CMP C
-        self.machine.memory[0x0005] = 0x76  # HLT
+        self.machine.cpu.memory[0x0000] = 0x0E  # MVI C, 14h
+        self.machine.cpu.memory[0x0001] = 0x14
+        self.machine.cpu.memory[0x0002] = 0x3E  # MVI A, 14h
+        self.machine.cpu.memory[0x0003] = 0x14
+        self.machine.cpu.memory[0x0004] = 0xB9  # CMP C
+        self.machine.cpu.memory[0x0005] = 0x76  # HLT
 
         self.machine.cpu.PC = 0x0000
 
@@ -454,17 +453,17 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.SP, 0x0000)
 
     def test_compare_register_with_memory(self):
-        self.machine.memory[0x0000] = 0x26  # MVI H, FFh
-        self.machine.memory[0x0001] = 0xFF
-        self.machine.memory[0x0002] = 0x2E  # MVI L, FFh
-        self.machine.memory[0x0003] = 0xFF
-        self.machine.memory[0x0004] = 0x3E  # MVI A, 14h
-        self.machine.memory[0x0005] = 0x14
-        self.machine.memory[0x0006] = 0x32  # STA FFFFh
-        self.machine.memory[0x0007] = 0xFF
-        self.machine.memory[0x0008] = 0xFF
-        self.machine.memory[0x0009] = 0xBE  # CMP M
-        self.machine.memory[0x000A] = 0x76  # HLT
+        self.machine.cpu.memory[0x0000] = 0x26  # MVI H, FFh
+        self.machine.cpu.memory[0x0001] = 0xFF
+        self.machine.cpu.memory[0x0002] = 0x2E  # MVI L, FFh
+        self.machine.cpu.memory[0x0003] = 0xFF
+        self.machine.cpu.memory[0x0004] = 0x3E  # MVI A, 14h
+        self.machine.cpu.memory[0x0005] = 0x14
+        self.machine.cpu.memory[0x0006] = 0x32  # STA FFFFh
+        self.machine.cpu.memory[0x0007] = 0xFF
+        self.machine.cpu.memory[0x0008] = 0xFF
+        self.machine.cpu.memory[0x0009] = 0xBE  # CMP M
+        self.machine.cpu.memory[0x000A] = 0x76  # HLT
 
         self.machine.PC = 0x0000
         self.machine.run()
@@ -507,18 +506,24 @@ class TestIntel8080(unittest.TestCase):
 
     @patch("xpire.machine.Screen", MockScreen)
     @patch("xpire.machine.pygame.event", MockPygameEvent())
-    @patch("xpire.machine.load_program_into_memory")
-    def test_machine_run(self, mock_load_program_into_memory):
-        mock_load_program_into_memory.return_value = None
+    def test_machine_run(self):
+        rom_file = tempfile.NamedTemporaryFile(suffix=".com")
         machine = Machine()
-        machine.load_rom(fake.file_name())
-        machine.memory[0x0000] = 0x76  # HLT
+        machine.load_rom(rom_file.name)
+        machine.cpu.memory[0x0000] = 0x76  # HLT
         machine.cpu.cycles = 40000
         machine.cpu.interrupts_enabled = True
         machine.run()
 
         self.assertTrue(machine.cpu.halted)
-        mock_load_program_into_memory.assert_called_once()
+
+    @patch("xpire.machine.Screen", MockScreen)
+    @patch("xpire.machine.pygame.event", MockPygameEvent())
+    def test_machine_invalid_rom(self):
+        rom_file = fake.file_name()
+        machine = Machine()
+        result = machine.load_rom(rom_file)
+        self.assertFalse(result)
 
     @patch("xpire.machine.Screen", MockScreen)
     @patch("xpire.machine.pygame.event", MockPygameEvent([pygame.QUIT]))
@@ -558,11 +563,11 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.PC, 0x0002)
 
     def test_compare_register_with_immediate(self):
-        self.machine.memory[0x0000] = 0x3E  # MVI A, 14h
-        self.machine.memory[0x0001] = 0x14
-        self.machine.memory[0x0002] = 0xFE  # CPI 14h
-        self.machine.memory[0x0003] = 0x14
-        self.machine.memory[0x0004] = 0x76  # HLT
+        self.machine.cpu.memory[0x0000] = 0x3E  # MVI A, 14h
+        self.machine.cpu.memory[0x0001] = 0x14
+        self.machine.cpu.memory[0x0002] = 0xFE  # CPI 14h
+        self.machine.cpu.memory[0x0003] = 0x14
+        self.machine.cpu.memory[0x0004] = 0x76  # HLT
 
         self.machine.PC = 0x0000
         self.machine.run()

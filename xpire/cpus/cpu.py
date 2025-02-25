@@ -12,7 +12,6 @@ from xpire.decorators import increment_program_counter
 from xpire.exceptions import SystemHalt
 from xpire.flags import FlagsManager
 from xpire.instructions.manager import InstructionManager as manager
-from xpire.memory import Memory
 from xpire.registers.register import RegisterManager
 from xpire.utils import join_bytes
 
@@ -34,10 +33,10 @@ class CPU(AbstractCPU):
 
     cycles: int
 
-    memory: Memory
+    memory: bytearray
     registers: RegisterManager
 
-    def __init__(self, memory: Memory) -> None:
+    def __init__(self) -> None:
         """
         Initialize a new CPU object.
 
@@ -46,11 +45,8 @@ class CPU(AbstractCPU):
         and the stack pointer to 0xFF.
 
         The CPU object starts a new thread to execute instructions.
-
-        Args:
-            memory (Memory): The memory object to use for the CPU.
         """
-        self.memory = memory
+        self.memory = bytearray(0x10000)
         self.registers = RegisterManager()
         self.flags = {}
 

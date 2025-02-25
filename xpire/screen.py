@@ -1,5 +1,3 @@
-import math
-
 import pygame
 
 from xpire.cpus.cpu import AbstractCPU
@@ -43,10 +41,8 @@ class Screen:
 
     def render_pixel(self, pixel_index, x, y) -> None:
         pixel = self.video_data[pixel_index]
-        color_index = pixel_index % 256 / (256 / self.color_table.__len__())
-        color = self.color_table[math.floor(color_index)]
         if pixel:
-            self._screen.set_at((x, y), color)
+            self._screen.set_at((x, y), (255, 255, 255))
 
     def rasterize(self, cpu: AbstractCPU) -> None:
         self.video_data = []
