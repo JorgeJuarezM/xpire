@@ -381,18 +381,20 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.PC, 0x0002)  # PC + 2 (fetch word)
 
     def test_substract_immediate_from_accumulator(self):
-        self.cpu.registers[Registers.A] = 0x14
-        self.cpu.PC = 0x0000
-        self.cpu.memory[0x0000] = 0x42
+        self.machine.memory[0x0000] = 0x3E  # MVI A, 14h
+        self.machine.memory[0x0001] = 0x14
+        self.machine.memory[0x0002] = 0xC6  # ADI 42h
+        self.machine.memory[0x0003] = 0x42
+        self.machine.memory[0x0004] = 0x76  # HLT
 
-        self.cpu.substract_immediate_from_accumulator()
+        self.machine.run()
 
-        self.assertEqual(self.cpu.registers[Registers.A], 0xD2)
-        self.assertEqual(self.cpu.flags.S, True)
-        self.assertEqual(self.cpu.flags.Z, False)
-        self.assertEqual(self.cpu.flags.P, True)
-        self.assertEqual(self.cpu.flags.C, True)
-        self.assertEqual(self.cpu.flags.A, True)
+        self.assertEqual(self.machine.cpu.registers[Registers.A], 0x56)
+        self.assertEqual(self.machine.cpu.flags.S, False)
+        self.assertEqual(self.machine.cpu.flags.Z, False)
+        self.assertEqual(self.machine.cpu.flags.P, True)
+        self.assertEqual(self.machine.cpu.flags.C, False)
+        self.assertEqual(self.machine.cpu.flags.A, False)
 
     def test_compare_register_with_accumulator(self):
         self.machine.memory[0x0000] = 0x0E  # MVI C, 14h
@@ -870,16 +872,23 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.SP, 0x0000)
 
     def test_substract_immdiate_from_accumulator_with_borrow(self):
-        self.cpu.registers[Registers.A] = 0x14
-        self.cpu.memory[0x0000] = 0x21
-        self.cpu.substract_immediate_from_accumulator_with_borrow()
+        self.machine.memory[0x0000] = 0x3E  # MVI A, 14h
+        self.machine.memory[0x0001] = 0x14
+        self.machine.memory[0x0002] = 0xC6  # ADI FFh
+        self.machine.memory[0x0003] = 0xFF
+        self.machine.memory[0x0004] = 0xDE  # SBI 42h
+        self.machine.memory[0x0005] = 0x42
+        self.machine.memory[0x0006] = 0x76  # HLT
 
-        self.assertEqual(self.cpu.registers[Registers.A], 0xF3)
-        self.assertEqual(self.cpu.flags.S, True)
-        self.assertEqual(self.cpu.flags.Z, False)
-        self.assertEqual(self.cpu.flags.P, True)
-        self.assertEqual(self.cpu.flags.C, True)
-        self.assertEqual(self.cpu.flags.A, True)
+        self.cpu.PC = 0x0000
+        self.machine.run()
+
+        self.assertEqual(self.machine.cpu.registers[Registers.A], 0xD0)
+        self.assertEqual(self.machine.cpu.flags.S, True)
+        self.assertEqual(self.machine.cpu.flags.Z, False)
+        self.assertEqual(self.machine.cpu.flags.P, False)
+        self.assertEqual(self.machine.cpu.flags.C, True)
+        self.assertEqual(self.machine.cpu.flags.A, True)
 
     def test_return_if_minus(self):
         self.cpu.flags.S = True
@@ -970,3 +979,61 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.P, True)
         self.assertEqual(self.cpu.flags.C, False)
         self.assertEqual(self.cpu.flags.A, True)
+
+    def test_aci(self):
+        self.machine.load_rom("tests/asm/aci.com")
+        self.machine.run()
+
+        # Case 1: 0x10 + 0x05 + CY=0
+        self.assertEqual(self.machine.memory[0x2000], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFF], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFE], 0b00000010)  # SZ0A0P1C
+
+        # Case 2: 0x10 + 0x05 + CY=1
+        self.assertEqual(self.machine.memory[0x2001], 0x16)
+        self.assertEqual(self.machine.memory[0xFFFD], 0x16)
+        self.assertEqual(self.machine.memory[0xFFFC], 0b00000010)
+
+        # Case 3: 0xF0 + 0x20 + CY=1
+        self.assertEqual(self.machine.memory[0x2002], 0x11)
+        self.assertEqual(self.machine.memory[0xFFFB], 0x11)
+        self.assertEqual(self.machine.memory[0xFFFA], 0b00000111)
+
+        # Case 4: 0xFE + 0x01 + CY=1
+        self.assertEqual(self.machine.memory[0x2003], 0x00)
+        self.assertEqual(self.machine.memory[0xFFF9], 0x00)
+        self.assertEqual(self.machine.memory[0xFFF8], 0b01010111)
+
+        # Case 5: 0x80 + 0x02 + CY=0
+        self.assertEqual(self.machine.memory[0x2004], 0x82)
+        self.assertEqual(self.machine.memory[0xFFF7], 0x82)
+        self.assertEqual(self.machine.memory[0xFFF6], 0b10000110)
+
+    def test_adi(self):
+        self.machine.load_rom("tests/asm/adi.com")
+        self.machine.run()
+
+        # Case 1: 0x10 + 0x05 + CY=0
+        self.assertEqual(self.machine.memory[0x2000], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFF], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFE], 0b00000010)  # SZ0A0P1C
+
+        # Case 2: 0x10 + 0x05 + CY=1
+        self.assertEqual(self.machine.memory[0x2001], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFD], 0x15)
+        self.assertEqual(self.machine.memory[0xFFFC], 0b00000010)
+
+        # Case 3: 0xF0 + 0x20 + CY=0
+        self.assertEqual(self.machine.memory[0x2002], 0x10)
+        self.assertEqual(self.machine.memory[0xFFFB], 0x10)
+        self.assertEqual(self.machine.memory[0xFFFA], 0b00000011)
+
+        # Case 4: 0xFE + 0x01 + CY=1
+        self.assertEqual(self.machine.memory[0x2003], 0xFF)
+        self.assertEqual(self.machine.memory[0xFFF9], 0xFF)
+        self.assertEqual(self.machine.memory[0xFFF8], 0b10000110)
+
+        # Case 5: 0x80 + 0x02 + CY=0
+        self.assertEqual(self.machine.memory[0x2004], 0x82)
+        self.assertEqual(self.machine.memory[0xFFF7], 0x82)
+        self.assertEqual(self.machine.memory[0xFFF6], 0b10000110)

@@ -155,24 +155,24 @@ class Intel8080(CPU):
         self.push(self.registers[h], self.registers[l])
         self.cycles += 11
 
-    @manager.add_instruction(0xA8, [Registers.A, Registers.B])
-    @manager.add_instruction(0xA9, [Registers.A, Registers.C])
-    @manager.add_instruction(0xAA, [Registers.A, Registers.D])
-    @manager.add_instruction(0xAB, [Registers.A, Registers.E])
-    @manager.add_instruction(0xAC, [Registers.A, Registers.H])
-    @manager.add_instruction(0xAD, [Registers.A, Registers.L])
-    @manager.add_instruction(0xAF, [Registers.A, Registers.A])
-    def xra(self, r1: int, r2: int) -> None:
-        value1 = self.registers[r1]
-        value2 = self.registers[r2]
+    @manager.add_instruction(0xA8, [Registers.B])
+    @manager.add_instruction(0xA9, [Registers.C])
+    @manager.add_instruction(0xAA, [Registers.D])
+    @manager.add_instruction(0xAB, [Registers.E])
+    @manager.add_instruction(0xAC, [Registers.H])
+    @manager.add_instruction(0xAD, [Registers.L])
+    @manager.add_instruction(0xAF, [Registers.A])
+    def xra(self, register: int) -> None:
+        value1 = self.registers[Registers.A]
+        value2 = self.registers[register]
 
         result = value1 ^ value2
-        self.registers[r1] = result
+        self.registers[Registers.A] = result
 
         self.flags.S = (result & 0x80) != 0
         self.flags.Z = (result & 0xFF) == 0
         self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
-        self.flags.A = False
+        # self.flags.A = False
         self.flags.C = False
 
         # print(f"XRA {r1} --> {hex(value1)} --> {hex(value2)} --> {hex(result)}")
@@ -401,8 +401,14 @@ class Intel8080(CPU):
         new_value = result & 0xFFFF
         self.registers[Registers.H], self.registers[Registers.L] = split_word(new_value)
 
-        self.flags.C = result > 0xFFFF or result < 0x0000
+        self.flags.C = result > 0xFFFF
         self.cycles += 10
+        # logger.info(
+        #     f"DAD: {h}{l} -> {hex(value1)} + HL({hex(value2)}) = {hex(new_value)}"
+        # )
+        # logger.info(
+        #     f"Flags: S={self.flags.S}, Z={self.flags.Z}, P={self.flags.P}, C={self.flags.C}, A={self.flags.A}"
+        # )
 
     @manager.add_instruction(0xD2)
     def jnc(self) -> None:
@@ -481,16 +487,13 @@ class Intel8080(CPU):
 
     @manager.add_instruction(0x39)
     def dad_sp(self) -> None:
-        s, p = split_word(self.SP)
-
-        sp = join_bytes(s, p)
         hl = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
 
-        result = hl + sp
+        result = hl + self.SP
         new_value = result & 0xFFFF
         self.registers[Registers.H], self.registers[Registers.L] = split_word(new_value)
 
-        self.flags.C = result > 0xFFFF or result < 0x0000
+        self.flags.C = result > 0xFFFF
 
         self.cycles += 10
 
@@ -1313,8 +1316,8 @@ class Intel8080(CPU):
         # self.flags.A = get_ls_nib(reg_value) == 0x00
         # self.flags.A = True
         # print(f"DCR {register} --> {hex(reg_value)} --> {hex(new_value)}")
-        # self.flags.A = not ((result & 0xF) == 0xF)
-        self.flags.A = (get_ls_nib(value_2) - 1) > 0x0F
+        self.flags.A = not ((result & 0xF) == 0xF)
+        # self.flags.A = (get_ls_nib(value_2) - 1) > 0x0F
 
         self.cycles += 5
 
@@ -1329,10 +1332,14 @@ class Intel8080(CPU):
 
     @manager.add_instruction(0x12, [Registers.D, Registers.E])
     @manager.add_instruction(0x02, [Registers.B, Registers.C])
-    def store_accumulator_to_mem_reg(self, r1: int, r2: int):
+    def stax_reg(self, r1: int, r2: int):
         address = join_bytes(self.registers[r1], self.registers[r2])
         self.write_memory_byte(address, self.registers[Registers.A])
 
     @manager.add_instruction(0x3B)
     def dcx_sp(self):
         self.SP = (self.SP - 0x01) & 0xFFFF
+
+    @manager.add_instruction(0xFB)
+    def eni(self):
+        self.interrupts_enabled = True

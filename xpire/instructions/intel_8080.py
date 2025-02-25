@@ -12,6 +12,9 @@ ADD_E = 0x83
 ADD_L = 0x85
 ADD_M = 0x86
 
+# ADD through accumulator and memory (HL) + carry
+ADC_M = 0x8E
+
 # ADD through accumulator and immediate
 ADI = 0xC6
 

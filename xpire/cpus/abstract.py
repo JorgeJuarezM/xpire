@@ -13,6 +13,8 @@ class AbstractCPU:
     interrupts_enabled: bool
     cycles: int
     event_handler: EventHandler
+    counter: int
+    opcode: str
 
     @abstractmethod
     def halt(self):

@@ -6,6 +6,9 @@ It provides methods to read and write memory cells, and to execute
 instructions.
 """
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
@@ -15,6 +18,13 @@ from xpire.instructions.manager import InstructionManager as manager
 from xpire.memory import Memory
 from xpire.registers.register import RegisterManager
 from xpire.utils import join_bytes
+
+logging.basicConfig(level=logging.INFO, filename="log.txt")
+
+handler = RotatingFileHandler("log.txt", maxBytes=1000000, backupCount=1)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
 
 
 class CPU(AbstractCPU):
@@ -63,6 +73,9 @@ class CPU(AbstractCPU):
 
         self.flags = FlagsManager()
 
+        self.counter = 0
+        self.opcode = ""
+
     def execute_instruction(self) -> None:
         """
         Execute a single instruction.
@@ -77,6 +90,12 @@ class CPU(AbstractCPU):
         try:
             opcode = self.fetch_byte()
             manager.execute(opcode, self)
+            # if self.counter >= 0:
+            #     logger.info(
+            #         f"COUNTER: {self.counter} OPCODE: {hex(opcode)}, Flag A: {self.flags.A}, Flags: {hex(self.flags.get_flags())}"
+            #     )
+            # print(hex(opcode), hex(self.flags.get_flags()))
+            self.counter += 1
         except SystemHalt:
             self.halted = True
             return

@@ -45,6 +45,7 @@ class InstructionManager:
                 Callable: The decorated function.
             """
             cls.instructions[opcode] = func, registers or []
+            # print(len(cls.instructions))
             return func
 
         return wrapper
@@ -62,7 +63,7 @@ class InstructionManager:
             Exception: If the opcode is unknown.
         """
         if opcode not in cls.instructions:
-            raise Exception(f"Unknown opcode: 0x{opcode:02x}")
+            raise Exception(f"Unknown opcode: 0x{opcode:02x} --> {cpu.counter}")
 
         handler, registers = cls.instructions[opcode]
         handler(cpu, *registers)
