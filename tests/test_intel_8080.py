@@ -6,6 +6,7 @@ from faker import Faker
 
 from xpire.cpus.intel_8080 import Intel8080, Registers
 from xpire.machine import Machine
+import tempfile
 
 fake = Faker()
 
@@ -506,8 +507,9 @@ class TestIntel8080(unittest.TestCase):
     @patch("xpire.machine.Screen", MockScreen)
     @patch("xpire.machine.pygame.event", MockPygameEvent())
     def test_machine_run(self):
+        rom_file = tempfile.NamedTemporaryFile(suffix=".com")
         machine = Machine()
-        machine.load_rom(fake.file_name())
+        machine.load_rom(rom_file.name)
         machine.cpu.memory[0x0000] = 0x76  # HLT
         machine.cpu.cycles = 40000
         machine.cpu.interrupts_enabled = True
