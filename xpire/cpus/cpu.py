@@ -45,9 +45,6 @@ class CPU(AbstractCPU):
         and the stack pointer to 0xFF.
 
         The CPU object starts a new thread to execute instructions.
-
-        Args:
-            memory (Memory): The memory object to use for the CPU.
         """
         self.memory = bytearray(0xFFFF)
         self.registers = RegisterManager()
