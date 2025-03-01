@@ -78,8 +78,9 @@ class CPU(AbstractCPU):
             return
 
     def execute_interrupt(self, opcode: int) -> None:
-        manager.execute(opcode, self)
-        self.interrupts_enabled = False
+        if self.interrupts_enabled:
+            manager.execute(opcode, self)
+            self.interrupts_enabled = False
 
     @increment_program_counter()
     def fetch_byte(self) -> int:

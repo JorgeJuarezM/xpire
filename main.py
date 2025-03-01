@@ -8,7 +8,8 @@ programs on the Intel 8080 CPU.
 
 import click
 
-from xpire.machine import Machine
+from xpire.engine import GameManager
+from xpire.scenes.space_invaders import SpaceInvadersScene
 
 
 @click.group()
@@ -30,9 +31,11 @@ def xpire():
 )
 def run(program_file: str) -> None:
     """Run an Intel 8080 program from a file."""
-    machine = Machine()
-    machine.load_rom(program_file)
-    machine.run()
+    scene = SpaceInvadersScene()
+    scene.load_rom(program_file)
+
+    game = GameManager(scene)
+    game.start()
 
 
 if __name__ == "__main__":
