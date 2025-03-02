@@ -24,7 +24,7 @@ class SpaceInvadersScene(GameScene):
     def __init__(self):
         self.cpu = Intel8080()
 
-    def load_rom(self, program_path: str) -> bool:
+    def load_rom(self, program_path: str) -> None:
         try:
             file_size = os.path.getsize(program_path)
             if file_size > 0xFFFF:
