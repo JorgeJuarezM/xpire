@@ -71,7 +71,7 @@ class TestIntel8080(unittest.TestCase):
 
         self.cpu.registers[Registers.B] = 0xFF
         self.cpu.registers[Registers.A] = 0xFF
-        self.cpu.add_to_accumulator(Registers.B)
+        self.cpu.add_reg(Registers.B)
 
         self.assertEqual(self.cpu.flags.Z, False)
         self.assertEqual(self.cpu.flags.S, True)
@@ -109,7 +109,7 @@ class TestIntel8080(unittest.TestCase):
     def test_add_to_accumulator(self):
         self.cpu.registers[Registers.A] = 0x2E
         self.cpu.registers[Registers.D] = 0x6C
-        self.cpu.add_to_accumulator(Registers.D)
+        self.cpu.add_reg(Registers.D)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x9A)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -135,8 +135,8 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.C] = 0x0F
 
         self.cpu.apply_xor_to_registers(Registers.A, Registers.A)
-        self.cpu.move_register_to_register(Registers.A, Registers.B)
-        self.cpu.move_register_to_register(Registers.A, Registers.C)
+        self.cpu.mov_reg_reg(Registers.A, Registers.B)
+        self.cpu.mov_reg_reg(Registers.A, Registers.C)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x00)
         self.assertEqual(self.cpu.registers[Registers.B], 0x00)
@@ -301,7 +301,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x33
         self.cpu.registers[Registers.C] = 0x0F
 
-        self.cpu.add_to_accumulator(Registers.C)
+        self.cpu.add_reg(Registers.C)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x42)
         self.assertEqual(self.cpu.registers[Registers.C], 0x0F)
