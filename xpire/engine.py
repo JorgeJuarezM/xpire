@@ -41,7 +41,6 @@ class GameManager:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_f:
                     pygame.display.toggle_fullscreen()
-                    return
 
     def print_debug_info(self) -> None:
         my_font = pygame.font.Font("space_invaders.ttf", 20)
