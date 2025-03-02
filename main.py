@@ -31,11 +31,15 @@ def xpire():
 )
 def run(program_file: str) -> None:
     """Run an Intel 8080 program from a file."""
-    scene = SpaceInvadersScene()
-    scene.load_rom(program_file)
+    try:
+        scene = SpaceInvadersScene()
+        scene.load_rom(program_file)
 
-    game = GameManager(scene)
-    game.start()
+        game = GameManager(scene)
+        game.start()
+    except Exception as e:
+        print(f"Error: {e}")
+        exit(1)
 
 
 if __name__ == "__main__":
