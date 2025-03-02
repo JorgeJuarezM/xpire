@@ -17,6 +17,7 @@ WHITE = (0xFF, 0xFF, 0xFF)
 RED = (0xFF, 0x00, 0x00)
 GREEN = (0x00, 0xFF, 0x00)
 BLUE = (0x00, 0x00, 0xFF)
+BLACK = (0x00, 0x00, 0x00)
 
 
 class SpaceInvadersScene(GameScene):
@@ -36,23 +37,8 @@ class SpaceInvadersScene(GameScene):
         except FileNotFoundError as e:
             raise Exception(f"ROM not found: {program_path}") from e
 
-    def _render(self):
-        surface = pygame.Surface((256, 224))
-        counter = 0
-        for y in range(0, 224):
-            for x in range(0, 256 // 8):
-                value = self.cpu.memory[0x2400 + counter]
-                for i in range(8):
-                    _x = (x * 8) + i
-                    if value & (1 << i):
-                        surface.set_at((_x, y), WHITE)
-                counter += 1
-        return pygame.transform.rotate(surface, 90)
-
     def render(self):
         surface = pygame.Surface((256, 224))
-        rect = surface.get_rect()
-        pygame.draw.rect(surface, WHITE, rect, 1)
         counter = 0
         for value in self.cpu.memory[0x2400:0x4000]:
             x = counter % 32
@@ -65,11 +51,10 @@ class SpaceInvadersScene(GameScene):
 
     def update(self):
         """Update the game state."""
-        opcode = flipflop.switch()
-        self.cpu.execute_interrupt(opcode)
-
         while frequency_ratio > self.cpu.cycles:
             self.cpu.execute_instruction()
 
+        opcode = flipflop.switch()
+        self.cpu.execute_interrupt(opcode)
         self.cpu.cycles = 0
         return self.render()
