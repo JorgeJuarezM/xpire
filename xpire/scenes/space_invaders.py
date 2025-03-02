@@ -36,7 +36,7 @@ class SpaceInvadersScene(GameScene):
         except FileNotFoundError as e:
             raise Exception(f"ROM not found: {program_path}") from e
 
-    def render(self):
+    def _render(self):
         surface = pygame.Surface((256, 224))
         counter = 0
         for y in range(0, 224):
@@ -47,6 +47,20 @@ class SpaceInvadersScene(GameScene):
                     if value & (1 << i):
                         surface.set_at((_x, y), WHITE)
                 counter += 1
+        return pygame.transform.rotate(surface, 90)
+
+    def render(self):
+        surface = pygame.Surface((256, 224))
+        rect = surface.get_rect()
+        pygame.draw.rect(surface, WHITE, rect, 1)
+        counter = 0
+        for value in self.cpu.memory[0x2400:0x4000]:
+            x = counter % 32
+            y = counter // 32
+            for i in range(8):
+                if value & (1 << i):
+                    surface.set_at((x * 8 + i, y), WHITE)
+            counter += 1
         return pygame.transform.rotate(surface, 90)
 
     def update(self):
