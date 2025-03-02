@@ -18,7 +18,7 @@ BLUE = (0x00, 0x00, 0xFF)
 
 
 class GameScene:
-    def update(self, events: list):
+    def update(self):
         """Update the game state."""
 
 
@@ -34,7 +34,6 @@ class GameManager:
         self.screen = pygame.display.set_mode(self.screen_size)
 
     def handle_events(self):
-        events = []
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -42,9 +41,7 @@ class GameManager:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_f:
                     pygame.display.toggle_fullscreen()
-                    continue
-            events.append(event)
-        return events
+                    return
 
     def print_debug_info(self) -> None:
         my_font = pygame.font.Font("space_invaders.ttf", 20)
@@ -65,8 +62,8 @@ class GameManager:
             self.clock.tick(60)
             self.screen.fill((0, 0, 0))
 
-            events = self.handle_events()
-            surface = self.scene.update(events)
+            self.handle_events()
+            surface = self.scene.update()
             surface = pygame.transform.scale(
                 surface, (surface.get_width() * 2, surface.get_height() * 2)
             )

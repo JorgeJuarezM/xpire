@@ -571,26 +571,6 @@ class Intel8080(CPU):
 
         self.cycles += 7
 
-    # @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
-    # def decrement_register_pair(self, h: int, l: int) -> None:
-    #     """
-    #     The 16-bit number held in the specified register pair
-    #     is decremented by one.
-
-    #     The result replaces the contents of the register pair.
-
-    #     Condition bits affected: None.
-    #     """
-    #     value = join_bytes(self.registers[h], self.registers[l])
-    #     value = (value - 0x01) & 0xFFFF
-
-    #     high_byte, low_byte = split_word(value)
-
-    #     self.registers[h] = high_byte
-    #     self.registers[l] = low_byte
-
-    #     self.cycles += 5
-
     @manager.add_instruction(OPCodes.JZ)
     def jump_if_zero(self) -> None:
         address = self.fetch_word()
@@ -876,7 +856,6 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.IN)
     def input(self) -> int:
         port = self.fetch_byte()
-        # print(f"IN Port: {port}, Value: {self.registers[Registers.A]}")
         if port == 0x01:
             self.registers[Registers.A] = self.port_1
         self.cycles += 10
