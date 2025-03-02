@@ -44,6 +44,8 @@ class InstructionManager:
             Returns:
                 Callable: The decorated function.
             """
+            if opcode in cls.instructions:
+                raise Exception(f"Duplicate opcode: 0x{opcode:02x}")
             cls.instructions[opcode] = func, registers or []
             return func
 

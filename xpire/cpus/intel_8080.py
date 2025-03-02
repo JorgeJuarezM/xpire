@@ -35,6 +35,7 @@ class Intel8080(CPU):
         self.out = {}
 
         self.interrupts_enabled = False
+        self.port_1 = 0x08
 
     def write_memory_byte(self, address, value) -> None:
         """
@@ -363,32 +364,56 @@ class Intel8080(CPU):
         self.write_memory_byte(address, self.fetch_byte())
         self.cycles += 10
 
-    @manager.add_instruction(OPCodes.MOV_A_A, [Registers.A, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_B, [Registers.B, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_C, [Registers.C, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_D, [Registers.D, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_E, [Registers.E, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_H, [Registers.H, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_A_L, [Registers.L, Registers.A])
-    @manager.add_instruction(OPCodes.MOV_B_A, [Registers.A, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_B_C, [Registers.C, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_B_D, [Registers.D, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_B_H, [Registers.H, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_B_L, [Registers.L, Registers.B])
-    @manager.add_instruction(OPCodes.MOV_C_A, [Registers.A, Registers.C])
-    @manager.add_instruction(OPCodes.MOV_C_C, [Registers.C, Registers.C])
-    @manager.add_instruction(OPCodes.MOV_D_A, [Registers.A, Registers.D])
-    @manager.add_instruction(OPCodes.MOV_D_C, [Registers.C, Registers.D])
-    @manager.add_instruction(OPCodes.MOV_E_A, [Registers.A, Registers.E])
-    @manager.add_instruction(OPCodes.MOV_E_B, [Registers.B, Registers.E])
-    @manager.add_instruction(OPCodes.MOV_E_C, [Registers.C, Registers.E])
-    @manager.add_instruction(OPCodes.MOV_H_A, [Registers.A, Registers.H])
-    @manager.add_instruction(OPCodes.MOV_H_C, [Registers.C, Registers.H])
-    @manager.add_instruction(OPCodes.MOV_H_L, [Registers.L, Registers.H])
-    @manager.add_instruction(OPCodes.MOV_L_A, [Registers.A, Registers.L])
-    @manager.add_instruction(OPCodes.MOV_L_B, [Registers.B, Registers.L])
-    @manager.add_instruction(OPCodes.MOV_L_C, [Registers.C, Registers.L])
-    def move_register_to_register(self, src: int, dst: int) -> None:
+    @manager.add_instruction(0x40, [Registers.B, Registers.B])
+    @manager.add_instruction(0x41, [Registers.C, Registers.B])
+    @manager.add_instruction(0x42, [Registers.D, Registers.B])
+    @manager.add_instruction(0x43, [Registers.E, Registers.B])
+    @manager.add_instruction(0x44, [Registers.H, Registers.B])
+    @manager.add_instruction(0x45, [Registers.L, Registers.B])
+    @manager.add_instruction(0x47, [Registers.A, Registers.B])
+    @manager.add_instruction(0x48, [Registers.B, Registers.C])
+    @manager.add_instruction(0x49, [Registers.C, Registers.C])
+    @manager.add_instruction(0x4A, [Registers.D, Registers.C])
+    @manager.add_instruction(0x4B, [Registers.E, Registers.C])
+    @manager.add_instruction(0x4C, [Registers.H, Registers.C])
+    @manager.add_instruction(0x4D, [Registers.L, Registers.C])
+    @manager.add_instruction(0x4F, [Registers.A, Registers.C])
+    @manager.add_instruction(0x50, [Registers.B, Registers.D])
+    @manager.add_instruction(0x51, [Registers.C, Registers.D])
+    @manager.add_instruction(0x52, [Registers.D, Registers.D])
+    @manager.add_instruction(0x53, [Registers.E, Registers.D])
+    @manager.add_instruction(0x54, [Registers.H, Registers.D])
+    @manager.add_instruction(0x55, [Registers.L, Registers.D])
+    @manager.add_instruction(0x57, [Registers.A, Registers.D])
+    @manager.add_instruction(0x58, [Registers.B, Registers.E])
+    @manager.add_instruction(0x59, [Registers.C, Registers.E])
+    @manager.add_instruction(0x5A, [Registers.D, Registers.E])
+    @manager.add_instruction(0x5B, [Registers.E, Registers.E])
+    @manager.add_instruction(0x5C, [Registers.H, Registers.E])
+    @manager.add_instruction(0x5D, [Registers.L, Registers.E])
+    @manager.add_instruction(0x5F, [Registers.A, Registers.E])
+    @manager.add_instruction(0x60, [Registers.B, Registers.H])
+    @manager.add_instruction(0x61, [Registers.C, Registers.H])
+    @manager.add_instruction(0x62, [Registers.D, Registers.H])
+    @manager.add_instruction(0x63, [Registers.E, Registers.H])
+    @manager.add_instruction(0x64, [Registers.H, Registers.H])
+    @manager.add_instruction(0x65, [Registers.L, Registers.H])
+    @manager.add_instruction(0x67, [Registers.A, Registers.H])
+    @manager.add_instruction(0x68, [Registers.B, Registers.L])
+    @manager.add_instruction(0x69, [Registers.C, Registers.L])
+    @manager.add_instruction(0x6A, [Registers.D, Registers.L])
+    @manager.add_instruction(0x6B, [Registers.E, Registers.L])
+    @manager.add_instruction(0x6C, [Registers.H, Registers.L])
+    @manager.add_instruction(0x6D, [Registers.L, Registers.L])
+    @manager.add_instruction(0x6F, [Registers.A, Registers.L])
+    @manager.add_instruction(0x78, [Registers.B, Registers.A])
+    @manager.add_instruction(0x79, [Registers.C, Registers.A])
+    @manager.add_instruction(0x7A, [Registers.D, Registers.A])
+    @manager.add_instruction(0x7B, [Registers.E, Registers.A])
+    @manager.add_instruction(0x7C, [Registers.H, Registers.A])
+    @manager.add_instruction(0x7D, [Registers.L, Registers.A])
+    @manager.add_instruction(0x7F, [Registers.A, Registers.A])
+    def mov_reg_reg(self, src: int, dst: int) -> None:
         self.registers[dst] = self.registers[src]
         self.cycles += 5
 
@@ -546,25 +571,25 @@ class Intel8080(CPU):
 
         self.cycles += 7
 
-    @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
-    def decrement_register_pair(self, h: int, l: int) -> None:
-        """
-        The 16-bit number held in the specified register pair
-        is decremented by one.
+    # @manager.add_instruction(OPCodes.DCX_HL, [Registers.H, Registers.L])
+    # def decrement_register_pair(self, h: int, l: int) -> None:
+    #     """
+    #     The 16-bit number held in the specified register pair
+    #     is decremented by one.
 
-        The result replaces the contents of the register pair.
+    #     The result replaces the contents of the register pair.
 
-        Condition bits affected: None.
-        """
-        value = join_bytes(self.registers[h], self.registers[l])
-        value = (value - 0x01) & 0xFFFF
+    #     Condition bits affected: None.
+    #     """
+    #     value = join_bytes(self.registers[h], self.registers[l])
+    #     value = (value - 0x01) & 0xFFFF
 
-        high_byte, low_byte = split_word(value)
+    #     high_byte, low_byte = split_word(value)
 
-        self.registers[h] = high_byte
-        self.registers[l] = low_byte
+    #     self.registers[h] = high_byte
+    #     self.registers[l] = low_byte
 
-        self.cycles += 5
+    #     self.cycles += 5
 
     @manager.add_instruction(OPCodes.JZ)
     def jump_if_zero(self) -> None:
@@ -574,28 +599,25 @@ class Intel8080(CPU):
 
         self.cycles += 10
 
-    @manager.add_instruction(OPCodes.ADD_B, [Registers.B])
-    @manager.add_instruction(OPCodes.ADD_C, [Registers.C])
-    @manager.add_instruction(OPCodes.ADD_D, [Registers.D])
-    @manager.add_instruction(OPCodes.ADD_L, [Registers.L])
-    def add_to_accumulator(self, register: int) -> None:
-        """
-        The specified byte is added to the contents of the accumulator
-        using two's complement arithmetic.
-
-        Condition bits affected: Carry, Sign, Zero, Parity, Auxiliary Carry.
-        """
-        value_1 = self.registers[register]
-        value_2 = self.registers[Registers.A]
+    @manager.add_instruction(0x80, [Registers.B])
+    @manager.add_instruction(0x81, [Registers.C])
+    @manager.add_instruction(0x82, [Registers.D])
+    @manager.add_instruction(0x83, [Registers.E])
+    @manager.add_instruction(0x84, [Registers.H])
+    @manager.add_instruction(0x85, [Registers.L])
+    @manager.add_instruction(0x87, [Registers.A])
+    def add_reg(self, register: int) -> None:
+        value_1 = self.registers[Registers.A]
+        value_2 = self.registers[register]
         result = value_1 + value_2
-        new_value = result & 0xFF
 
-        self.set_flags(new_value)
-        self.set_carry_flag(result)
-        self.set_aux_carry_flag(value_1, value_2)
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(value_1) + get_ls_nib(value_2)) > 0x0F
+        self.flags.C = result > 0xFF
 
-        self.registers[Registers.A] = new_value
-
+        self.registers[Registers.A] = result & 0xFF
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.JPE)
@@ -854,7 +876,9 @@ class Intel8080(CPU):
     @manager.add_instruction(OPCodes.IN)
     def input(self) -> int:
         port = self.fetch_byte()
-        print(f"IN Port: {port}, Value: {self.registers[Registers.A]}")
+        # print(f"IN Port: {port}, Value: {self.registers[Registers.A]}")
+        if port == 0x01:
+            self.registers[Registers.A] = self.port_1
         self.cycles += 10
 
     @manager.add_instruction(OPCodes.XTHL)
@@ -1068,10 +1092,12 @@ class Intel8080(CPU):
 
         self.cycles += 7
 
-    @manager.add_instruction(OPCodes.STAX_B, [Registers.B, Registers.C])
-    def store_accumulator_to_mem_reg(self, r1: int, r2: int):
+    @manager.add_instruction(0x12, [Registers.D, Registers.E])
+    @manager.add_instruction(0x02, [Registers.B, Registers.C])
+    def stax_reg(self, r1: int, r2: int):
         address = join_bytes(self.registers[r1], self.registers[r2])
         self.write_memory_byte(address, self.registers[Registers.A])
+        self.cycles += 7
 
     @manager.add_instruction(OPCodes.INR_M)
     def increment_memory_address(self):
@@ -1131,4 +1157,59 @@ class Intel8080(CPU):
         )
         self.flags.C = result <= 0xFF
         self.registers[Registers.A] = result & 0xFF
+        self.cycles += 4
+
+    @manager.add_instruction(0x27)
+    def daa(self):
+        accumulator = self.registers[Registers.A]
+        carry = 1 if self.flags.C else 0
+        half_carry = 1 if self.flags.A else 0
+
+        lsb = accumulator & 0x0F
+        if half_carry or lsb > 9:
+            accumulator = (accumulator + 0x06) & 0xFF
+            self.flags.A = (lsb + 0x06) > 0xF
+
+        msb = accumulator >> 4
+        if carry or msb > 9:
+            accumulator = (accumulator + 0x60) & 0xFF
+            self.flags.C = (msb + 0x06) > 0x0F
+        else:
+            self.flags.C = False
+
+        self.registers[Registers.A] = accumulator & 0xFF
+        self.flags.Z = (accumulator & 0xFF) == 0x00
+        self.flags.S = (accumulator & 0x80) != 0x00
+        self.flags.P = (bin(accumulator & 0xFF).count("1") % 2) == 0
+
+    @manager.add_instruction(0x0B, [Registers.B, Registers.C])
+    @manager.add_instruction(0x1B, [Registers.D, Registers.E])
+    @manager.add_instruction(0x2B, [Registers.H, Registers.L])
+    def dcx_reg16(self, h: int, l: int):
+        value = join_bytes(self.registers[h], self.registers[l])
+        result = value - 0x01
+        result = result & 0xFFFF
+        self.registers[h], self.registers[l] = split_word(result)
+
+    @manager.add_instruction(0x88, [Registers.B])
+    @manager.add_instruction(0x89, [Registers.C])
+    @manager.add_instruction(0x8A, [Registers.D])
+    @manager.add_instruction(0x8B, [Registers.E])
+    @manager.add_instruction(0x8C, [Registers.H])
+    @manager.add_instruction(0x8D, [Registers.L])
+    @manager.add_instruction(0x8F, [Registers.A])
+    def adc_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+        reg_value += 1 if self.flags.C else 0
+        result = a_value + reg_value
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(reg_value)) > 0x0F
+        self.flags.C = result > 0xFF
+
+        self.registers[Registers.A] = result & 0xFF
+
         self.cycles += 4
