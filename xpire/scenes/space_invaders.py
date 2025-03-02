@@ -1,3 +1,5 @@
+import os
+
 import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
@@ -21,35 +23,31 @@ class SpaceInvadersScene(GameScene):
 
     def __init__(self):
         self.cpu = Intel8080()
-        self.room_path = "drafts/invaders.com"
-        self.load_rom(self.room_path)
 
     def load_rom(self, program_path: str) -> bool:
         try:
+            file_size = os.path.getsize(program_path)
+            if file_size > 0xFFFF:
+                raise Exception("ROM is too large, max size is 64kb")
+
             with open(program_path, "rb") as f:
                 self.cpu.memory = bytearray(f.read())
             self.cpu.memory += bytearray(0x10000 - len(self.cpu.memory))
-        except FileNotFoundError:
-            print(f"ROM not found: {program_path}")
+        except FileNotFoundError as e:
+            raise Exception(f"ROM not found: {program_path}") from e
 
     def render(self):
-        video_memory = []
-        surface = pygame.Surface((224, 256))
-        for i in self.cpu.memory[0x2400:0x4000]:
-            for j in range(8):
-                if i & (1 << j):
-                    video_memory.append(1)
-                else:
-                    video_memory.append(0)
-
+        surface = pygame.Surface((256, 224))
         counter = 0
-        for x in range(0, 224):
-            for y in reversed(range(0, 256)):
-                pixel = video_memory[counter]
-                if pixel:
-                    surface.set_at((x, y), GREEN)
+        for y in range(0, 224):
+            for x in range(0, 256 // 8):
+                value = self.cpu.memory[0x2400 + counter]
+                for i in range(8):
+                    _x = (x * 8) + i
+                    if value & (1 << i):
+                        surface.set_at((_x, y), WHITE)
                 counter += 1
-        return surface
+        return pygame.transform.rotate(surface, 90)
 
     def update(self):
         """Update the game state."""

@@ -910,6 +910,9 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RST_1)
     def rst_1(self) -> None:
+        if not self.interrupts_enabled:
+            return
+
         self.interrupts_enabled = False
         h, l = split_word(self.PC)
         self.push(h, l)
@@ -918,6 +921,9 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RST_2)
     def rst_2(self) -> None:
+        if not self.interrupts_enabled:
+            return
+
         self.interrupts_enabled = False
         h, l = split_word(self.PC)
         self.push(h, l)
@@ -992,6 +998,9 @@ class Intel8080(CPU):
 
     @manager.add_instruction(OPCodes.RST_7)
     def rst_7(self) -> None:
+        if not self.interrupts_enabled:
+            return
+
         self.interrupts_enabled = False
         h, l = split_word(self.PC)
         self.push(h, l)
