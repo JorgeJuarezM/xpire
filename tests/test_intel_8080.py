@@ -975,3 +975,11 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.P, True)
         self.assertEqual(self.cpu.flags.C, False)
         self.assertEqual(self.cpu.flags.A, True)
+
+    def test_dcx_reg16(self):
+        self.cpu.registers[Registers.H] = 0x12
+        self.cpu.registers[Registers.L] = 0x34
+        self.cpu.dcx_reg16(Registers.H, Registers.L)
+
+        self.assertEqual(self.cpu.registers[Registers.H], 0x12)
+        self.assertEqual(self.cpu.registers[Registers.L], 0x33)
