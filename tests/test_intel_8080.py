@@ -997,3 +997,10 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.L] = 0x34
         self.cpu.stax_reg(Registers.H, Registers.L)
         self.assertEqual(self.cpu.memory[0x1234], 0x99)
+
+    def test_daa(self):
+        self.cpu.flags.C = True
+        self.cpu.flags.A = True
+        self.cpu.registers[Registers.A] = 0x1B
+        self.cpu.daa()
+        self.assertEqual(self.cpu.registers[Registers.A], 0x81)
