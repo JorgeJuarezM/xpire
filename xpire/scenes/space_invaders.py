@@ -49,12 +49,28 @@ class SpaceInvadersScene(GameScene):
             counter += 1
         return pygame.transform.rotate(surface, 90)
 
+    def handle_events(self):
+        self.cpu.port_1 = 0x08
+        if pygame.key.get_pressed()[pygame.K_c]:
+            self.cpu.port_1 |= 0x01
+        if pygame.key.get_pressed()[pygame.K_RETURN]:
+            self.cpu.port_1 |= 0x04
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            self.cpu.port_1 |= 0x10
+        if pygame.key.get_pressed()[pygame.K_LEFT]:
+            self.cpu.port_1 |= 0x20
+        if pygame.key.get_pressed()[pygame.K_RIGHT]:
+            self.cpu.port_1 |= 0x40
+
     def update(self):
         """Update the game state."""
-        while frequency_ratio > self.cpu.cycles:
-            self.cpu.execute_instruction()
-
         opcode = flipflop.switch()
         self.cpu.execute_interrupt(opcode)
         self.cpu.cycles = 0
+
+        self.handle_events()
+
+        while frequency_ratio > self.cpu.cycles:
+            self.cpu.execute_instruction()
+
         return self.render()
