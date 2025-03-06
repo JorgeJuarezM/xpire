@@ -167,7 +167,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x33
         self.cpu.registers[Registers.C] = 0x0F
 
-        self.cpu.register_or_with_accumulator(Registers.C)
+        self.cpu.ora_reg(Registers.C)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x3F)
         self.assertEqual(self.cpu.registers[Registers.C], 0x0F)
@@ -418,7 +418,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x14
         self.cpu.registers[Registers.C] = 0x22
 
-        self.cpu.compare_register_with_accumulator(Registers.C)
+        self.cpu.cmp_reg(Registers.C)
 
         self.assertEqual(self.cpu.flags.S, True)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -495,7 +495,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x14
         self.cpu.registers[Registers.C] = 0x14
 
-        self.cpu.substract_register_from_accumulator(Registers.C)
+        self.cpu.sub_reg(Registers.C)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x00)
         self.assertEqual(self.cpu.flags.S, False)

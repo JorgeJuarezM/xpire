@@ -342,10 +342,14 @@ class Intel8080(CPU):
         self.registers[Registers.A] = self.read_memory_byte(address)
         self.cycles += 7
 
-    @manager.add_instruction(OPCodes.MOV_M_A, [Registers.A])
-    @manager.add_instruction(OPCodes.MOV_M_B, [Registers.B])
-    @manager.add_instruction(OPCodes.MOV_M_C, [Registers.C])
-    def move_register_to_hl_memory(self, register: int) -> None:
+    @manager.add_instruction(0x70, [Registers.B])
+    @manager.add_instruction(0x71, [Registers.C])
+    @manager.add_instruction(0x72, [Registers.D])
+    @manager.add_instruction(0x73, [Registers.E])
+    @manager.add_instruction(0x74, [Registers.H])
+    @manager.add_instruction(0x75, [Registers.L])
+    @manager.add_instruction(0x77, [Registers.A])
+    def mov_m_reg(self, register: int) -> None:
         address = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
         self.write_memory_byte(address, self.registers[register])
         self.cycles += 7
@@ -533,25 +537,22 @@ class Intel8080(CPU):
 
         self.cycles += 16
 
-    @manager.add_instruction(OPCodes.ORA_B, [Registers.B])
-    @manager.add_instruction(OPCodes.ORA_C, [Registers.C])
-    @manager.add_instruction(OPCodes.ORA_H, [Registers.H])
-    def register_or_with_accumulator(self, register: int) -> None:
-        """
-        The specified byte is logically ORed bit by bit with
-        the contents of the accumulator.
-
-        The carry bit is reset to zero.
-
-        Condition bits affected: Carry, zero, sign, parity.
-        """
+    @manager.add_instruction(0xB0, [Registers.B])
+    @manager.add_instruction(0xB1, [Registers.C])
+    @manager.add_instruction(0xB2, [Registers.D])
+    @manager.add_instruction(0xB3, [Registers.E])
+    @manager.add_instruction(0xB4, [Registers.H])
+    @manager.add_instruction(0xB5, [Registers.L])
+    @manager.add_instruction(0xB7, [Registers.A])
+    def ora_reg(self, register: int) -> None:
         result = self.registers[Registers.A] | self.registers[register]
         self.registers[Registers.A] = result
 
-        self.set_flags(result)
+        self.flags.S = (result & 0x80) != 0
+        self.flags.Z = (result & 0xFF) == 0
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
         self.flags.C = False
         self.flags.A = False
-
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.ORA_M, [Registers.A])
@@ -938,6 +939,14 @@ class Intel8080(CPU):
         self.PC = 0x10
         self.cycles += 11
 
+    @manager.add_instruction(0xE7)
+    def rst_4(self) -> None:
+        self.interrupts_enabled = False
+        h, l = split_word(self.PC)
+        self.push(h, l)
+        self.PC = 0x20
+        self.cycles += 11
+
     @manager.add_instruction(OPCodes.SUI)
     def substract_immediate_from_accumulator(self) -> None:
         i_value = self.fetch_byte()
@@ -1003,6 +1012,14 @@ class Intel8080(CPU):
             return
 
         self.cycles += 5
+
+    @manager.add_instruction(0xF7)
+    def rst_7(self) -> None:
+        self.interrupts_enabled = False
+        h, l = split_word(self.PC)
+        self.push(h, l)
+        self.PC = 0x30
+        self.cycles += 11
 
     @manager.add_instruction(OPCodes.RST_7)
     def rst_7(self) -> None:
@@ -1103,13 +1120,25 @@ class Intel8080(CPU):
 
         self.cycles += 10
 
-    @manager.add_instruction(OPCodes.CMP_B, [Registers.B])
-    @manager.add_instruction(OPCodes.CMP_C, [Registers.C])
-    @manager.add_instruction(OPCodes.CMP_H, [Registers.H])
-    def compare_register_with_accumulator(self, register: int) -> None:
-        self.compare_with_twos_complement(
-            self.registers[Registers.A], self.registers[register]
-        )
+    @manager.add_instruction(0xB8, [Registers.B])
+    @manager.add_instruction(0xB9, [Registers.C])
+    @manager.add_instruction(0xBA, [Registers.D])
+    @manager.add_instruction(0xBB, [Registers.E])
+    @manager.add_instruction(0xBC, [Registers.H])
+    @manager.add_instruction(0xBD, [Registers.L])
+    @manager.add_instruction(0xBF, [Registers.A])
+    def cmp_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+        compl = get_twos_complement(reg_value)
+        result = a_value + compl
+
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.S = (result & 0x80) != 0
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.C = result <= 0xFF
+
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
         self.cycles += 4
 
     @manager.add_instruction(OPCodes.CNC)
@@ -1132,20 +1161,25 @@ class Intel8080(CPU):
         )
         self.cycles += 7
 
-    @manager.add_instruction(OPCodes.SUB_A, [Registers.A])
-    def substract_register_from_accumulator(self, register: int) -> None:
-        """
-        The specified byte is subtracted from the accumulator using
-        two's complement arithmetic.
+    @manager.add_instruction(0x90, [Registers.B])
+    @manager.add_instruction(0x91, [Registers.C])
+    @manager.add_instruction(0x92, [Registers.D])
+    @manager.add_instruction(0x93, [Registers.E])
+    @manager.add_instruction(0x94, [Registers.H])
+    @manager.add_instruction(0x95, [Registers.L])
+    @manager.add_instruction(0x97, [Registers.A])
+    def sub_reg(self, register: int) -> None:
+        a_value = self.registers[Registers.A]
+        reg_value = self.registers[register]
+        compl = get_twos_complement(reg_value)
+        result = a_value + compl
 
-        If there is no carry out of the high-order bit position, indicating that
-        a borrow occurred, the Carry bit is set; otherwise it is reset.
-        """
-        result = self.substract_with_twos_complement(
-            self.registers[Registers.A],
-            self.registers[register],
-        )
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        self.flags.A = (get_ls_nib(a_value) + get_ls_nib(compl)) > 0x0F
         self.flags.C = result <= 0xFF
+
         self.registers[Registers.A] = result & 0xFF
         self.cycles += 4
 
@@ -1194,3 +1228,55 @@ class Intel8080(CPU):
         self.registers[Registers.A] = result & 0xFF
 
         self.cycles += 4
+
+    @manager.add_instruction(0xF9)
+    def sphl(self) -> None:
+        self.SP = join_bytes(self.registers[Registers.H], self.registers[Registers.L])
+        self.cycles += 5
+
+    @manager.add_instruction(0x33)
+    def inx_sp(self):
+        self.SP = (self.SP + 0x01) & 0xFFFF
+        self.cycles += 5
+
+    @manager.add_instruction(0x3B)
+    def dcx_sp(self):
+        self.SP = (self.SP - 0x01) & 0xFFFF
+        self.cycles += 5
+
+    @manager.add_instruction(0xFC)
+    def cm_addr(self) -> None:
+        address = self.fetch_word()
+        if self.flags.S:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0x3F)
+    def cmc(self):
+        self.flags.C = not self.flags.C
+        self.cycles += 4
+
+    @manager.add_instruction(0xF4)
+    def cp_addr(self) -> None:
+        address = self.fetch_word()
+        if not self.flags.S:
+            h, l = split_word(self.PC)
+            self.push(h, l)
+            self.PC = address
+            self.cycles += 17
+            return
+
+        self.cycles += 11
+
+    @manager.add_instruction(0xF2)
+    def jp(self):
+        address = self.fetch_word()
+        if not self.flags.S:
+            self.PC = address
+
+        self.cycles += 10
