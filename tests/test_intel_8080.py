@@ -983,3 +983,10 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.registers[Registers.H], 0x12)
         self.assertEqual(self.cpu.registers[Registers.L], 0x33)
+
+    def test_input(self):
+        self.cpu.registers[Registers.A] = 0x00
+        self.cpu.port_1 = 0xFF
+        self.cpu.memory[0x0000] = 0x01  # PORT 1
+        self.cpu.input()
+        self.assertEqual(self.cpu.registers[Registers.A], 0xFF)
