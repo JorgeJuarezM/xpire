@@ -990,3 +990,10 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x01  # PORT 1
         self.cpu.input()
         self.assertEqual(self.cpu.registers[Registers.A], 0xFF)
+
+    def test_stax_reg(self):
+        self.cpu.registers[Registers.A] = 0x99
+        self.cpu.registers[Registers.H] = 0x12
+        self.cpu.registers[Registers.L] = 0x34
+        self.cpu.stax_reg(Registers.H, Registers.L)
+        self.assertEqual(self.cpu.memory[0x1234], 0x99)
