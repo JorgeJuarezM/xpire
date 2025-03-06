@@ -571,6 +571,17 @@ class Intel8080(CPU):
 
         self.cycles += 7
 
+    @manager.add_instruction(0x0B, [Registers.B, Registers.C])
+    @manager.add_instruction(0x1B, [Registers.D, Registers.E])
+    @manager.add_instruction(0x2B, [Registers.H, Registers.L])
+    def dcx_reg16(self, h: int, l: int):
+        value = join_bytes(self.registers[h], self.registers[l])
+        result = value - 0x01
+        result = result & 0xFFFF
+        self.registers[h], self.registers[l] = split_word(result)
+
+        self.cycles += 5
+
     @manager.add_instruction(OPCodes.JZ)
     def jump_if_zero(self) -> None:
         address = self.fetch_word()
@@ -1160,15 +1171,6 @@ class Intel8080(CPU):
         self.flags.Z = (accumulator & 0xFF) == 0x00
         self.flags.S = (accumulator & 0x80) != 0x00
         self.flags.P = (bin(accumulator & 0xFF).count("1") % 2) == 0
-
-    @manager.add_instruction(0x0B, [Registers.B, Registers.C])
-    @manager.add_instruction(0x1B, [Registers.D, Registers.E])
-    @manager.add_instruction(0x2B, [Registers.H, Registers.L])
-    def dcx_reg16(self, h: int, l: int):
-        value = join_bytes(self.registers[h], self.registers[l])
-        result = value - 0x01
-        result = result & 0xFFFF
-        self.registers[h], self.registers[l] = split_word(result)
 
     @manager.add_instruction(0x88, [Registers.B])
     @manager.add_instruction(0x89, [Registers.C])
