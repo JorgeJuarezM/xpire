@@ -1004,3 +1004,17 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x1B
         self.cpu.daa()
         self.assertEqual(self.cpu.registers[Registers.A], 0x81)
+
+    def test_daa_no_carry(self):
+        self.cpu.flags.C = False
+        self.cpu.flags.A = False
+        self.cpu.registers[Registers.A] = 0x11
+        self.cpu.daa()
+        self.assertEqual(self.cpu.registers[Registers.A], 0x11)
+
+    def test_adc_reg(self):
+        self.cpu.flags.C = True
+        self.cpu.registers[Registers.A] = 0x1B
+        self.cpu.registers[Registers.B] = 0x1B
+        self.cpu.adc_reg(Registers.B)
+        self.assertEqual(self.cpu.registers[Registers.A], (0x1B + 0x1B + 1))
