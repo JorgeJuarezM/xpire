@@ -121,7 +121,7 @@ class TestIntel8080(unittest.TestCase):
     def test_register_and_register(self):
         self.cpu.registers[Registers.A] = 0xFC
         self.cpu.registers[Registers.D] = 0x0F
-        self.cpu.register_and_register(Registers.A, Registers.D)
+        self.cpu.ana_reg(Registers.D)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x0C)
         self.assertEqual(self.cpu.flags.S, False)
@@ -134,7 +134,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.B] = 0x0F
         self.cpu.registers[Registers.C] = 0x0F
 
-        self.cpu.apply_xor_to_registers(Registers.A, Registers.A)
+        self.cpu.xra(Registers.A)
         self.cpu.mov_reg_reg(Registers.A, Registers.B)
         self.cpu.mov_reg_reg(Registers.A, Registers.C)
 
@@ -152,7 +152,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0b11111111  # 0xFF
         self.cpu.registers[Registers.B] = 0b10111011  # 0xBB
 
-        self.cpu.apply_xor_to_registers(Registers.A, Registers.B)
+        self.cpu.xra(Registers.B)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0b01000100)  # 0x44
         self.assertEqual(self.cpu.registers[Registers.B], 0b10111011)  # 0xBB
