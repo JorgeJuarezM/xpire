@@ -311,17 +311,17 @@ class Intel8080(CPU):
     @manager.add_instruction(0x17)
     def ral(self):
         carry = 1 if self.flags.C else 0
-        a_value = self.registers["A"]
+        a_value = self.registers.A
         new_carry = a_value & 0x80
 
         # Rotar el acumulador a la izquierda
         # El bit de carry se convierte en el bit menos significativo (LSB)
-        a_value = (a_value << 1) | (carry >> 7)
+        a_value = (a_value << 1) | carry
 
         # Asegurarse de que el acumulador siga siendo de 8 bits
         a_value = a_value & 0xFF
 
-        self.registers["A"] = a_value
+        self.registers.A = a_value
         self.flags.C = True if new_carry else False
         self.cycles += 4
 

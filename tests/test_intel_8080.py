@@ -994,3 +994,10 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.write_memory_byte(self.cpu.registers.BC, 0x99)
         self.cpu.ldax_reg16("BC")
         self.assertEqual(self.cpu.registers.A, 0x99)
+
+    def test_ral(self):
+        self.cpu.flags.C = True
+        self.cpu.registers.A = 0b01000000
+        self.cpu.ral()
+        self.assertEqual(self.cpu.registers.A, 0b10000001)
+        self.assertEqual(self.cpu.flags.C, False)
