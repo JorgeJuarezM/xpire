@@ -1205,7 +1205,7 @@ class Intel8080(CPU):
     @manager.add_instruction(0xE2)
     def jpo_addr(self) -> None:
         address = self.fetch_word()
-        if not self.flags.P:
+        if self.flags.P:
             self.PC = address
             self.cycles += 17
             return
