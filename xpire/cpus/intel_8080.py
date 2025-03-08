@@ -131,7 +131,7 @@ class Intel8080(CPU):
     @manager.add_instruction(0x12, ["DE"])
     def stax_reg(self, register: str) -> None:
         address = self.registers[register]
-        self.write_memory_byte(address, self.registers["A"])
+        self.write_memory_byte(address, self.registers.A)
         self.cycles += 7
 
     @manager.add_instruction(0x03, ["B", "C"])
