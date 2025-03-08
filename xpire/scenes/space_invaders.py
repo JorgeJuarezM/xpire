@@ -47,7 +47,11 @@ class SpaceInvadersScene(GameScene):
                 if value & (1 << i):
                     surface.set_at((x * 8 + i, y), WHITE)
             counter += 1
+
+        # Draw rect around the screen
+        pygame.draw.rect(surface, RED, (0, 0, 256, 224), 1)
         return pygame.transform.rotate(surface, 90)
+        # return surface
 
     def handle_events(self):
         self.cpu.port_1 = 0x08
@@ -71,6 +75,8 @@ class SpaceInvadersScene(GameScene):
         self.handle_events()
 
         while frequency_ratio > self.cpu.cycles:
+            if self.cpu.halted:
+                raise Exception("CPU is halted")
             self.cpu.execute_instruction()
 
         return self.render()

@@ -817,8 +817,8 @@ class Intel8080(CPU):
     @manager.add_instruction(0xB5, ["L"])
     @manager.add_instruction(0xB7, ["A"])
     def ora_reg(self, register: int) -> None:
-        result = self.registers["A"] | self.registers[register]
-        self.registers["A"] = result
+        result = self.registers.A | self.registers[register]
+        self.registers.A = result
 
         self.flags.S = (result & 0x80) != 0
         self.flags.Z = (result & 0xFF) == 0
