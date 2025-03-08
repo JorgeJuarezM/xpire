@@ -827,13 +827,9 @@ class Intel8080(CPU):
         result = a_value & value2
         self.registers[Registers.A] = result
 
-        # print(result, result & 0x80)
-
         self.flags.S = (result & 0x80) != 0
-        # self.flags.S = (result & (0xFF - (0xFF >> 1))) != 0
         self.flags.Z = (result & 0xFF) == 0
         self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
-        # self.flags.A = False
         self.flags.C = False
         self.flags.A = (get_ls_nib(a_value) + get_ls_nib(value2)) > 0xF
 
@@ -1456,8 +1452,6 @@ class Intel8080(CPU):
     def jpo(self) -> None:
         address = self.fetch_word()
         if not self.flags.P:
-            # h, l = split_word(self.PC)
-            # self.push(h, l)
             self.PC = address
             self.cycles += 17
             return
