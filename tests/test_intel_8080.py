@@ -988,3 +988,9 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers.B = 0x1B
         self.cpu.adc_reg("B")
         self.assertEqual(self.cpu.registers.A, (0x1B + 0x1B + 1))
+
+    def test_ldax_reg16(self):
+        self.cpu.registers.BC = 0x1234
+        self.cpu.write_memory_byte(self.cpu.registers.BC, 0x99)
+        self.cpu.ldax_reg16("BC")
+        self.assertEqual(self.cpu.registers.A, 0x99)

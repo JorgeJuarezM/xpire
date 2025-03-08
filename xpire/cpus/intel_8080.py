@@ -267,12 +267,10 @@ class Intel8080(CPU):
         self.set_carry_flag(result, mask=0xFFFF)
         self.cycles += 10
 
-    @manager.add_instruction(0x0A, ["B", "C"])
-    @manager.add_instruction(0x1A, ["D", "E"])
-    def ldax_reg16(self, h: int, l: int) -> None:
-        address_l = self.registers[l]
-        address_h = self.registers[h]
-        address = join_bytes(address_h, address_l)
+    @manager.add_instruction(0x0A, ["BC"])
+    @manager.add_instruction(0x1A, ["DE"])
+    def ldax_reg16(self, register: str) -> None:
+        address = self.registers[register]
         self.registers["A"] = self.read_memory_byte(address)
         self.cycles += 7
 

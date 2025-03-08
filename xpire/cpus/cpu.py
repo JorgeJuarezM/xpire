@@ -12,7 +12,7 @@ from xpire.decorators import increment_program_counter
 from xpire.exceptions import SystemHalt
 from xpire.flags import FlagsManager
 from xpire.instructions.manager import InstructionManager as manager
-from xpire.registers.inter_8080 import Registers
+from xpire.registers.intel_8080 import Registers
 from xpire.utils import join_bytes
 
 
