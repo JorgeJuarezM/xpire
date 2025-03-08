@@ -579,18 +579,17 @@ class Intel8080(CPU):
     @manager.add_instruction(0x84, ["H"])
     @manager.add_instruction(0x85, ["L"])
     @manager.add_instruction(0x87, ["A"])
-    def add_reg(self, register: int) -> None:
-        value_1 = self.registers["A"]
-        value_2 = self.registers[register]
-        result = value_1 + value_2
+    def add_reg(self, register: str) -> None:
+        value = self.registers[register]
+        result = self.registers.A + value
 
         self.flags.S = (result & 0x80) != 0x00
         self.flags.Z = (result & 0xFF) == 0x00
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
-        self.flags.A = (get_ls_nib(value_1) + get_ls_nib(value_2)) > 0x0F
+        self.flags.A = (get_ls_nib(self.registers.A) + get_ls_nib(value)) > 0x0F
         self.flags.C = result > 0xFF
 
-        self.registers["A"] = result & 0xFF
+        self.registers.A = result & 0xFF
         self.cycles += 4
 
     @manager.add_instruction(0x86)
