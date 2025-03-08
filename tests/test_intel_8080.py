@@ -87,7 +87,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.A = False
 
         self.cpu.registers[Registers.B] = 0xFE
-        self.cpu.increment_register(Registers.B)
+        self.cpu.inr_reg(Registers.B)
 
         self.assertEqual(self.cpu.registers[Registers.B], 0xFF)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -97,7 +97,7 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.A, False)
 
         self.cpu.registers[Registers.B] = 0xFF
-        self.cpu.increment_register(Registers.B)
+        self.cpu.inr_reg(Registers.B)
 
         self.assertEqual(self.cpu.registers[Registers.B], 0x00)
         self.assertEqual(self.cpu.flags.Z, True)
@@ -186,7 +186,7 @@ class TestIntel8080(unittest.TestCase):
             0b11110010 -> 0b01111001
         """
         self.cpu.registers[Registers.A] = 0b11110010  # 0xF2
-        self.cpu.rotate_right_a()
+        self.cpu.rrc()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0b1111001)  # 0x79
         self.assertEqual(self.cpu.flags.S, False)
@@ -199,7 +199,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0b01101010  # 0x6A
         self.cpu.flags.C = True
 
-        self.cpu.rotate_right_a_through_carry()
+        self.cpu.rar()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0b10110101)  # 0xB5
         self.assertEqual(self.cpu.flags.S, False)
@@ -215,7 +215,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.H] = 0xA1
         self.cpu.registers[Registers.L] = 0x7B
 
-        self.cpu.sum_register_pair_with_hl(Registers.B, Registers.C)
+        self.cpu.dad_reg16(Registers.B, Registers.C)
 
         self.assertEqual(self.cpu.registers[Registers.H], 0xD5)
         self.assertEqual(self.cpu.registers[Registers.L], 0x1A)
@@ -232,9 +232,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.D] = 0x33
         self.cpu.registers[Registers.E] = 0x55
 
-        self.cpu.exchange_register_pairs(
-            Registers.H, Registers.L, Registers.D, Registers.E
-        )
+        self.cpu.xchg(Registers.H, Registers.L, Registers.D, Registers.E)
 
         self.assertEqual(self.cpu.registers[Registers.H], 0x33)
         self.assertEqual(self.cpu.registers[Registers.L], 0x55)
@@ -247,10 +245,10 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.add_immediate_to_accumulator()
+        self.cpu.adi_d8()
         self.assertEqual(self.cpu.registers[Registers.A], 0x56)
 
-        self.cpu.add_immediate_to_accumulator()
+        self.cpu.adi_d8()
         self.assertEqual(self.cpu.registers[Registers.A], 0x14)
         self.assertEqual(self.cpu.flags.S, False)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -291,7 +289,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.H] = 0x00
         self.cpu.registers[Registers.L] = 0xFF
 
-        self.cpu.push_to_stack(Registers.H, Registers.L)
+        self.cpu.push(Registers.H, Registers.L)
 
         self.assertEqual(self.cpu.memory[self.cpu.SP], 0xFF)
         self.assertEqual(self.cpu.memory[self.cpu.SP - 1], 0x00)
@@ -322,7 +320,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[self.cpu.SP] = 0xDD
         self.cpu.memory[self.cpu.SP + 1] = 0xDE
 
-        self.cpu.exchange_sp_hl()
+        self.cpu.xthl()
 
         self.assertEqual(self.cpu.registers[Registers.H], 0xDE)  # SP +1
         self.assertEqual(self.cpu.registers[Registers.L], 0xDD)  # SP
@@ -334,7 +332,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.L] = 0x00
         self.cpu.memory[0x0000] = 0x19
 
-        self.cpu.increment_memory_address()
+        self.cpu.inr_m()
 
         self.assertEqual(self.cpu.memory[0x0000], 0x1A)
         self.assertEqual(self.cpu.flags.S, False)
@@ -348,7 +346,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.PC = 0x0000
         self.cpu.memory[0x0000] = 0x42
 
-        self.cpu.accumulator_and_immediate()
+        self.cpu.ani_d8()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x00)
         self.assertEqual(self.cpu.flags.S, False)
@@ -364,7 +362,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_minus()
+        self.cpu.jm_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -375,7 +373,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_minus()
+        self.cpu.jm_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)  # PC + 2 (fetch word)
 
@@ -384,7 +382,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.PC = 0x0000
         self.cpu.memory[0x0000] = 0x42
 
-        self.cpu.substract_immediate_from_accumulator()
+        self.cpu.sui_d8()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0xD2)
         self.assertEqual(self.cpu.flags.S, True)
@@ -434,7 +432,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_not_carry()
+        self.cpu.cnc_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0xFFFE)
@@ -447,7 +445,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_not_carry()
+        self.cpu.cnc_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -483,7 +481,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.PC = 0x0000
         self.cpu.memory[0x0000] = 0x42
 
-        self.cpu.compare_register_with_memory()
+        self.cpu.cmp_m()
 
         self.assertEqual(self.cpu.flags.S, True)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -534,7 +532,7 @@ class TestIntel8080(unittest.TestCase):
 
     def test_decrement_register(self):
         self.cpu.registers[Registers.A] = 0x14
-        self.cpu.decrement_register(Registers.A)
+        self.cpu.dcr_reg(Registers.A)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x13)
         self.assertEqual(self.cpu.flags.S, False)
@@ -550,7 +548,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_not_zero()
+        self.cpu.jnz_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -558,7 +556,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.clear_flags()
         self.cpu.flags.Z = True
 
-        self.cpu.jump_if_not_zero()
+        self.cpu.jnz_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
 
@@ -586,7 +584,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_not_carry()
+        self.cpu.rnc()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -599,7 +597,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_not_carry()
+        self.cpu.rnc()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -612,7 +610,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_carry()
+        self.cpu.rc()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -625,7 +623,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_carry()
+        self.cpu.rc()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -638,7 +636,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.H] = 0x00
         self.cpu.registers[Registers.L] = 0x00
 
-        self.cpu.register_or_with_memory(Registers.A)
+        self.cpu.ora_m(Registers.A)
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x14)
         self.assertEqual(self.cpu.flags.S, False)
@@ -654,7 +652,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_zero()
+        self.cpu.jz_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -662,7 +660,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.clear_flags()
         self.cpu.flags.Z = False
 
-        self.cpu.jump_if_zero()
+        self.cpu.jz_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
 
@@ -673,7 +671,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_parity()
+        self.cpu.jpe_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -681,13 +679,13 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.clear_flags()
         self.cpu.flags.P = False
 
-        self.cpu.jump_if_parity()
+        self.cpu.jpe_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
 
     def test_rotate_left_accumulator(self):
         self.cpu.registers[Registers.A] = 0x14
-        self.cpu.rotate_left_accumulator()
+        self.cpu.rlc()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0x28)
         self.assertEqual(self.cpu.flags.S, False)
@@ -703,7 +701,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_not_carry()
+        self.cpu.jnc_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -711,7 +709,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.clear_flags()
         self.cpu.flags.C = True
 
-        self.cpu.jump_if_not_carry()
+        self.cpu.jnc_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
 
@@ -722,7 +720,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.jump_if_carry()
+        self.cpu.jc_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
 
@@ -730,7 +728,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.clear_flags()
         self.cpu.flags.C = False
 
-        self.cpu.jump_if_carry()
+        self.cpu.jc_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
 
@@ -740,11 +738,11 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x14
         self.cpu.flags.set_flags(0xFF)
 
-        self.cpu.push_processor_state_word()
+        self.cpu.push_psw()
         self.cpu.registers[Registers.A] = 0x20
         self.cpu.flags.clear_flags()
 
-        self.cpu.pop_processor_state_word()
+        self.cpu.pop_psw()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -767,7 +765,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_zero()
+        self.cpu.rz()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -780,7 +778,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_zero()
+        self.cpu.rz()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -793,7 +791,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_not_zero()
+        self.cpu.rnz()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -806,14 +804,14 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_not_zero()
+        self.cpu.rnz()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
 
     def test_decrement_memory_byte(self):
         self.cpu.memory[0x0000] = 0x14
-        self.cpu.decrement_memory_byte()
+        self.cpu.dcr_m()
 
         self.assertEqual(self.cpu.memory[0x0000], 0x13)
         self.assertEqual(self.cpu.flags.S, False)
@@ -830,7 +828,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_zero()
+        self.cpu.cz_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0xFFFE)
@@ -843,7 +841,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_zero()
+        self.cpu.cz_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -856,7 +854,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_not_zero()
+        self.cpu.cnz_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0xFFFE)
@@ -869,7 +867,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_not_zero()
+        self.cpu.cnz_addr()
 
         self.assertEqual(self.cpu.PC, 0x0002)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -877,7 +875,7 @@ class TestIntel8080(unittest.TestCase):
     def test_substract_immdiate_from_accumulator_with_borrow(self):
         self.cpu.registers[Registers.A] = 0x14
         self.cpu.memory[0x0000] = 0x21
-        self.cpu.substract_immediate_from_accumulator_with_borrow()
+        self.cpu.sbi_d8()
 
         self.assertEqual(self.cpu.registers[Registers.A], 0xF3)
         self.assertEqual(self.cpu.flags.S, True)
@@ -894,7 +892,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_minus()
+        self.cpu.rm()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -907,7 +905,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_minus()
+        self.cpu.rm()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -920,7 +918,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_parity_even()
+        self.cpu.rp()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0x0002)
@@ -933,7 +931,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.return_if_parity_even()
+        self.cpu.rp()
 
         self.assertEqual(self.cpu.PC, 0x0000)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -946,7 +944,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_parity_even()
+        self.cpu.cpe_addr()
 
         self.assertEqual(self.cpu.PC, 0xBE42)
         self.assertEqual(self.cpu.SP, 0xFFFE)
@@ -959,7 +957,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0x42
         self.cpu.memory[0x0001] = 0xBE
 
-        self.cpu.call_if_parity_even()
+        self.cpu.cpe_addr()
 
         self.assertEqual(self.cpu.PC, 0x02)
         self.assertEqual(self.cpu.SP, 0x0000)
@@ -988,7 +986,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.registers[Registers.A] = 0x00
         self.cpu.port_1 = 0xFF
         self.cpu.memory[0x0000] = 0x01  # PORT 1
-        self.cpu.input()
+        self.cpu.in_d8()
         self.assertEqual(self.cpu.registers[Registers.A], 0xFF)
 
     def test_stax_reg(self):
