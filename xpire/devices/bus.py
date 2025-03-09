@@ -1,5 +1,6 @@
-from xpire.devices.device import Device
 from typing import Dict
+
+from xpire.devices.device import Device
 
 
 class Bus:

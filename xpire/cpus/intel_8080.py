@@ -24,7 +24,6 @@ class Intel8080(CPU):
         self.out = {}
 
         self.interrupts_enabled = False
-        self.port_1 = 0x08
 
     def write_memory_byte(self, address, value) -> None:
         """
