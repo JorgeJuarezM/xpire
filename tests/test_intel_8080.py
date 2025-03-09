@@ -1001,3 +1001,12 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.ral()
         self.assertEqual(self.cpu.registers.A, 0b10000001)
         self.assertEqual(self.cpu.flags.C, False)
+
+    def test_shld(self):
+        self.cpu.memory[0x00] = 0xFE
+        self.cpu.memory[0x01] = 0xFF
+        self.cpu.registers.HL = 0x1234
+        self.cpu.shld()
+        self.assertEqual(self.cpu.PC, 0x0002)
+        self.assertEqual(self.cpu.memory[0xFFFE], 0x34)
+        self.assertEqual(self.cpu.memory[0xFFFF], 0x12)
