@@ -20,7 +20,8 @@ class P1Controls(Device):
         self._value = 0x08
 
     def write(self, value: int, port: Optional[int] = None):
-        self._value = value | 0x08
+        self._value |= value
+        self._value |= 0x08
 
 
 class Shifter(Device):

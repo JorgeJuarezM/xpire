@@ -3,6 +3,8 @@ import os
 import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
+from xpire.devices.bus import Bus
+from xpire.devices.device import Device, P1Controls, Shifter
 from xpire.devices.taito_arcade import FlipFlopD
 from xpire.engine import GameScene
 
@@ -24,6 +26,9 @@ class SpaceInvadersScene(GameScene):
 
     def __init__(self):
         self.cpu = Intel8080()
+        self.cpu.bus.add_device(Bus.Addresss.SHIFTER, Shifter())
+        self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, P1Controls())
+        self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -50,17 +55,19 @@ class SpaceInvadersScene(GameScene):
         return pygame.transform.rotate(surface, 90)
 
     def handle_events(self):
-        self.cpu.port_1 = 0x08
+        p1_controller = self.cpu.bus.get_device(Bus.Addresss.P1_CONTROLLER)
+        p1_controller.reset()
+
         if pygame.key.get_pressed()[pygame.K_c]:
-            self.cpu.port_1 |= 0x01
+            p1_controller.write(0x01)
         if pygame.key.get_pressed()[pygame.K_RETURN]:
-            self.cpu.port_1 |= 0x04
+            p1_controller.write(0x04)
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            self.cpu.port_1 |= 0x10
+            p1_controller.write(0x10)
         if pygame.key.get_pressed()[pygame.K_LEFT]:
-            self.cpu.port_1 |= 0x20
+            p1_controller.write(0x20)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
-            self.cpu.port_1 |= 0x40
+            p1_controller.write(0x40)
 
     def update(self):
         """Update the game state."""
