@@ -351,8 +351,8 @@ class Intel8080(CPU):
     @manager.add_instruction(0x22)
     def shld(self) -> None:
         address = self.fetch_word()
-        self.write_memory_byte(address, self.registers["L"])
-        self.write_memory_byte(address + 0x01, self.registers["H"])
+        self.write_memory_byte(address, self.registers.L)
+        self.write_memory_byte(address + 0x01, self.registers.H)
         self.cycles += 16
 
     @manager.add_instruction(0x27)
