@@ -26,9 +26,11 @@ class SpaceInvadersScene(GameScene):
 
     def __init__(self):
         self.cpu = Intel8080()
+        self.p1_controller = P1Controls()
         self.cpu.bus.add_device(Bus.Addresss.SHIFTER, Shifter())
-        self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, P1Controls())
+        self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, self.p1_controller)
         self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
+        self.clock = pygame.time.Clock()
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -55,29 +57,36 @@ class SpaceInvadersScene(GameScene):
         return pygame.transform.rotate(surface, 90)
 
     def handle_events(self):
-        p1_controller = self.cpu.bus.get_device(Bus.Addresss.P1_CONTROLLER)
-        p1_controller.reset()
-
+        self.p1_controller.reset()
         if pygame.key.get_pressed()[pygame.K_c]:
-            p1_controller.write(0x01)
+            self.p1_controller.write(0x01)
         if pygame.key.get_pressed()[pygame.K_RETURN]:
-            p1_controller.write(0x04)
+            self.p1_controller.write(0x04)
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            p1_controller.write(0x10)
+            self.p1_controller.write(0x10)
         if pygame.key.get_pressed()[pygame.K_LEFT]:
-            p1_controller.write(0x20)
+            self.p1_controller.write(0x20)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
-            p1_controller.write(0x40)
+            self.p1_controller.write(0x40)
 
-    def update(self):
-        """Update the game state."""
+    def handle_interrupts(self):
+        if not self.cpu.interrupts_enabled:
+            return False
+
         opcode = flipflop.switch()
         self.cpu.execute_interrupt(opcode)
         self.cpu.cycles = 0
+        return True
 
-        self.handle_events()
+    def update(self):
+        """Update the game state."""
+        while True:
+            render = False
+            if self.cpu.cycles > frequency_ratio:
+                self.handle_events()
+                render = self.handle_interrupts()
 
-        while frequency_ratio > self.cpu.cycles:
+            if render:
+                yield self.render()
+
             self.cpu.execute_instruction()
-
-        return self.render()

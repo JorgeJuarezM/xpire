@@ -27,9 +27,6 @@ class Bus:
     def add_device(self, address: int, device: Device):
         self.devices[address] = device
 
-    def get_device(self, address: int) -> Device:
-        return self.devices[address]
-
     def read(self, port: int) -> int:
         if port not in self.read_mapping:
             return 0x00
@@ -42,6 +39,8 @@ class Bus:
 
     def write(self, port: int, value: int):
         if port not in self.write_mapping:
+            if port not in [6, 3, 5]:
+                raise Exception(f"Invalid port: {port}, value: {value}")
             return
         address = self.write_mapping[port]
 
