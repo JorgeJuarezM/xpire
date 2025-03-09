@@ -381,10 +381,9 @@ class Intel8080(CPU):
     @manager.add_instruction(0x2A)
     def lhld(self) -> None:
         address1 = self.fetch_word()
-        address2 = (address1 + 0x01) & 0xFFFF
 
         l = self.read_memory_byte(address1)
-        h = self.read_memory_byte(address2)
+        h = self.read_memory_byte((address1 + 0x01) & 0xFFFF)
         self.registers.HL = join_bytes(h, l)
         self.cycles += 16
 
