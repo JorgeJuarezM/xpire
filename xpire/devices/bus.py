@@ -39,11 +39,9 @@ class Bus:
 
     def write(self, port: int, value: int):
         if port not in self.write_mapping:
-            if port not in [6, 3, 5]:
-                raise Exception(f"Invalid port: {port}, value: {value}")
             return
-        address = self.write_mapping[port]
 
+        address = self.write_mapping[port]
         if not address in self.devices:
             return
 
