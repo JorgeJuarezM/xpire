@@ -12,7 +12,7 @@ from xpire.decorators import increment_program_counter
 from xpire.exceptions import SystemHalt
 from xpire.flags import FlagsManager
 from xpire.instructions.manager import InstructionManager as manager
-from xpire.registers.register import RegisterManager
+from xpire.registers.intel_8080 import Registers
 from xpire.utils import join_bytes
 
 
@@ -34,7 +34,7 @@ class CPU(AbstractCPU):
     cycles: int
 
     memory: bytearray
-    registers: RegisterManager
+    registers: Registers
 
     def __init__(self) -> None:
         """
@@ -47,7 +47,7 @@ class CPU(AbstractCPU):
         The CPU object starts a new thread to execute instructions.
         """
         self.memory = bytearray(0x10000)
-        self.registers = RegisterManager()
+        self.registers = Registers()
         self.flags = {}
 
         self.SP = 0x0000
