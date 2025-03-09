@@ -725,7 +725,8 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.get_flags(), 0xFF)
 
     def test_set_carry_flag(self):
-        self.cpu.set_carry()
+        self.cpu.flags.clear_flags()
+        self.cpu.stc()
         self.assertEqual(self.cpu.flags.C, True)
         self.assertEqual(self.cpu.flags.S, False)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -1010,3 +1011,128 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.PC, 0x0002)
         self.assertEqual(self.cpu.memory[0xFFFE], 0x34)
         self.assertEqual(self.cpu.memory[0xFFFF], 0x12)
+
+    def test_lhld(self):
+        self.cpu.memory[0x00] = 0xFE
+        self.cpu.memory[0x01] = 0xFF
+        self.cpu.memory[0xFFFE] = 0x34
+        self.cpu.memory[0xFFFF] = 0x12
+        self.cpu.lhld()
+        self.assertEqual(self.cpu.PC, 0x0002)
+        self.assertEqual(self.cpu.registers.HL, 0x1234)
+
+    def test_cma(self):
+        self.cpu.registers.A = 0x99
+        self.cpu.cma()
+        self.assertEqual(self.cpu.registers.A, 0x66)
+
+    def test_mvi_m_d8(self):
+        self.cpu.memory[0x0000] = 0x99
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[self.cpu.registers.HL] = 0x00
+
+        self.cpu.mvi_m_d8()
+        self.assertEqual(self.cpu.memory[self.cpu.registers.HL], 0x99)
+
+    def test_dad_sp(self):
+        self.cpu.registers.HL = 0x0001
+        self.cpu.SP = 0x1234
+        self.cpu.dad_sp()
+        self.assertEqual(self.cpu.registers.HL, 0x1235)
+
+    def test_lda_addr(self):
+        self.cpu.memory[0x0000] = 0xFF
+        self.cpu.memory[0x0001] = 0xFF
+        self.cpu.memory[0xFFFF] = 0x99
+        self.cpu.lda_addr()
+        self.assertEqual(self.cpu.registers.A, 0x99)
+
+    def test_mov_reg_m(self):
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x99
+        self.cpu.mov_reg_m("A")
+        self.assertEqual(self.cpu.registers.A, 0x99)
+
+    def test_mov_m_reg(self):
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.registers.A = 0x99
+        self.cpu.mov_m_reg("A")
+        self.assertEqual(self.cpu.memory[0xFFFF], 0x99)
+
+    def test_add_m(self):
+        self.cpu.registers.A = 0x01
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x99
+        self.cpu.add_m()
+        self.assertEqual(self.cpu.registers.A, 0x9A)
+
+    def test_adc_m(self):
+        self.cpu.registers.A = 0x01
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x99
+        self.cpu.adc_m()
+        self.assertEqual(self.cpu.registers.A, 0x9A)
+
+    def test_sub_m(self):
+        self.cpu.registers.A = 0x99
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x01
+        self.cpu.sub_m()
+        self.assertEqual(self.cpu.registers.A, 0x98)
+
+    def test_sbb_reg(self):
+        self.cpu.registers.A = 0x99
+        self.cpu.registers.B = 0x01
+
+        self.cpu.sbb_reg("B")
+        self.assertEqual(self.cpu.registers.A, 0x98)
+
+    def test_sbb_m(self):
+        self.cpu.registers.A = 0x99
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x01
+        self.cpu.sbb_m()
+        self.assertEqual(self.cpu.registers.A, 0x98)
+
+    def test_xra_m(self):
+        self.cpu.registers.A = 0x99
+        self.cpu.registers.HL = 0xFFFF
+        self.cpu.memory[0xFFFF] = 0x01
+        self.cpu.xra_m()
+        self.assertEqual(self.cpu.registers.A, 0x98)
+
+    def test_aci_d8(self):
+        self.cpu.memory[0x0000] = 0x01
+        self.cpu.registers.A = 0x99
+        self.cpu.aci_d8()
+        self.assertEqual(self.cpu.registers.A, 0x9A)
+
+    def test_out_d8(self):
+        self.cpu.memory[0x0000] = 0x01
+        self.cpu.registers.A = 0x99
+        self.cpu.out_d8()
+        # Todo: implement
+
+    def test_pchl(self):
+        self.cpu.PC = 0x0000
+        self.cpu.registers.HL = 0x1234
+        self.cpu.pchl()
+        self.assertEqual(self.cpu.PC, 0x1234)
+
+    def test_xri_d8(self):
+        self.cpu.memory[0x0000] = 0b00101011
+        self.cpu.registers.A = 0b10101010
+        self.cpu.xri_d8()
+        self.assertEqual(self.cpu.registers.A, 0b10000001)
+
+    def test_ori_d8(self):
+        self.cpu.memory[0x0000] = 0b10101010
+        self.cpu.registers.A = 0b01010101
+        self.cpu.ori_d8()
+        self.assertEqual(self.cpu.registers.A, 0b11111111)
+
+    def test_sphl(self):
+        self.cpu.SP = 0x0000
+        self.cpu.registers.HL = 0x1234
+        self.cpu.sphl()
+        self.assertEqual(self.cpu.SP, 0x1234)

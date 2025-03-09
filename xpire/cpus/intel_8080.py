@@ -441,12 +441,12 @@ class Intel8080(CPU):
         self.cycles += 10
 
     @manager.add_instruction(0x36)
-    def move_immediate_to_hl_memory(self) -> None:
+    def mvi_m_d8(self) -> None:
         self.write_memory_byte(self.registers.HL, self.fetch_byte())
         self.cycles += 10
 
     @manager.add_instruction(0x37)
-    def set_carry(self):
+    def stc(self):
         self.flags.C = True
         self.cycles += 4
 
@@ -765,12 +765,12 @@ class Intel8080(CPU):
         self.cycles += 4
 
     @manager.add_instruction(0xAE, ["A"])
-    def xra_m(self, r1: int) -> None:
-        value1 = self.registers[r1]
+    def xra_m(self) -> None:
+        value1 = self.registers.A
         value_2 = self.read_memory_byte(self.registers.HL)
 
         result = value1 ^ value_2
-        self.registers[r1] = result
+        self.registers.A = result
 
         self.flags.S = (result & 0x80) != 0
         self.flags.Z = (result & 0xFF) == 0
