@@ -2,11 +2,12 @@
 Test class for Bus.
 """
 
-import math
 import unittest
 import unittest.mock
+
 from faker import Faker
-from xpire.devices.bus import Bus, Device
+
+from xpire.devices.bus import Bus
 
 fake = Faker()
 

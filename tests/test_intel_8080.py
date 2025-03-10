@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import unittest.mock
 from unittest.mock import patch
 
 import pygame
@@ -956,11 +957,14 @@ class TestIntel8080(unittest.TestCase):
 
         self.assertEqual(self.cpu.registers.HL, 0x1233)
 
-    def test_input(self):
+    @unittest.mock.patch("xpire.cpus.cpu.Bus.read")
+    def test_input(self, mock_read):
+        mock_read.return_value = 0x00
         self.cpu.registers.A = 0x00
         self.cpu.memory[0x0000] = 0x01  # PORT 1
         self.cpu.in_d8()
         self.assertEqual(self.cpu.registers.A, 0x00)
+        mock_read.assert_called_once_with(0x01)
 
     def test_stax_reg(self):
         self.cpu.registers.A = 0x99
@@ -1106,11 +1110,13 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.aci_d8()
         self.assertEqual(self.cpu.registers.A, 0x9A)
 
-    def test_out_d8(self):
+    @unittest.mock.patch("xpire.cpus.cpu.Bus.write")
+    def test_out_d8(self, mock_write):
+        mock_write.return_value = None
         self.cpu.memory[0x0000] = 0x01
         self.cpu.registers.A = 0x99
         self.cpu.out_d8()
-        # Todo: implement
+        mock_write.assert_called_once_with(0x01, 0x99)
 
     def test_pchl(self):
         self.cpu.PC = 0x0000
