@@ -26,6 +26,7 @@ class GameManager:
 
     def __init__(self, scene: GameScene):
         pygame.init()
+        pygame.font.init()
 
         self.screen_size = (800, 600)
 
