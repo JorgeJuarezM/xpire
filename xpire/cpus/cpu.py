@@ -9,6 +9,7 @@ instructions.
 import xpire.instructions.common as OPCodes
 from xpire.cpus.abstract import AbstractCPU
 from xpire.decorators import increment_program_counter
+from xpire.devices.bus import Bus
 from xpire.exceptions import SystemHalt
 from xpire.flags import FlagsManager
 from xpire.instructions.manager import InstructionManager as manager
@@ -58,6 +59,7 @@ class CPU(AbstractCPU):
         self.halted = False
 
         self.flags = FlagsManager()
+        self.bus = Bus()
 
     def execute_instruction(self) -> None:
         """

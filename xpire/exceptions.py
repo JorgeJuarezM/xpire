@@ -71,3 +71,27 @@ class InvalidMemoryValue(BaseException):
         """
         message = f"Invalid memory value: 0x{value:02x} at address: {address:02x}"
         super().__init__(message)
+
+
+class InvalidReadPort(BaseException):
+    def __init__(self, port: int):
+        message = f"Invalid read port: {port}"
+        super().__init__(message)
+
+
+class InvalidWritePort(BaseException):
+    def __init__(self, port: int):
+        message = f"Invalid write port: {port}"
+        super().__init__(message)
+
+
+class InvalidReadAddress(BaseException):
+    def __init__(self, address: int):
+        message = f"Invalid read address: {address}"
+        super().__init__(message)
+
+
+class InvalidWriteAddress(BaseException):
+    def __init__(self, address: int):
+        message = f"Invalid write address: {address}"
+        super().__init__(message)
