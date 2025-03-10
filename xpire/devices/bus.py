@@ -1,6 +1,7 @@
 from typing import Dict
 
 from xpire.devices.device import Device
+from xpire.exceptions import InvalidReadPort, InvalidWritePort
 
 
 class Bus:
@@ -41,13 +42,13 @@ class Bus:
 
     def _get_read_port_addresss(self, port: int) -> int:
         if port not in self.read_mapping:
-            raise Exception(f"Invalid port to read: {port}")
+            raise InvalidReadPort(port)
 
         return self.read_mapping[port]
 
     def _get_write_port_addresss(self, port: int) -> int:
         if port not in self.write_mapping:
-            raise Exception(f"Invalid port to write: {port}")
+            raise InvalidWritePort(port)
 
         return self.write_mapping[port]
 

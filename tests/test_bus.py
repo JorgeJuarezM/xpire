@@ -8,6 +8,7 @@ import unittest.mock
 from faker import Faker
 
 from xpire.devices.bus import Bus, Device
+from xpire.exceptions import InvalidReadPort, InvalidWritePort
 
 fake = Faker()
 
@@ -49,3 +50,11 @@ class TestBus(unittest.TestCase):
             self.bus.devices[Bus.Addresss.DUMMY_DEVICE]._value,
             value_to_write,
         )
+
+    def test_read_invalid_port(self):
+        with self.assertRaises(InvalidReadPort):
+            self.bus.read(0xFF)
+
+    def test_write_invalid_port(self):
+        with self.assertRaises(InvalidWritePort):
+            self.bus.write(0xFF, 0xFF)
