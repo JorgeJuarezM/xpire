@@ -35,7 +35,7 @@ class Shifter(Device):
         elif port == 0x04:
             self._value = (self._value >> 8) | (value << 7)
         else:
-            raise Exception("Invalid port")
+            raise Exception(f"Invalid port {port}")
 
     def read(self):
         return (self._value >> self._offset) & 0xFF
