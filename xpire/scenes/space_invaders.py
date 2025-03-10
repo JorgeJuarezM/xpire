@@ -75,18 +75,15 @@ class SpaceInvadersScene(GameScene):
 
         opcode = flipflop.switch()
         self.cpu.execute_interrupt(opcode)
-        self.cpu.cycles = 0
         return True
 
     def update(self):
         """Update the game state."""
         while True:
-            render = False
             if self.cpu.cycles > frequency_ratio:
                 self.handle_events()
-                render = self.handle_interrupts()
-
-            if render:
+                self.handle_interrupts()
+                self.cpu.cycles = 0
                 yield self.render()
 
             self.cpu.execute_instruction()
