@@ -83,3 +83,15 @@ class InvalidWritePort(BaseException):
     def __init__(self, port: int):
         message = f"Invalid write port: {port}"
         super().__init__(message)
+
+
+class InvalidReadAddress(BaseException):
+    def __init__(self, address: int):
+        message = f"Invalid read address: {address}"
+        super().__init__(message)
+
+
+class InvalidWriteAddress(BaseException):
+    def __init__(self, address: int):
+        message = f"Invalid write address: {address}"
+        super().__init__(message)
