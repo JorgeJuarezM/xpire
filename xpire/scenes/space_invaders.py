@@ -34,6 +34,9 @@ class SpaceInvadersScene(GameScene):
         self.clock = pygame.time.Clock()
         self.flipflop = FlipFlopD()
 
+    def is_finished(self) -> bool:
+        return False
+
     def load_rom(self, program_path: str) -> None:
         try:
             file_size = os.path.getsize(program_path)
