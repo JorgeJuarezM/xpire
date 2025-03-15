@@ -1,6 +1,7 @@
 import sys
 
 import pygame
+from pygame.surface import Surface
 
 from xpire.devices.taito_arcade import FlipFlopD
 
@@ -59,10 +60,11 @@ class GameManager:
         self.screen.blit(time_surface, (30, 50 + offset))
 
     def start(self):
-        while True:
+        running = True
+        while running:
             self.clock.tick(60)
             self.screen.fill(BG_COLOR)
-            frame: pygame.surface.Surface = self.scene.update()
+            frame: Surface = self.scene.update()
 
             self.handle_events()
             surface = pygame.transform.scale(
@@ -76,3 +78,5 @@ class GameManager:
 
             self.print_debug_info()
             pygame.display.update()
+
+            running = not self.scene.is_finished()
