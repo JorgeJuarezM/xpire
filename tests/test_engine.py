@@ -5,18 +5,10 @@ Test class for Bus.
 import unittest
 import unittest.mock
 
+import pygame
 from faker import Faker
 
-from xpire.devices.bus import Bus, Device
-from xpire.exceptions import (
-    InvalidReadAddress,
-    InvalidReadPort,
-    InvalidWriteAddress,
-    InvalidWritePort,
-)
 from xpire.engine import GameManager
-import pygame
-
 
 fake = Faker()
 
