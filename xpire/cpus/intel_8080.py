@@ -24,7 +24,6 @@ class Intel8080(CPU):
         self.out = {}
 
         self.interrupts_enabled = False
-        self.port_1 = 0x08
 
     def write_memory_byte(self, address, value) -> None:
         """
@@ -764,7 +763,7 @@ class Intel8080(CPU):
         self.flags.C = False
         self.cycles += 4
 
-    @manager.add_instruction(0xAE, ["A"])
+    @manager.add_instruction(0xAE)
     def xra_m(self) -> None:
         value1 = self.registers.A
         value_2 = self.read_memory_byte(self.registers.HL)
@@ -1039,7 +1038,7 @@ class Intel8080(CPU):
     @manager.add_instruction(0xD3)
     def out_d8(self) -> None:
         port = self.fetch_byte()
-        print(f"OUT: Port: {port}, Value: {self.registers.A}")
+        self.bus.write(port, self.registers.A)
         self.cycles += 10
 
     @manager.add_instruction(0xD4)
@@ -1096,8 +1095,7 @@ class Intel8080(CPU):
     @manager.add_instruction(0xDB)
     def in_d8(self) -> int:
         port = self.fetch_byte()
-        if port == 0x01:
-            self.registers.A = self.port_1
+        self.registers.A = self.bus.read(port)
         self.cycles += 10
 
     @manager.add_instruction(0xDC)

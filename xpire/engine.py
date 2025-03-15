@@ -26,6 +26,7 @@ class GameManager:
 
     def __init__(self, scene: GameScene):
         pygame.init()
+        pygame.font.init()
 
         self.screen_size = (800, 600)
 
@@ -57,14 +58,14 @@ class GameManager:
         self.screen.blit(time_surface, (30, 50 + offset))
 
     def start(self):
-        while True:
+        for frame in self.scene.update():
             self.clock.tick(60)
             self.screen.fill((0, 0, 0))
 
             self.handle_events()
-            surface = self.scene.update()
             surface = pygame.transform.scale(
-                surface, (surface.get_width() * 2, surface.get_height() * 2)
+                frame,
+                (frame.get_width() * 2, frame.get_height() * 2),
             )
 
             x_position = self.screen.get_width() // 2 - surface.get_width() // 2

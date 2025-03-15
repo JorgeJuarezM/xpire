@@ -3,6 +3,8 @@ import os
 import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
+from xpire.devices.bus import Bus
+from xpire.devices.device import Device, P1Controls, Shifter
 from xpire.devices.taito_arcade import FlipFlopD
 from xpire.engine import GameScene
 
@@ -24,6 +26,11 @@ class SpaceInvadersScene(GameScene):
 
     def __init__(self):
         self.cpu = Intel8080()
+        self.p1_controller = P1Controls()
+        self.cpu.bus.add_device(Bus.Addresss.SHIFTER, Shifter())
+        self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, self.p1_controller)
+        self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
+        self.clock = pygame.time.Clock()
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -50,27 +57,33 @@ class SpaceInvadersScene(GameScene):
         return pygame.transform.rotate(surface, 90)
 
     def handle_events(self):
-        self.cpu.port_1 = 0x08
+        self.p1_controller.reset()
         if pygame.key.get_pressed()[pygame.K_c]:
-            self.cpu.port_1 |= 0x01
+            self.p1_controller.write(0x01)
         if pygame.key.get_pressed()[pygame.K_RETURN]:
-            self.cpu.port_1 |= 0x04
+            self.p1_controller.write(0x04)
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            self.cpu.port_1 |= 0x10
+            self.p1_controller.write(0x10)
         if pygame.key.get_pressed()[pygame.K_LEFT]:
-            self.cpu.port_1 |= 0x20
+            self.p1_controller.write(0x20)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
-            self.cpu.port_1 |= 0x40
+            self.p1_controller.write(0x40)
+
+    def handle_interrupts(self):
+        if not self.cpu.interrupts_enabled:
+            return False
+
+        opcode = flipflop.switch()
+        self.cpu.execute_interrupt(opcode)
+        return True
 
     def update(self):
         """Update the game state."""
-        opcode = flipflop.switch()
-        self.cpu.execute_interrupt(opcode)
-        self.cpu.cycles = 0
+        while True:
+            if self.cpu.cycles > frequency_ratio:
+                self.handle_events()
+                self.handle_interrupts()
+                self.cpu.cycles = 0
+                yield self.render()
 
-        self.handle_events()
-
-        while frequency_ratio > self.cpu.cycles:
             self.cpu.execute_instruction()
-
-        return self.render()
