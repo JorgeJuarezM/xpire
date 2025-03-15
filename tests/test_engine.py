@@ -18,7 +18,7 @@ class MockScene:
         self.surface = surface
 
     def update(self):
-        yield self.surface
+        return self.surface
 
 
 class TestEngine(unittest.TestCase):
