@@ -9,7 +9,7 @@ import unittest.mock
 import pygame
 from faker import Faker
 
-from xpire.scenes.space_invaders import SpaceInvadersScene
+from xpire.scenes.space_invaders import SpaceInvadersScene, frequency_ratio
 
 fake = Faker()
 
@@ -123,3 +123,31 @@ class TestSpaceInvadersScene(unittest.TestCase):
             }
             self.scene.handle_events()
             self.scene.p1_controller.write.assert_called_with(0x40)
+
+    def test_update(self):
+        self.scene.cpu.cycles = frequency_ratio + 1
+        self.scene.cpu.execute_instruction = unittest.mock.Mock()
+        self.scene.handle_events = unittest.mock.Mock()
+        self.scene.handle_interrupts = unittest.mock.Mock()
+
+        for _ in self.scene.update():
+            self.scene.cpu.execute_instruction.assert_not_called()
+            self.scene.handle_events.assert_called_once()
+            self.scene.handle_interrupts.assert_called_once()
+            break
+
+    def test_handle_interrupts_not_enabled(self):
+        self.scene.cpu.interrupts_enabled = False
+        self.scene.cpu.execute_interrupt = unittest.mock.Mock()
+        result = self.scene.handle_interrupts()
+
+        self.assertFalse(result)
+        self.scene.cpu.execute_interrupt.assert_not_called()
+
+    def test_handle_interrupts_enabled(self):
+        self.scene.cpu.interrupts_enabled = True
+        self.scene.cpu.execute_interrupt = unittest.mock.Mock()
+        result = self.scene.handle_interrupts()
+
+        self.assertTrue(result)
+        self.scene.cpu.execute_interrupt.assert_called_once()
