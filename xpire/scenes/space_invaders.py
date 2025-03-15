@@ -24,6 +24,7 @@ BLACK = (0x00, 0x00, 0x00)
 class SpaceInvadersScene(GameScene):
 
     def __init__(self):
+        super().__init__()
         self.cpu = Intel8080()
         self.p1_controller = P1Controls()
         self.cpu.bus.add_device(Bus.Addresss.SHIFTER, Shifter())
