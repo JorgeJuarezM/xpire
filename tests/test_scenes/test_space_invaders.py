@@ -6,6 +6,7 @@ import tempfile
 import unittest
 import unittest.mock
 
+import pygame
 from faker import Faker
 
 from xpire.scenes.space_invaders import SpaceInvadersScene
@@ -38,3 +39,87 @@ class TestSpaceInvadersScene(unittest.TestCase):
 
         self.assertIsNotNone(surface)
         self.assertEqual(surface.get_size(), (224, 256))
+
+    def test_handle_events_no_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: False,
+                pygame.K_RETURN: False,
+                pygame.K_SPACE: False,
+                pygame.K_LEFT: False,
+                pygame.K_RIGHT: False,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_not_called()
+
+    def test_handle_events_coin_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: True,
+                pygame.K_RETURN: False,
+                pygame.K_SPACE: False,
+                pygame.K_LEFT: False,
+                pygame.K_RIGHT: False,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_called_with(0x01)
+
+    def test_handle_events_start_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: False,
+                pygame.K_RETURN: True,
+                pygame.K_SPACE: False,
+                pygame.K_LEFT: False,
+                pygame.K_RIGHT: False,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_called_with(0x04)
+
+    def test_handle_events_fire_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: False,
+                pygame.K_RETURN: False,
+                pygame.K_SPACE: True,
+                pygame.K_LEFT: False,
+                pygame.K_RIGHT: False,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_called_with(0x10)
+
+    def test_handle_events_left_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: False,
+                pygame.K_RETURN: False,
+                pygame.K_SPACE: False,
+                pygame.K_LEFT: True,
+                pygame.K_RIGHT: False,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_called_with(0x20)
+
+    def test_handle_events_right_key_pressed(self):
+        self.scene.p1_controller.write = unittest.mock.Mock()
+
+        with unittest.mock.patch("pygame.key.get_pressed") as mock_get_pressed:
+            mock_get_pressed.return_value = {
+                pygame.K_c: False,
+                pygame.K_RETURN: False,
+                pygame.K_SPACE: False,
+                pygame.K_LEFT: False,
+                pygame.K_RIGHT: True,
+            }
+            self.scene.handle_events()
+            self.scene.p1_controller.write.assert_called_with(0x40)
