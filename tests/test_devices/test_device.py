@@ -42,3 +42,8 @@ class TestSpaceInvadersScene(unittest.TestCase):
         shifter.write(write_offset, 0x02)  # write to offset
         shifter.write(write_value, 0x04)  # write to value
         self.assertEqual(shifter.read(), expected_value)
+
+    def test_shifter_invalid_port(self):
+        shifter = Shifter()
+        with self.assertRaises(Exception):
+            shifter.write(0x01, 0x05)
