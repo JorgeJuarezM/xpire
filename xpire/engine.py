@@ -20,6 +20,9 @@ BG_COLOR = (0x20, 0x22, 0x2E)
 
 
 class GameScene:
+    def __init__(self):
+        self.is_finished = False
+
     def update(self) -> pygame.surface.Surface:
         """Update the game state."""
 
@@ -79,4 +82,4 @@ class GameManager:
             self.print_debug_info()
             pygame.display.update()
 
-            running = not self.scene.is_finished()
+            running = not self.scene.is_finished
