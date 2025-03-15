@@ -39,6 +39,9 @@ class TestEngine(unittest.TestCase):
         mock_update.return_value = None
         mock_get.return_value = []
 
+        self.engine.scene.is_finished = unittest.mock.Mock()
+        self.engine.scene.is_finished.return_value = True
+
         self.engine.start()
 
         mock_update.assert_called_once()
