@@ -1,5 +1,5 @@
 """
-Test class for Spàce Invaders Scene.
+Test class for Space Invaders Scene.
 """
 
 import tempfile
