@@ -15,6 +15,7 @@ WHITE = (0xFF, 0xFF, 0xFF)
 RED = (0xFF, 0x00, 0x00)
 GREEN = (0x00, 0xFF, 0x00)
 BLUE = (0x00, 0x00, 0xFF)
+BG_COLOR = (0x20, 0x22, 0x2E)
 
 
 class GameScene:
@@ -58,9 +59,10 @@ class GameManager:
         self.screen.blit(time_surface, (30, 50 + offset))
 
     def start(self):
-        for frame in self.scene.update():
+        while True:
             self.clock.tick(60)
-            self.screen.fill((0, 0, 0))
+            self.screen.fill(BG_COLOR)
+            frame = self.scene.update()
 
             self.handle_events()
             surface = pygame.transform.scale(
