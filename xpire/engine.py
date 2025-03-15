@@ -19,7 +19,7 @@ BG_COLOR = (0x20, 0x22, 0x2E)
 
 
 class GameScene:
-    def update(self):
+    def update(self) -> pygame.surface.Surface:
         """Update the game state."""
 
 
@@ -62,7 +62,7 @@ class GameManager:
         while True:
             self.clock.tick(60)
             self.screen.fill(BG_COLOR)
-            frame = self.scene.update()
+            frame: pygame.surface.Surface = self.scene.update()
 
             self.handle_events()
             surface = pygame.transform.scale(

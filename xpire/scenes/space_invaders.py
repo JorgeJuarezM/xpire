@@ -12,7 +12,6 @@ screen_frequency = 60
 cpu_frequency = 2000000
 
 frequency_ratio = cpu_frequency // screen_frequency
-flipflop = FlipFlopD()
 
 
 WHITE = (0xFF, 0xFF, 0xFF)
@@ -32,6 +31,7 @@ class SpaceInvadersScene(GameScene):
         self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
         self.cpu.bus.add_device(Bus.Addresss.DUMMY_DEVICE, Device())
         self.clock = pygame.time.Clock()
+        self.flipflop = FlipFlopD()
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -71,10 +71,10 @@ class SpaceInvadersScene(GameScene):
             self.p1_controller.write(0x40)
 
     def handle_interrupts(self):
-        opcode = flipflop.switch()
+        opcode = self.flipflop.switch()
         self.cpu.execute_interrupt(opcode)
 
-    def update(self):
+    def update(self) -> pygame.surface.Surface:
         """Update the game state."""
         self.handle_events()
         self.handle_interrupts()

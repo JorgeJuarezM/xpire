@@ -130,24 +130,17 @@ class TestSpaceInvadersScene(unittest.TestCase):
         self.scene.handle_events = unittest.mock.Mock()
         self.scene.handle_interrupts = unittest.mock.Mock()
 
-        for _ in self.scene.update():
-            self.scene.cpu.execute_instruction.assert_not_called()
-            self.scene.handle_events.assert_called_once()
-            self.scene.handle_interrupts.assert_called_once()
-            break
+        self.scene.update()
+        self.scene.cpu.execute_instruction.assert_not_called()
+        self.scene.handle_events.assert_called_once()
+        self.scene.handle_interrupts.assert_called_once()
 
-    def test_handle_interrupts_not_enabled(self):
-        self.scene.cpu.interrupts_enabled = False
+    def test_handle_interrupts(self):
         self.scene.cpu.execute_interrupt = unittest.mock.Mock()
-        result = self.scene.handle_interrupts()
+        self.scene.flipflop.switch = unittest.mock.Mock()
+        self.scene.flipflop.switch.return_value = 0xFF
 
-        self.assertFalse(result)
-        self.scene.cpu.execute_interrupt.assert_not_called()
+        self.scene.handle_interrupts()
 
-    def test_handle_interrupts_enabled(self):
-        self.scene.cpu.interrupts_enabled = True
-        self.scene.cpu.execute_interrupt = unittest.mock.Mock()
-        result = self.scene.handle_interrupts()
-
-        self.assertTrue(result)
-        self.scene.cpu.execute_interrupt.assert_called_once()
+        self.scene.flipflop.switch.assert_called_once()
+        self.scene.cpu.execute_interrupt.assert_called_once_with(0xFF)
