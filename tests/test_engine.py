@@ -18,7 +18,7 @@ class MockScene:
         self.surface = surface
 
     def update(self):
-        yield self.surface
+        return self.surface
 
 
 class TestEngine(unittest.TestCase):
@@ -38,6 +38,9 @@ class TestEngine(unittest.TestCase):
     def test_start(self, mock_update, mock_get):
         mock_update.return_value = None
         mock_get.return_value = []
+
+        self.engine.scene.is_finished = unittest.mock.Mock()
+        self.engine.scene.is_finished.return_value = True
 
         self.engine.start()
 
