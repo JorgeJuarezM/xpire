@@ -362,12 +362,12 @@ class Intel8080(CPU):
 
         lsb = self.registers.A & 0x0F
         if half_carry or lsb > 9:
-            accumulator = accumulator + 0x06
+            accumulator = (accumulator + 0x06) & 0xFF
             self.flags.A = (lsb + 0x06) > 0xF
 
         msb = self.registers.A >> 4
         if carry or msb > 9:
-            accumulator = accumulator + 0x60
+            accumulator = (accumulator + 0x60) & 0xFF
             self.flags.C = (msb + 0x06) > 0x0F
         else:
             self.flags.C = False
