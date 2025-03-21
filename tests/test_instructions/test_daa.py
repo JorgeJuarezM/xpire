@@ -6,13 +6,8 @@ Thanks to GunshipPenguin for the test cases.
 """
 
 import unittest
-import unittest.mock
-
-from faker import Faker
 
 from xpire.cpus.intel_8080 import Intel8080
-
-fake = Faker()
 
 
 def bcd_encode(n):
