@@ -360,12 +360,12 @@ class Intel8080(CPU):
         carry = 1 if self.flags.C else 0
         half_carry = 1 if self.flags.A else 0
 
-        lsb = accumulator & 0x0F
+        lsb = self.registers.A & 0x0F
         if half_carry or lsb > 9:
             accumulator = (accumulator + 0x06) & 0xFF
             self.flags.A = (lsb + 0x06) > 0xF
 
-        msb = accumulator >> 4
+        msb = self.registers.A >> 4
         if carry or msb > 9:
             accumulator = (accumulator + 0x60) & 0xFF
             self.flags.C = (msb + 0x06) > 0x0F
@@ -376,6 +376,7 @@ class Intel8080(CPU):
         self.flags.Z = (accumulator & 0xFF) == 0x00
         self.flags.S = (accumulator & 0x80) != 0x00
         self.flags.P = (bin(accumulator & 0xFF).count("1") % 2) == 0
+        self.cycles += 4
 
     @manager.add_instruction(0x2A)
     def lhld(self) -> None:
