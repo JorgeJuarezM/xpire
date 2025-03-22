@@ -11,6 +11,7 @@ values are tuples containing the instruction handler and the registers.
 from typing import Callable, List, Optional, Tuple
 
 from xpire.cpus.abstract import AbstractCPU
+from xpire.cpus.intructions import Instruction
 
 
 class InstructionManager:
@@ -65,6 +66,12 @@ class InstructionManager:
         """
         if opcode not in cls.instructions:
             raise Exception(f"Unknown opcode: 0x{opcode:02x}")
+
+        ins = cls.instructions[opcode]
+        if isinstance(ins, Instruction):
+            cycles = ins.execute_instruction(cpu)
+            cpu.cycles += cycles
+            return cycles
 
         handler, registers = cls.instructions[opcode]
         handler(cpu, *registers)

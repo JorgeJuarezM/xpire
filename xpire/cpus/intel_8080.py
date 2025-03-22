@@ -3,6 +3,7 @@ Intel 8080 CPU implementation.
 """
 
 from xpire.cpus.cpu import CPU
+from xpire.cpus.intructions import Instruction
 from xpire.decorators import increment_stack_pointer
 from xpire.instructions.manager import InstructionManager as manager
 from xpire.utils import get_ls_nib, get_twos_complement, join_bytes, split_word
@@ -21,9 +22,57 @@ class Intel8080(CPU):
         initializes the registers to zero.
         """
         super().__init__(*args, **kwargs)
-        self.out = {}
-
         self.interrupts_enabled = False
+
+        instructions = {
+            0x00: NOP(),
+            0x01: LXI("BC"),
+            0x02: STAX("BC"),
+            0x03: INX("BC"),
+            0x04: INR("B"),
+            0x05: DCR("B"),
+            0x06: MVI("B"),
+            0x07: RLC(),
+            0x08: NOP(),
+            0x09: DAD("BC"),
+            0x0A: LDAX("BC"),
+            0x0B: DCX("BC"),
+            0x0C: INR("C"),
+            0x0D: DCR("C"),
+            0x0E: MVI("C"),
+            0x0F: RRC(),
+            0x10: NOP(),
+            0x11: LXI("DE"),
+            0x12: STAX("DE"),
+            0x13: INX("DE"),
+            0x14: INR("D"),
+            0x15: DCR("D"),
+            0x16: MVI("D"),
+            0x17: RAL(),
+            0x19: DAD("DE"),
+            0x1A: LDAX("DE"),
+            0x1B: DCX("DE"),
+            0x20: NOP(),
+            0x1C: INR("E"),
+            0x1D: DCR("E"),
+            0x1E: MVI("E"),
+            0x21: LXI("HL"),
+            0x23: INX("HL"),
+            0x24: INR("H"),
+            0x25: DCR("H"),
+            0x26: MVI("H"),
+            0x29: DAD("HL"),
+            0x2B: DCX("HL"),
+            0x2C: INR("L"),
+            0x2D: DCR("L"),
+            0x2E: MVI("L"),
+            0x3A: LDA(),
+            0x3C: INR("A"),
+            0x3D: DCR("A"),
+            0x3E: MVI("A"),
+        }
+
+        manager.instructions.update(instructions)
 
     def write_memory_byte(self, address, value) -> None:
         """
@@ -118,211 +167,211 @@ class Intel8080(CPU):
         self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
         self.flags.C = result <= 0xFF
 
-    @manager.add_instruction(0x01, ["B", "C"])
-    @manager.add_instruction(0x11, ["D", "E"])
-    @manager.add_instruction(0x21, ["H", "L"])
-    def lxi_reg_d16(self, h: int, l: int) -> None:
-        self.registers[l] = self.fetch_byte()
-        self.registers[h] = self.fetch_byte()
-        self.cycles += 10
+    # @manager.add_instruction(0x01, ["B", "C"])
+    # @manager.add_instruction(0x11, ["D", "E"])
+    # @manager.add_instruction(0x21, ["H", "L"])
+    # def lxi_reg_d16(self, h: int, l: int) -> None:
+    #     self.registers[l] = self.fetch_byte()
+    #     self.registers[h] = self.fetch_byte()
+    #     self.cycles += 10
 
-    @manager.add_instruction(0x02, ["BC"])
-    @manager.add_instruction(0x12, ["DE"])
-    def stax_reg(self, register: str) -> None:
-        address = self.registers[register]
-        self.write_memory_byte(address, self.registers.A)
-        self.cycles += 7
+    # @manager.add_instruction(0x02, ["BC"])
+    # @manager.add_instruction(0x12, ["DE"])
+    # def stax_reg(self, register: str) -> None:
+    #     address = self.registers[register]
+    #     self.write_memory_byte(address, self.registers.A)
+    #     self.cycles += 7
 
-    @manager.add_instruction(0x03, ["B", "C"])
-    @manager.add_instruction(0x13, ["D", "E"])
-    @manager.add_instruction(0x23, ["H", "L"])
-    def inx_reg(self, h: int, l: int) -> None:
-        """
-        Increment the value of the specified register pair by one.
+    # @manager.add_instruction(0x03, ["B", "C"])
+    # @manager.add_instruction(0x13, ["D", "E"])
+    # @manager.add_instruction(0x23, ["H", "L"])
+    # def inx_reg(self, h: int, l: int) -> None:
+    #     """
+    #     Increment the value of the specified register pair by one.
 
-        Condition bits affected: Zero, Sign, Parity, Auxiliary.
-        """
-        value = join_bytes(self.registers[h], self.registers[l])
-        result = value + 0x01
-        new_value = result & 0xFFFF
+    #     Condition bits affected: Zero, Sign, Parity, Auxiliary.
+    #     """
+    #     value = join_bytes(self.registers[h], self.registers[l])
+    #     result = value + 0x01
+    #     new_value = result & 0xFFFF
 
-        high, low = split_word(new_value)
-        self.registers[h] = high
-        self.registers[l] = low
-        self.cycles += 5
+    #     high, low = split_word(new_value)
+    #     self.registers[h] = high
+    #     self.registers[l] = low
+    #     self.cycles += 5
 
-    @manager.add_instruction(0x04, ["B"])
-    @manager.add_instruction(0x0C, ["C"])
-    @manager.add_instruction(0x14, ["D"])
-    @manager.add_instruction(0x1C, ["E"])
-    @manager.add_instruction(0x24, ["H"])
-    @manager.add_instruction(0x2C, ["L"])
-    @manager.add_instruction(0x3C, ["A"])
-    def inr_reg(self, register: int) -> None:
-        """
-        Increment the value of the specified register by one.
+    # @manager.add_instruction(0x04, ["B"])
+    # @manager.add_instruction(0x0C, ["C"])
+    # @manager.add_instruction(0x14, ["D"])
+    # @manager.add_instruction(0x1C, ["E"])
+    # @manager.add_instruction(0x24, ["H"])
+    # @manager.add_instruction(0x2C, ["L"])
+    # @manager.add_instruction(0x3C, ["A"])
+    # def inr_reg(self, register: int) -> None:
+    #     """
+    #     Increment the value of the specified register by one.
 
-        Condition bits affected: Zero, Sign, Parity, Auxiliary.
-        """
-        value = self.registers[register]
-        result = value + 0x01
-        new_value = result & 0xFF
-        self.registers[register] = new_value
+    #     Condition bits affected: Zero, Sign, Parity, Auxiliary.
+    #     """
+    #     value = self.registers[register]
+    #     result = value + 0x01
+    #     new_value = result & 0xFF
+    #     self.registers[register] = new_value
 
-        self.set_flags(new_value)
-        self.set_aux_carry_flag(value, 0x01)
+    #     self.set_flags(new_value)
+    #     self.set_aux_carry_flag(value, 0x01)
 
-        self.cycles += 5
+    #     self.cycles += 5
 
-    @manager.add_instruction(0x05, ["B"])
-    @manager.add_instruction(0x0D, ["C"])
-    @manager.add_instruction(0x15, ["D"])
-    @manager.add_instruction(0x1D, ["E"])
-    @manager.add_instruction(0x25, ["H"])
-    @manager.add_instruction(0x2D, ["L"])
-    @manager.add_instruction(0x3D, ["A"])
-    def dcr_reg(self, register: int) -> None:
-        """
-        Decrement the value of the specified register by one.
+    # @manager.add_instruction(0x05, ["B"])
+    # @manager.add_instruction(0x0D, ["C"])
+    # @manager.add_instruction(0x15, ["D"])
+    # @manager.add_instruction(0x1D, ["E"])
+    # @manager.add_instruction(0x25, ["H"])
+    # @manager.add_instruction(0x2D, ["L"])
+    # @manager.add_instruction(0x3D, ["A"])
+    # def dcr_reg(self, register: int) -> None:
+    #     """
+    #     Decrement the value of the specified register by one.
 
-        Condition bits affected: Zero, Sign, Parity, Auxiliary Carry
-        """
-        reg_value = self.registers[register]
-        result = reg_value - 0x01
-        new_value = result & 0xFF
-        self.registers[register] = new_value
+    #     Condition bits affected: Zero, Sign, Parity, Auxiliary Carry
+    #     """
+    #     reg_value = self.registers[register]
+    #     result = reg_value - 0x01
+    #     new_value = result & 0xFF
+    #     self.registers[register] = new_value
 
-        self.set_flags(new_value)
-        self.flags.A = ((result & 0xF) - 1) > 0xF
-        self.cycles += 5
+    #     self.set_flags(new_value)
+    #     self.flags.A = ((result & 0xF) - 1) > 0xF
+    #     self.cycles += 5
 
-    @manager.add_instruction(0x06, ["B"])
-    @manager.add_instruction(0x0E, ["C"])
-    @manager.add_instruction(0x16, ["D"])
-    @manager.add_instruction(0x1E, ["E"])
-    @manager.add_instruction(0x26, ["H"])
-    @manager.add_instruction(0x2E, ["L"])
-    @manager.add_instruction(0x3E, ["A"])
-    def mvi_reg(self, register: int) -> callable:
-        """
-        Move an immediate value to the specified register.
+    # @manager.add_instruction(0x06, ["B"])
+    # @manager.add_instruction(0x0E, ["C"])
+    # @manager.add_instruction(0x16, ["D"])
+    # @manager.add_instruction(0x1E, ["E"])
+    # @manager.add_instruction(0x26, ["H"])
+    # @manager.add_instruction(0x2E, ["L"])
+    # @manager.add_instruction(0x3E, ["A"])
+    # def mvi_reg(self, register: int) -> callable:
+    #     """
+    #     Move an immediate value to the specified register.
 
-        This instruction fetches an immediate 8-bit value from memory and stores
-        it in the specified register. The opcode determines which register the
-        value will be stored in.
+    #     This instruction fetches an immediate 8-bit value from memory and stores
+    #     it in the specified register. The opcode determines which register the
+    #     value will be stored in.
 
-        Args:
-            register (int): The register identifier where the immediate value
-                            should be stored.
-        """
-        self.registers[register] = self.fetch_byte()
-        self.cycles += 7
+    #     Args:
+    #         register (int): The register identifier where the immediate value
+    #                         should be stored.
+    #     """
+    #     self.registers[register] = self.fetch_byte()
+    #     self.cycles += 7
 
-    @manager.add_instruction(0x07)
-    def rlc(self) -> None:
-        """
-        The carry bit is set equal to the high-order bit of the accumulator.
+    # @manager.add_instruction(0x07)
+    # def rlc(self) -> None:
+    #     """
+    #     The carry bit is set equal to the high-order bit of the accumulator.
 
-        The contents of the accumulator are rotated one bit position
-        to the left, with the high-order bit being transferred to the
-        low-order bit position of the accumulator.
+    #     The contents of the accumulator are rotated one bit position
+    #     to the left, with the high-order bit being transferred to the
+    #     low-order bit position of the accumulator.
 
-        Condition bits affected: Carry.
-        """
-        accumulator = self.registers.A & 0xFF
-        # Obtener el bit menos significativo (LSB) del acumulador
-        new_carry = accumulator & 0x80
-        # Rotar el acumulador a la izquierda
-        # El bit de carry se convierte en el bit menos significativo (LSB)
-        accumulator = (accumulator << 1) | (new_carry >> 7)
-        # Asegurarse de que el acumulador siga siendo de 8 bits
-        accumulator = accumulator & 0xFF
-        self.registers.A = accumulator
-        self.flags.C = True if new_carry else False
-        self.cycles += 4
+    #     Condition bits affected: Carry.
+    #     """
+    #     accumulator = self.registers.A & 0xFF
+    #     # Obtener el bit menos significativo (LSB) del acumulador
+    #     new_carry = accumulator & 0x80
+    #     # Rotar el acumulador a la izquierda
+    #     # El bit de carry se convierte en el bit menos significativo (LSB)
+    #     accumulator = (accumulator << 1) | (new_carry >> 7)
+    #     # Asegurarse de que el acumulador siga siendo de 8 bits
+    #     accumulator = accumulator & 0xFF
+    #     self.registers.A = accumulator
+    #     self.flags.C = True if new_carry else False
+    #     self.cycles += 4
 
-    @manager.add_instruction(0x08)
-    @manager.add_instruction(0x10)
-    def ignored_instruction(self) -> None:
-        self.cycles += 4
+    # @manager.add_instruction(0x08)
+    # @manager.add_instruction(0x10)
+    # def ignored_instruction(self) -> None:
+    #     self.cycles += 4
 
-    @manager.add_instruction(0x09, ["BC"])
-    @manager.add_instruction(0x19, ["DE"])
-    @manager.add_instruction(0x29, ["HL"])
-    def dad_reg16(self, register: str) -> None:
-        """
-        The 16-bit number in the specified register pair is added
-        to the 16-bit number held in the Hand L registers using two's complement arithmetic.
+    # @manager.add_instruction(0x09, ["BC"])
+    # @manager.add_instruction(0x19, ["DE"])
+    # @manager.add_instruction(0x29, ["HL"])
+    # def dad_reg16(self, register: str) -> None:
+    #     """
+    #     The 16-bit number in the specified register pair is added
+    #     to the 16-bit number held in the Hand L registers using two's complement arithmetic.
 
-        The result replaces the contents of the Hand L registers.
+    #     The result replaces the contents of the Hand L registers.
 
-        Condition bits affected: Carry.
-        """
-        value = self.registers[register]
-        result = value + self.registers.HL
-        new_value = result & 0xFFFF
+    #     Condition bits affected: Carry.
+    #     """
+    #     value = self.registers[register]
+    #     result = value + self.registers.HL
+    #     new_value = result & 0xFFFF
 
-        self.registers.HL = new_value
-        self.set_carry_flag(result, mask=0xFFFF)
-        self.cycles += 10
+    #     self.registers.HL = new_value
+    #     self.set_carry_flag(result, mask=0xFFFF)
+    #     self.cycles += 10
 
-    @manager.add_instruction(0x0A, ["BC"])
-    @manager.add_instruction(0x1A, ["DE"])
-    def ldax_reg16(self, register: str) -> None:
-        address = self.registers[register]
-        self.registers.A = self.read_memory_byte(address)
-        self.cycles += 7
+    # @manager.add_instruction(0x0A, ["BC"])
+    # @manager.add_instruction(0x1A, ["DE"])
+    # def ldax_reg16(self, register: str) -> None:
+    #     address = self.registers[register]
+    #     self.registers.A = self.read_memory_byte(address)
+    #     self.cycles += 7
 
-    @manager.add_instruction(0x0B, ["BC"])
-    @manager.add_instruction(0x1B, ["DE"])
-    @manager.add_instruction(0x2B, ["HL"])
-    def dcx_reg16(self, register: str):
-        value = self.registers[register]
-        result = value - 0x01
-        result = result & 0xFFFF
-        self.registers[register] = result
+    # @manager.add_instruction(0x0B, ["BC"])
+    # @manager.add_instruction(0x1B, ["DE"])
+    # @manager.add_instruction(0x2B, ["HL"])
+    # def dcx_reg16(self, register: str):
+    #     value = self.registers[register]
+    #     result = value - 0x01
+    #     result = result & 0xFFFF
+    #     self.registers[register] = result
 
-        self.cycles += 5
+    #     self.cycles += 5
 
-    @manager.add_instruction(0x0F)
-    def rrc(self) -> None:
-        """
-        The carry bit is set equal to the low-order bit of the accumulator.
+    # @manager.add_instruction(0x0F)
+    # def rrc(self) -> None:
+    #     """
+    #     The carry bit is set equal to the low-order bit of the accumulator.
 
-        The contents of the accumulator are rotated one bit position
-        to the right, with the low-order bit being transferred to the
-        high-order bit position of the accumulator.
+    #     The contents of the accumulator are rotated one bit position
+    #     to the right, with the low-order bit being transferred to the
+    #     high-order bit position of the accumulator.
 
-        Condition bits affected: Carry.
-        """
-        accumulator = self.registers.A & 0xFF
-        # Obtener el bit menos significativo (LSB) del acumulador
-        new_carry = accumulator & 0x01
-        # Rotar el acumulador a la derecha
-        # El bit de carry se convierte en el bit más significativo (MSB)
-        accumulator = (accumulator >> 1) | (new_carry << 7)
-        # Asegurarse de que el acumulador siga siendo de 8 bits
-        accumulator = accumulator & 0xFF
-        self.registers.A = accumulator
-        self.flags.C = True if new_carry else False
-        self.cycles += 4
+    #     Condition bits affected: Carry.
+    #     """
+    #     accumulator = self.registers.A & 0xFF
+    #     # Obtener el bit menos significativo (LSB) del acumulador
+    #     new_carry = accumulator & 0x01
+    #     # Rotar el acumulador a la derecha
+    #     # El bit de carry se convierte en el bit más significativo (MSB)
+    #     accumulator = (accumulator >> 1) | (new_carry << 7)
+    #     # Asegurarse de que el acumulador siga siendo de 8 bits
+    #     accumulator = accumulator & 0xFF
+    #     self.registers.A = accumulator
+    #     self.flags.C = True if new_carry else False
+    #     self.cycles += 4
 
-    @manager.add_instruction(0x17)
-    def ral(self):
-        carry = 1 if self.flags.C else 0
-        a_value = self.registers.A
-        new_carry = a_value & 0x80
+    # @manager.add_instruction(0x17)
+    # def ral(self):
+    #     carry = 1 if self.flags.C else 0
+    #     a_value = self.registers.A
+    #     new_carry = a_value & 0x80
 
-        # Rotar el acumulador a la izquierda
-        # El bit de carry se convierte en el bit menos significativo (LSB)
-        a_value = (a_value << 1) | carry
+    #     # Rotar el acumulador a la izquierda
+    #     # El bit de carry se convierte en el bit menos significativo (LSB)
+    #     a_value = (a_value << 1) | carry
 
-        # Asegurarse de que el acumulador siga siendo de 8 bits
-        a_value = a_value & 0xFF
+    #     # Asegurarse de que el acumulador siga siendo de 8 bits
+    #     a_value = a_value & 0xFF
 
-        self.registers.A = a_value
-        self.flags.C = True if new_carry else False
-        self.cycles += 4
+    #     self.registers.A = a_value
+    #     self.flags.C = True if new_carry else False
+    #     self.cycles += 4
 
     @manager.add_instruction(0x1F)
     def rar(self) -> None:
@@ -459,18 +508,18 @@ class Intel8080(CPU):
         self.set_carry_flag(result, mask=0xFFFF)
         self.cycles += 10
 
-    @manager.add_instruction(0x3A)
-    def lda_addr(self) -> None:
-        """
-        Load the value at the specified memory address to the accumulator (A register).
+    # @manager.add_instruction(0x3A)
+    # def lda_addr(self) -> None:
+    #     """
+    #     Load the value at the specified memory address to the accumulator (A register).
 
-        This instruction fetches a 16-bit address from memory and loads the value stored at that address
-        to the accumulator. The value is loaded as a byte, not a word.
-        """
-        address = self.fetch_word()
-        value = self.read_memory_byte(address)
-        self.registers.A = value
-        self.cycles += 13
+    #     This instruction fetches a 16-bit address from memory and loads the value stored at that address
+    #     to the accumulator. The value is loaded as a byte, not a word.
+    #     """
+    #     address = self.fetch_word()
+    #     value = self.read_memory_byte(address)
+    #     self.registers.A = value
+    #     self.cycles += 13
 
     @manager.add_instruction(0x3B)
     def dcx_sp(self):
@@ -1039,7 +1088,11 @@ class Intel8080(CPU):
     @manager.add_instruction(0xD3)
     def out_d8(self) -> None:
         port = self.fetch_byte()
-        self.bus.write(port, self.registers.A)
+        # self.bus.write(port, self.registers.A)
+
+        if port == 3:
+            print(f"OUT-> {port:02X}: {self.registers.A:02X}")
+
         self.cycles += 10
 
     @manager.add_instruction(0xD4)
@@ -1395,3 +1448,209 @@ class Intel8080(CPU):
             self._push(h, l)
             self.PC = 0x38
             self.cycles += 11
+
+
+class NOP(Instruction):
+    _cycles = 4
+
+    def execute(self, cpu: Intel8080) -> int:
+        return self._cycles
+
+
+class LXI(Instruction):
+    _cycles = 10
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        cpu.registers[register] = cpu.fetch_word()
+        return self._cycles
+
+
+class STAX(Instruction):
+    _cycles = 7
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        address = cpu.registers[register]
+        cpu.write_memory_byte(address, cpu.registers.A)
+        return self._cycles
+
+
+class INX(Instruction):
+    """
+    Increment the value of the specified 16-bit register by one.
+
+    Condition bits affected: None.
+    """
+
+    _cycles = 5
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        reg_value = cpu.registers[register]
+        cpu.registers[register] = (reg_value + 1) & 0xFFFF
+        return self._cycles
+
+
+class INR(Instruction):
+    """
+    Increment the value of the specified 8-bit register by one.
+
+    Condition bits affected: Zero, Sign, Parity, Auxiliary.
+    """
+
+    _cycles = 5
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        value = cpu.registers[register]
+        result = value + 1
+        cpu.registers[register] = result & 0xFF
+
+        cpu.set_flags(result & 0xFF)
+        cpu.set_aux_carry_flag(value, 1)
+
+        return self._cycles
+
+
+class DCR(Instruction):
+    _cycles = 5
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        value = cpu.registers[register]
+        result = value - 1
+        cpu.registers[register] = result & 0xFF
+
+        cpu.set_flags(result & 0xFF)
+        cpu.flags.A = ((result & 0xF) - 1) > 0xF
+
+        return self._cycles
+
+
+class MVI(Instruction):
+    """
+    Move an immediate value to the specified register."
+    """
+
+    _cycles = 7
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        cpu.registers[register] = cpu.fetch_byte()
+        return self._cycles
+
+
+class RLC(Instruction):
+    """
+    The carry bit is set equal to the high-order bit of the accumulator.
+
+    The contents of the accumulator are rotated one bit position
+    to the left, with the high-order bit being transferred to the
+    low-order bit position of the accumulator.
+
+    Condition bits affected: Carry.
+    """
+
+    _cycles = 4
+
+    def execute(self, cpu: Intel8080) -> int:
+        accumulator = cpu.registers.A & 0xFF
+        # Obtener el bit menos significativo (LSB) del acumulador
+        new_carry = accumulator & 0x80
+        # Rotar el acumulador a la izquierda
+        # El bit de carry se convierte en el bit menos significativo (LSB)
+        accumulator = (accumulator << 1) | (new_carry >> 7)
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        accumulator = accumulator & 0xFF
+        cpu.registers.A = accumulator
+        cpu.flags.C = True if new_carry else False
+
+        return self._cycles
+
+
+class DAD(Instruction):
+    _cycles = 10
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        value = cpu.registers[register]
+        result = value + cpu.registers.HL
+        new_value = result & 0xFFFF
+
+        cpu.registers.HL = new_value
+        cpu.set_carry_flag(result, mask=0xFFFF)
+
+        return self._cycles
+
+
+class LDAX(Instruction):
+    _cycles = 7
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        address = cpu.registers[register]
+        cpu.registers.A = cpu.read_memory_byte(address)
+        return self._cycles
+
+
+class DCX(Instruction):
+    _cycles = 5
+
+    def execute(self, cpu: Intel8080, register: str) -> int:
+        value = cpu.registers[register]
+        result = value - 1
+        result = result & 0xFFFF
+        cpu.registers[register] = result
+
+        return self._cycles
+
+
+class RRC(Instruction):
+    """
+    The carry bit is set equal to the low-order bit of the accumulator.
+
+    The contents of the accumulator are rotated one bit position
+    to the right, with the low-order bit being transferred to the
+    high-order bit position of the accumulator.
+
+    Condition bits affected: Carry.
+    """
+
+    _cycles = 4
+
+    def execute(self, cpu: Intel8080) -> int:
+        accumulator = cpu.registers.A & 0xFF
+        # Obtener el bit menos significativo (LSB) del acumulador
+        new_carry = accumulator & 0x01
+        # Rotar el acumulador a la derecha
+        # El bit de carry se convierte en el bit más significativo (MSB)
+        accumulator = (accumulator >> 1) | (new_carry << 7)
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        accumulator = accumulator & 0xFF
+        cpu.registers.A = accumulator
+        cpu.flags.C = True if new_carry else False
+
+        return self._cycles
+
+
+class RAL(Instruction):
+    _cycles = 4
+
+    def execute(self, cpu: Intel8080) -> None:
+        carry = 1 if cpu.flags.C else 0
+        a_value = cpu.registers.A
+        new_carry = a_value & 0x80
+
+        # Rotar el acumulador a la izquierda
+        # El bit de carry se convierte en el bit menos significativo (LSB)
+        a_value = (a_value << 1) | carry
+
+        # Asegurarse de que el acumulador siga siendo de 8 bits
+        a_value = a_value & 0xFF
+
+        cpu.registers.A = a_value
+        cpu.flags.C = True if new_carry else False
+
+        return self._cycles
+
+
+class LDA(Instruction):
+    _cycles = 4
+
+    def execute(self, cpu: Intel8080) -> int:
+        address = cpu.fetch_word()
+        cpu.registers.A = cpu.read_memory_byte(address)
+        return self._cycles
