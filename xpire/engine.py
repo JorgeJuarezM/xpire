@@ -79,7 +79,7 @@ class GameManager:
             y_position = self.screen.get_height() // 2 - surface.get_height() // 2
             self.screen.blit(surface, (x_position, y_position))
 
-            self.print_debug_info()
+            # self.print_debug_info()
             pygame.display.update()
 
             running = not self.scene.is_finished

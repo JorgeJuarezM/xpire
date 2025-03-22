@@ -82,6 +82,9 @@ class SpaceInvadersScene(GameScene):
 
         while self.cpu.cycles < frequency_ratio:
             self.cpu.execute_instruction()
+            if self.cpu.halted:
+                self.is_finished = True
+                break
 
         self.cpu.cycles = 0
         return self.render()

@@ -6,7 +6,19 @@ from unittest.mock import patch
 import pygame
 from faker import Faker
 
-from xpire.cpus.intel_8080 import Intel8080
+from xpire.cpus.intel_8080 import (
+    DAD,
+    DCR,
+    DCX,
+    INR,
+    LDA,
+    LDAX,
+    RAL,
+    RLC,
+    RRC,
+    STAX,
+    Intel8080,
+)
 from xpire.machine import Machine
 
 fake = Faker()
@@ -88,7 +100,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.flags.A = False
 
         self.cpu.registers.B = 0xFE
-        self.cpu.inr_reg("B")
+        INR("B").execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.B, 0xFF)
         self.assertEqual(self.cpu.flags.Z, False)
@@ -98,7 +110,7 @@ class TestIntel8080(unittest.TestCase):
         self.assertEqual(self.cpu.flags.A, False)
 
         self.cpu.registers.B = 0xFF
-        self.cpu.inr_reg("B")
+        INR("B").execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.B, 0x00)
         self.assertEqual(self.cpu.flags.Z, True)
@@ -180,7 +192,7 @@ class TestIntel8080(unittest.TestCase):
             0b11110010 -> 0b01111001
         """
         self.cpu.registers.A = 0b11110010  # 0xF2
-        self.cpu.rrc()
+        RRC().execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.A, 0b1111001)  # 0x79
         self.assertEqual(self.cpu.flags.S, False)
@@ -205,7 +217,7 @@ class TestIntel8080(unittest.TestCase):
     def test_sum_register_pair_with_hl(self):
         self.cpu.registers.BC = 0x339F
         self.cpu.registers.HL = 0xA17B
-        self.cpu.dad_reg16("BC")
+        DAD("BC").execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.HL, 0xD51A)
         self.assertEqual(self.cpu.flags.S, False)
@@ -509,7 +521,7 @@ class TestIntel8080(unittest.TestCase):
 
     def test_decrement_register(self):
         self.cpu.registers.A = 0x14
-        self.cpu.dcr_reg("A")
+        DCR("A").execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.A, 0x13)
         self.assertEqual(self.cpu.flags.S, False)
@@ -661,7 +673,7 @@ class TestIntel8080(unittest.TestCase):
 
     def test_rotate_left_accumulator(self):
         self.cpu.registers.A = 0x14
-        self.cpu.rlc()
+        RLC().execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.A, 0x28)
         self.assertEqual(self.cpu.flags.S, False)
@@ -953,7 +965,7 @@ class TestIntel8080(unittest.TestCase):
 
     def test_dcx_reg16(self):
         self.cpu.registers.HL = 0x1234
-        self.cpu.dcx_reg16("HL")
+        DCX("HL").execute_instruction(self.cpu)
 
         self.assertEqual(self.cpu.registers.HL, 0x1233)
 
@@ -969,7 +981,7 @@ class TestIntel8080(unittest.TestCase):
     def test_stax_reg(self):
         self.cpu.registers.A = 0x99
         self.cpu.registers.BC = 0x1234
-        self.cpu.stax_reg("BC")
+        STAX("BC").execute_instruction(self.cpu)
         self.assertEqual(self.cpu.memory[0x1234], 0x99)
 
     def test_daa(self):
@@ -996,13 +1008,13 @@ class TestIntel8080(unittest.TestCase):
     def test_ldax_reg16(self):
         self.cpu.registers.BC = 0x1234
         self.cpu.write_memory_byte(self.cpu.registers.BC, 0x99)
-        self.cpu.ldax_reg16("BC")
+        LDAX("BC").execute_instruction(self.cpu)
         self.assertEqual(self.cpu.registers.A, 0x99)
 
     def test_ral(self):
         self.cpu.flags.C = True
         self.cpu.registers.A = 0b01000000
-        self.cpu.ral()
+        RAL().execute_instruction(self.cpu)
         self.assertEqual(self.cpu.registers.A, 0b10000001)
         self.assertEqual(self.cpu.flags.C, False)
 
@@ -1047,7 +1059,7 @@ class TestIntel8080(unittest.TestCase):
         self.cpu.memory[0x0000] = 0xFF
         self.cpu.memory[0x0001] = 0xFF
         self.cpu.memory[0xFFFF] = 0x99
-        self.cpu.lda_addr()
+        LDA().execute_instruction(self.cpu)
         self.assertEqual(self.cpu.registers.A, 0x99)
 
     def test_mov_reg_m(self):

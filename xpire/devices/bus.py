@@ -20,6 +20,7 @@ class Bus:
     def __init__(self):
         self.devices: Dict[int, Device] = {}
         self.read_mapping = {
+            0x00: self.Addresss.DUMMY_DEVICE,
             0x01: self.Addresss.P1_CONTROLLER,
             0x02: self.Addresss.P2_CONTROLLER,
             0x03: self.Addresss.SHIFTER,
