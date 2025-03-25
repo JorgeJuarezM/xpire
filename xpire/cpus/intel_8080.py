@@ -1040,6 +1040,9 @@ class Intel8080(CPU):
     def out_d8(self) -> None:
         port = self.fetch_byte()
         self.bus.write(port, self.registers.A)
+
+        print(f"OUT {hex(port)}: {hex(self.registers.A)}")
+
         self.cycles += 10
 
     @manager.add_instruction(0xD4)

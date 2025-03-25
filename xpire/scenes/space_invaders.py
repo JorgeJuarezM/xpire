@@ -1,3 +1,4 @@
+import math
 import os
 
 import pygame
@@ -19,6 +20,15 @@ RED = (0xFF, 0x00, 0x00)
 GREEN = (0x00, 0xFF, 0x00)
 BLUE = (0x00, 0x00, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
+
+
+COLOR_PALETE = [
+    WHITE,
+    RED,
+    GREEN,
+    BLUE,
+    BLACK,
+]
 
 
 class SpaceInvadersScene(GameScene):
@@ -71,17 +81,36 @@ class SpaceInvadersScene(GameScene):
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.p1_controller.write(0x40)
 
-    def handle_interrupts(self):
-        opcode = self.flipflop.switch()
-        self.cpu.execute_interrupt(opcode)
+    def handle_interrupts(self, line_number=0):
+        line_number += 1
+        self.drawLine(line_number)
+        if line_number == 96:
+            self.cpu.execute_interrupt(0xCF)
+        if line_number == 224:
+            self.cpu.execute_interrupt(0xD7)
+
+    def drawLine(self, line):
+        color_index = self.cpu.memory[0x4000]
+        try:
+            color = COLOR_PALETE[color_index]
+        except IndexError:
+            color = BLACK
+
+        scale = self.screen.get_width() / 224
+        x = int(line * scale)
+        y = self.screen.get_height()
+        pygame.draw.line(self.screen, color, (x, 0), (x, y), math.ceil(scale))
 
     def update(self) -> pygame.surface.Surface:
         """Update the game state."""
         self.handle_events()
-        self.handle_interrupts()
 
-        while self.cpu.cycles < frequency_ratio:
-            self.cpu.execute_instruction()
+        self.screen = pygame.display.get_surface()
+        cycles = cpu_frequency // screen_frequency // 224
+        for line_number in range(224):
+            self.handle_interrupts(line_number)
+            while self.cpu.cycles < cycles:
+                self.cpu.execute_instruction()
 
-        self.cpu.cycles = 0
+            self.cpu.cycles = 0
         return self.render()
