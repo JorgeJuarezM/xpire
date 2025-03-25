@@ -1,7 +1,7 @@
 import unittest
 
-from xpire.scenes.xpire import XpireScene
 from xpire.constants import Colors
+from xpire.scenes.xpire import XpireScene
 
 
 class TestXpireScene(unittest.TestCase):
@@ -18,3 +18,13 @@ class TestXpireScene(unittest.TestCase):
             self.assertNotEqual(self.scene.surface.get_at((i, 1)), Colors.RED)
 
         self.scene.get_background_color.assert_called_once()
+
+    def test_get_ink_color(self):
+        color = self.scene.get_ink_color()
+        self.assertIsInstance(color, tuple)
+        self.assertEqual(len(color), 3)
+
+        for c in color:
+            self.assertIsInstance(c, int)
+            self.assertGreaterEqual(c, 0)
+            self.assertLessEqual(c, 255)
