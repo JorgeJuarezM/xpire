@@ -33,4 +33,4 @@ class XpireScene(SpaceInvadersScene):
         return super().drawLine(line)
 
     def clear_screen(self):
-        pass
+        """Clear the screen (Skip)."""
