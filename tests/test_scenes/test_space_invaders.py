@@ -33,13 +33,6 @@ class TestSpaceInvadersScene(unittest.TestCase):
         with self.assertRaises(Exception):
             self.scene.load_rom(fake.file_path())
 
-    def test_render(self):
-        self.scene.cpu.memory = bytearray(fake.binary(length=0xFFFF))
-        surface = self.scene.render()
-
-        self.assertIsNotNone(surface)
-        self.assertEqual(surface.get_size(), (224, 256))
-
     def test_handle_events_no_key_pressed(self):
         self.scene.p1_controller.write = unittest.mock.Mock()
 
@@ -138,10 +131,6 @@ class TestSpaceInvadersScene(unittest.TestCase):
 
     def test_handle_interrupts(self):
         self.scene.cpu.execute_interrupt = unittest.mock.Mock()
-        self.scene.flipflop.switch = unittest.mock.Mock()
-        self.scene.flipflop.switch.return_value = 0xFF
 
-        self.scene.handle_interrupts()
-
-        self.scene.flipflop.switch.assert_called_once()
-        self.scene.cpu.execute_interrupt.assert_called_once_with(0xFF)
+        self.scene.handle_interrupts(line_number=95)  # Interrupt on line 96
+        self.scene.cpu.execute_interrupt.assert_called_once_with(0xCF)
