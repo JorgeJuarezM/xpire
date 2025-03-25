@@ -8,6 +8,15 @@ class TestXpireScene(unittest.TestCase):
     def setUp(self):
         self.scene = XpireScene()
 
+    def _test_colors(self, color):
+        self.assertIsInstance(color, tuple)
+        self.assertEqual(len(color), 3)
+
+        for c in color:
+            self.assertIsInstance(c, int)
+            self.assertGreaterEqual(c, 0)
+            self.assertLessEqual(c, 255)
+
     def test_draw_line(self):
         self.scene.get_background_color = unittest.mock.Mock()
         self.scene.get_background_color.return_value = Colors.RED
@@ -21,10 +30,13 @@ class TestXpireScene(unittest.TestCase):
 
     def test_get_ink_color(self):
         color = self.scene.get_ink_color()
-        self.assertIsInstance(color, tuple)
-        self.assertEqual(len(color), 3)
+        self._test_colors(color)
 
-        for c in color:
-            self.assertIsInstance(c, int)
-            self.assertGreaterEqual(c, 0)
-            self.assertLessEqual(c, 255)
+    def test_get_background_color(self):
+        color = self.scene.get_background_color()
+        self._test_colors(color)
+
+    def test_get_background_color__out_of_bounds(self):
+        self.scene.cpu.memory[0x4000] = 0xFF
+        color = self.scene.get_background_color()
+        self._test_colors(color)
