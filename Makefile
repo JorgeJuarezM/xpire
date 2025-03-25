@@ -1,5 +1,5 @@
 test:
-	python -m unittest tests.test_scenes.test_space_invaders.TestSpaceInvadersScene.test_update
+	python -m unittest discover -s tests -p 'test_*.py'
 
 test_asm:
 	asm80 examples/tests.asm -o examples/tests.bin

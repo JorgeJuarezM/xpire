@@ -117,15 +117,17 @@ class TestSpaceInvadersScene(unittest.TestCase):
             self.scene.handle_events()
             self.scene.p1_controller.write.assert_called_with(0x40)
 
-    @unittest.mock.patch("xpire.scenes.space_invaders.CYCLES_PER_LINE", 0)
+    @unittest.mock.patch("xpire.scenes.space_invaders.CYCLES_PER_LINE", 1)
     @unittest.mock.patch("xpire.scenes.space_invaders.SCREEN_HEIGHT", 1)
     def test_update(self):
-        self.scene.cpu.execute_instruction = unittest.mock.Mock()
+        def mock_execute_instruction():
+            self.scene.cpu.cycles += 1
+
+        self.scene.cpu.execute_instruction = mock_execute_instruction
         self.scene.handle_events = unittest.mock.Mock()
         self.scene.handle_interrupts = unittest.mock.Mock()
 
         self.scene.update()
-        self.scene.cpu.execute_instruction.assert_not_called()
         self.scene.handle_events.assert_called_once()
         self.scene.handle_interrupts.assert_called_once()
 
