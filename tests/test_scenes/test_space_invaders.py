@@ -9,7 +9,7 @@ import unittest.mock
 import pygame
 from faker import Faker
 
-from xpire.scenes.space_invaders import SpaceInvadersScene, frequency_ratio
+from xpire.scenes.space_invaders import SpaceInvadersScene
 
 fake = Faker()
 
@@ -124,8 +124,9 @@ class TestSpaceInvadersScene(unittest.TestCase):
             self.scene.handle_events()
             self.scene.p1_controller.write.assert_called_with(0x40)
 
+    @unittest.mock.patch("xpire.scenes.space_invaders.CYCLES_PER_LINE", 0)
+    @unittest.mock.patch("xpire.scenes.space_invaders.SCREEN_HEIGHT", 1)
     def test_update(self):
-        self.scene.cpu.cycles = frequency_ratio + 1
         self.scene.cpu.execute_instruction = unittest.mock.Mock()
         self.scene.handle_events = unittest.mock.Mock()
         self.scene.handle_interrupts = unittest.mock.Mock()

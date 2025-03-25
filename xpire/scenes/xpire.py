@@ -1,6 +1,7 @@
-from xpire.scenes.space_invaders import SpaceInvadersScene, SCREEN_WIDTH
-from xpire.constants import Colors
 import pygame
+
+from xpire.constants import Colors
+from xpire.scenes.space_invaders import SCREEN_WIDTH, SpaceInvadersScene
 
 COLOR_PALETE = [
     Colors.BLACK,
