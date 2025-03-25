@@ -1,4 +1,3 @@
-import math
 import os
 
 import pygame
@@ -6,29 +5,16 @@ import pygame
 from xpire.cpus.intel_8080 import Intel8080
 from xpire.devices.bus import Bus
 from xpire.devices.device import Device, P1Controls, Shifter
-from xpire.devices.taito_arcade import FlipFlopD
 from xpire.engine import GameScene
 
-screen_frequency = 60
-cpu_frequency = 2000000
+SCREEN_WIDTH = 256
+SCREEN_HEIGHT = 224
+SCREEN_LINE_SIZE = 32
+VIDEO_MEMORY_BASE = 0x2400
 
-frequency_ratio = cpu_frequency // screen_frequency
-
-
-WHITE = (0xFF, 0xFF, 0xFF)
-RED = (0xFF, 0x00, 0x00)
-GREEN = (0x00, 0xFF, 0x00)
-BLUE = (0x00, 0x00, 0xFF)
-BLACK = (0x00, 0x00, 0x00)
-
-
-COLOR_PALETE = [
-    WHITE,
-    RED,
-    GREEN,
-    BLUE,
-    BLACK,
-]
+SCREEN_FREQUENCY = 60
+CPU_FREQUENCY = 2000000
+CYCLES_PER_LINE = CPU_FREQUENCY // SCREEN_FREQUENCY // SCREEN_HEIGHT
 
 
 class SpaceInvadersScene(GameScene):
@@ -41,8 +27,7 @@ class SpaceInvadersScene(GameScene):
         self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, self.p1_controller)
         self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
         self.cpu.bus.add_device(Bus.Addresss.DUMMY_DEVICE, Device())
-        self.clock = pygame.time.Clock()
-        self.flipflop = FlipFlopD()
+        self.surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -55,18 +40,6 @@ class SpaceInvadersScene(GameScene):
             self.cpu.memory += bytearray(0x10000 - len(self.cpu.memory))
         except FileNotFoundError as e:
             raise Exception(f"ROM not found: {program_path}") from e
-
-    def render(self):
-        surface = pygame.Surface((256, 224))
-        counter = 0
-        for value in self.cpu.memory[0x2400:0x4000]:
-            x = counter % 32
-            y = counter // 32
-            for i in range(8):
-                if value & (1 << i):
-                    surface.set_at((x * 8 + i, y), WHITE)
-            counter += 1
-        return pygame.transform.rotate(surface, 90)
 
     def handle_events(self):
         self.p1_controller.reset()
@@ -83,34 +56,38 @@ class SpaceInvadersScene(GameScene):
 
     def handle_interrupts(self, line_number=0):
         line_number += 1
-        self.drawLine(line_number)
         if line_number == 96:
             self.cpu.execute_interrupt(0xCF)
         if line_number == 224:
             self.cpu.execute_interrupt(0xD7)
 
     def drawLine(self, line):
-        color_index = self.cpu.memory[0x4000]
-        try:
-            color = COLOR_PALETE[color_index]
-        except IndexError:
-            color = BLACK
+        counter = line * SCREEN_LINE_SIZE
+        memory_base = VIDEO_MEMORY_BASE + counter
+        for value in self.cpu.memory[memory_base : memory_base + SCREEN_LINE_SIZE]:
+            x = counter % SCREEN_LINE_SIZE
+            y = counter // SCREEN_LINE_SIZE
+            for i in range(8):
+                if value & (1 << i):
+                    self.surface.set_at((x * 8 + i, y), self.get_ink_color())
+            counter += 1
 
-        scale = self.screen.get_width() / 224
-        x = int(line * scale)
-        y = self.screen.get_height()
-        pygame.draw.line(self.screen, color, (x, 0), (x, y), math.ceil(scale))
+    def get_frame(self):
+        return pygame.transform.rotate(self.surface, 90)
+
+    def clear_screen(self):
+        self.surface.fill(self.get_background_color())
 
     def update(self) -> pygame.surface.Surface:
         """Update the game state."""
         self.handle_events()
+        self.clear_screen()
 
-        self.screen = pygame.display.get_surface()
-        cycles = cpu_frequency // screen_frequency // 224
-        for line_number in range(224):
+        cycles = CYCLES_PER_LINE
+        for line_number in range(SCREEN_HEIGHT):
+            self.cpu.cycles = 0
+            self.drawLine(line_number)
             self.handle_interrupts(line_number)
             while self.cpu.cycles < cycles:
                 self.cpu.execute_instruction()
-
-            self.cpu.cycles = 0
-        return self.render()
+        return self.get_frame()
