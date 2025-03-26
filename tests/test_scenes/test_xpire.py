@@ -21,7 +21,7 @@ class TestXpireScene(unittest.TestCase):
         self.scene.get_background_color = unittest.mock.Mock()
         self.scene.get_background_color.return_value = Colors.RED
 
-        self.scene.drawLine(0)
+        self.scene.draw_line(0)
         for i in range(self.scene.surface.get_width()):
             self.assertEqual(self.scene.surface.get_at((i, 0)), Colors.RED)
             self.assertNotEqual(self.scene.surface.get_at((i, 1)), Colors.RED)

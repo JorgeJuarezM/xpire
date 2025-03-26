@@ -9,6 +9,7 @@ import unittest.mock
 import pygame
 from faker import Faker
 
+from xpire.constants import Colors
 from xpire.scenes.space_invaders import SpaceInvadersScene
 
 fake = Faker()
@@ -126,13 +127,25 @@ class TestSpaceInvadersScene(unittest.TestCase):
         self.scene.cpu.execute_instruction = mock_execute_instruction
         self.scene.handle_events = unittest.mock.Mock()
         self.scene.handle_interrupts = unittest.mock.Mock()
+        self.scene.draw_line = unittest.mock.Mock()
 
         self.scene.update()
         self.scene.handle_events.assert_called_once()
         self.scene.handle_interrupts.assert_called_once()
+        self.scene.draw_line.assert_called_once()
 
     def test_handle_interrupts(self):
         self.scene.cpu.execute_interrupt = unittest.mock.Mock()
 
         self.scene.handle_interrupts(line_number=95)  # Interrupt on line 96
         self.scene.cpu.execute_interrupt.assert_called_once_with(0xCF)
+
+    def test_draw_line(self):
+        self.scene.get_ink_color = unittest.mock.Mock()
+        self.scene.get_ink_color.return_value = Colors.RED
+
+        self.scene.cpu.memory[0x2400:0x2420] = [0xFF] * 0x20
+        self.scene.draw_line(0)
+        for i in range(self.scene.surface.get_width()):
+            self.assertEqual(self.scene.surface.get_at((i, 0)), Colors.RED)
+            self.assertNotEqual(self.scene.surface.get_at((i, 1)), Colors.RED)

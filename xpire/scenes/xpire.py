@@ -23,14 +23,14 @@ class XpireScene(SpaceInvadersScene):
     def get_ink_color(self):
         return Colors.BLACK
 
-    def drawLine(self, line):
+    def draw_line(self, line):
         pygame.draw.line(
             self.surface,
             self.get_background_color(),
             (0, line),
             (SCREEN_WIDTH, line),
         )
-        return super().drawLine(line)
+        return super().draw_line(line)
 
     def clear_screen(self):
         """Clear the screen (Skip)."""

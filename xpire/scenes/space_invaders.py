@@ -61,7 +61,7 @@ class SpaceInvadersScene(GameScene):
         if line_number == 224:
             self.cpu.execute_interrupt(0xD7)
 
-    def drawLine(self, line):
+    def draw_line(self, line):
         counter = line * SCREEN_LINE_SIZE
         memory_base = VIDEO_MEMORY_BASE + counter
         for value in self.cpu.memory[memory_base : memory_base + SCREEN_LINE_SIZE]:
@@ -86,7 +86,7 @@ class SpaceInvadersScene(GameScene):
         cycles = CYCLES_PER_LINE
         for line_number in range(SCREEN_HEIGHT):
             self.cpu.cycles = 0
-            self.drawLine(line_number)
+            self.draw_line(line_number)
             self.handle_interrupts(line_number)
             while self.cpu.cycles < cycles:
                 self.cpu.execute_instruction()
