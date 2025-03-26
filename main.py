@@ -6,10 +6,23 @@ It provides a command-line interface for loading and running
 programs on the Intel 8080 CPU.
 """
 
+import traceback
+
 import click
 
 from xpire.engine import GameManager
 from xpire.scenes.space_invaders import SpaceInvadersScene
+from xpire.scenes.xpire import XpireScene
+
+MACHINE_OPTIONS = [
+    "SI",
+    "XPIRE",
+]
+
+MACHINE_MAP = {
+    "SI": SpaceInvadersScene,
+    "XPIRE": XpireScene,
+}
 
 
 @click.group()
@@ -29,16 +42,27 @@ def xpire():
     required=True,
     metavar="FILE",
 )
-def run(program_file: str) -> None:
+@click.option(
+    "-m",
+    "--machine",
+    "machine",
+    type=click.Choice(MACHINE_OPTIONS, case_sensitive=False),
+    default="SI",
+    help="""
+    The machine to run the program on.
+    
+    Run `xpire machines` for a list of available machines.
+    """,
+)
+def run(program_file: str, machine: str) -> None:
     """Run an Intel 8080 program from a file."""
     try:
-        scene = SpaceInvadersScene()
+        scene = MACHINE_MAP[machine]()
         scene.load_rom(program_file)
-
         game = GameManager(scene)
         game.start()
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception:
+        print(f"Error: {traceback.format_exc()}")
         exit(1)
 
 

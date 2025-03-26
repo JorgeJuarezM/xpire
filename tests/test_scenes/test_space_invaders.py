@@ -9,12 +9,15 @@ import unittest.mock
 import pygame
 from faker import Faker
 
-from xpire.scenes.space_invaders import SpaceInvadersScene, frequency_ratio
+from tests.base import ColorBaseTest
+from xpire.constants import Colors
+from xpire.scenes.space_invaders import SpaceInvadersScene
 
 fake = Faker()
 
 
-class TestSpaceInvadersScene(unittest.TestCase):
+class TestSpaceInvadersScene(ColorBaseTest):
+
     def setUp(self):
         self.scene = SpaceInvadersScene()
 
@@ -32,13 +35,6 @@ class TestSpaceInvadersScene(unittest.TestCase):
     def test_load_rom_not_found(self):
         with self.assertRaises(Exception):
             self.scene.load_rom(fake.file_path())
-
-    def test_render(self):
-        self.scene.cpu.memory = bytearray(fake.binary(length=0xFFFF))
-        surface = self.scene.render()
-
-        self.assertIsNotNone(surface)
-        self.assertEqual(surface.get_size(), (224, 256))
 
     def test_handle_events_no_key_pressed(self):
         self.scene.p1_controller.write = unittest.mock.Mock()
@@ -124,23 +120,41 @@ class TestSpaceInvadersScene(unittest.TestCase):
             self.scene.handle_events()
             self.scene.p1_controller.write.assert_called_with(0x40)
 
+    @unittest.mock.patch("xpire.scenes.space_invaders.CYCLES_PER_LINE", 1)
+    @unittest.mock.patch("xpire.scenes.space_invaders.SCREEN_HEIGHT", 1)
     def test_update(self):
-        self.scene.cpu.cycles = frequency_ratio + 1
-        self.scene.cpu.execute_instruction = unittest.mock.Mock()
+        def mock_execute_instruction():
+            self.scene.cpu.cycles += 1
+
+        self.scene.cpu.execute_instruction = mock_execute_instruction
         self.scene.handle_events = unittest.mock.Mock()
         self.scene.handle_interrupts = unittest.mock.Mock()
+        self.scene.draw_line = unittest.mock.Mock()
 
         self.scene.update()
-        self.scene.cpu.execute_instruction.assert_not_called()
         self.scene.handle_events.assert_called_once()
         self.scene.handle_interrupts.assert_called_once()
+        self.scene.draw_line.assert_called_once()
 
     def test_handle_interrupts(self):
         self.scene.cpu.execute_interrupt = unittest.mock.Mock()
-        self.scene.flipflop.switch = unittest.mock.Mock()
-        self.scene.flipflop.switch.return_value = 0xFF
 
-        self.scene.handle_interrupts()
+        self.scene.handle_interrupts(line_number=95)  # Interrupt on line 96
+        self.scene.cpu.execute_interrupt.assert_called_once_with(0xCF)
 
-        self.scene.flipflop.switch.assert_called_once()
-        self.scene.cpu.execute_interrupt.assert_called_once_with(0xFF)
+        self.scene.handle_interrupts(line_number=223)  # Interrupt on line 224
+        self.scene.cpu.execute_interrupt.assert_called_with(0xD7)
+
+    def test_draw_line(self):
+        self.scene.get_ink_color = unittest.mock.Mock()
+        self.scene.get_ink_color.return_value = Colors.RED
+
+        self.scene.cpu.memory[0x2400:0x2420] = [0xFF] * 0x20
+        self.scene.draw_line(0)
+        for i in range(self.scene.surface.get_width()):
+            self.assertEqual(self.scene.surface.get_at((i, 0)), Colors.RED)
+            self.assertNotEqual(self.scene.surface.get_at((i, 1)), Colors.RED)
+
+    def test_get_ink_color(self):
+        color = self.scene.get_ink_color()
+        self._test_colors(color)

@@ -16,6 +16,8 @@ WHITE = (0xFF, 0xFF, 0xFF)
 RED = (0xFF, 0x00, 0x00)
 GREEN = (0x00, 0xFF, 0x00)
 BLUE = (0x00, 0x00, 0xFF)
+BLACK = (0x00, 0x00, 0x00)
+
 BG_COLOR = (0x20, 0x22, 0x2E)
 
 
@@ -25,6 +27,12 @@ class GameScene:
 
     def update(self) -> pygame.surface.Surface:
         """Update the game state."""
+
+    def get_background_color(self) -> tuple[int, int, int]:
+        return BLACK
+
+    def get_ink_color(self) -> tuple[int, int, int]:
+        return WHITE
 
 
 class GameManager:
@@ -79,7 +87,7 @@ class GameManager:
             y_position = self.screen.get_height() // 2 - surface.get_height() // 2
             self.screen.blit(surface, (x_position, y_position))
 
-            self.print_debug_info()
+            # self.print_debug_info()
             pygame.display.update()
 
             running = not self.scene.is_finished
