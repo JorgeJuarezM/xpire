@@ -140,6 +140,9 @@ class TestSpaceInvadersScene(unittest.TestCase):
         self.scene.handle_interrupts(line_number=95)  # Interrupt on line 96
         self.scene.cpu.execute_interrupt.assert_called_once_with(0xCF)
 
+        self.scene.handle_interrupts(line_number=223)  # Interrupt on line 224
+        self.scene.cpu.execute_interrupt.assert_called_with(0xD7)
+
     def test_draw_line(self):
         self.scene.get_ink_color = unittest.mock.Mock()
         self.scene.get_ink_color.return_value = Colors.RED
