@@ -9,13 +9,15 @@ import unittest.mock
 import pygame
 from faker import Faker
 
+from tests.base import ColorBaseTest
 from xpire.constants import Colors
 from xpire.scenes.space_invaders import SpaceInvadersScene
 
 fake = Faker()
 
 
-class TestSpaceInvadersScene(unittest.TestCase):
+class TestSpaceInvadersScene(ColorBaseTest):
+
     def setUp(self):
         self.scene = SpaceInvadersScene()
 
@@ -152,3 +154,7 @@ class TestSpaceInvadersScene(unittest.TestCase):
         for i in range(self.scene.surface.get_width()):
             self.assertEqual(self.scene.surface.get_at((i, 0)), Colors.RED)
             self.assertNotEqual(self.scene.surface.get_at((i, 1)), Colors.RED)
+
+    def test_get_ink_color(self):
+        color = self.scene.get_ink_color()
+        self._test_colors(color)

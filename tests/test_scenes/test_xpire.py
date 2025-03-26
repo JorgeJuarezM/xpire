@@ -1,21 +1,13 @@
 import unittest
 
+from tests.base import ColorBaseTest
 from xpire.constants import Colors
 from xpire.scenes.xpire import XpireScene
 
 
-class TestXpireScene(unittest.TestCase):
+class TestXpireScene(ColorBaseTest):
     def setUp(self):
         self.scene = XpireScene()
-
-    def _test_colors(self, color):
-        self.assertIsInstance(color, tuple)
-        self.assertEqual(len(color), 3)
-
-        for c in color:
-            self.assertIsInstance(c, int)
-            self.assertGreaterEqual(c, 0)
-            self.assertLessEqual(c, 255)
 
     def test_draw_line(self):
         self.scene.get_background_color = unittest.mock.Mock()
