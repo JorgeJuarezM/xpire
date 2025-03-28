@@ -5,14 +5,13 @@ Thanks to GunshipPenguin for the test cases.
     https://github.com/GunshipPenguin/lib8080/blob/master/test/unit/instructions/daa_test.c
 """
 
-import unittest
 from tests.base.intel_8080 import Intel8080_Base
 
 
 class Test_ADD_Instruction(Intel8080_Base):
 
     def test_add_b(self):
-        self.cpu.write_memory_byte(0x0000, 0x80) # ADD B
+        self.cpu.write_memory_byte(0x0000, 0x80)  # ADD B
         self.cpu.registers.B = 0x01
         self.cpu.registers.A = 0x00
 
@@ -23,7 +22,7 @@ class Test_ADD_Instruction(Intel8080_Base):
         self.assertEqual(self.cpu.cycles, 4)
 
     def test_add_c(self):
-        self.cpu.write_memory_byte(0x0000, 0x81) # ADD C
+        self.cpu.write_memory_byte(0x0000, 0x81)  # ADD C
         self.cpu.registers.C = 0x01
         self.cpu.registers.A = 0x00
 
@@ -54,7 +53,6 @@ class Test_ADD_Instruction(Intel8080_Base):
         self.assertEqual(self.cpu.registers.A, 0x01)
         self.assertEqual(self.cpu.PC, 0x0001)
         self.assertEqual(self.cpu.cycles, 4)
-
 
     def test_add_h(self):
         self.cpu.write_memory_byte(0x0000, 0x84)
@@ -100,9 +98,8 @@ class Test_ADD_Instruction(Intel8080_Base):
         self.assertEqual(self.cpu.PC, 0x0001)
         self.assertEqual(self.cpu.cycles, 4)
 
-
     def test_set_zero_flag(self):
-        self.cpu.write_memory_byte(0x0000, 0x80) # ADD B
+        self.cpu.write_memory_byte(0x0000, 0x80)  # ADD B
         self.cpu.registers.A = 0x00
         self.cpu.registers.B = 0x00
 
@@ -125,7 +122,7 @@ class Test_ADD_Instruction(Intel8080_Base):
 
     def test_set_sign_flag(self):
         self.cpu.write_memory_byte(0x0000, 0x80)
-        self.cpu.registers.A = 0x7f
+        self.cpu.registers.A = 0x7F
         self.cpu.registers.B = 0x01
 
         self.cpu.flags.S = False
@@ -136,7 +133,7 @@ class Test_ADD_Instruction(Intel8080_Base):
 
     def test_set_auxiliary_carry_flag(self):
         self.cpu.write_memory_byte(0x0000, 0x80)
-        self.cpu.registers.A = 0x0f
+        self.cpu.registers.A = 0x0F
         self.cpu.registers.B = 0x01
 
         self.cpu.flags.AC = False
@@ -147,7 +144,7 @@ class Test_ADD_Instruction(Intel8080_Base):
 
     def test_set_carry_flag(self):
         self.cpu.write_memory_byte(0x0000, 0x80)
-        self.cpu.registers.A = 0xff
+        self.cpu.registers.A = 0xFF
         self.cpu.registers.B = 0x01
 
         self.cpu.flags.C = False
