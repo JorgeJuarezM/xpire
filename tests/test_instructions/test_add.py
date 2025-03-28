@@ -2,7 +2,7 @@
 Test class for ADD Instruction.
 
 Thanks to GunshipPenguin for the test cases.
-    https://github.com/GunshipPenguin/lib8080/blob/master/test/unit/instructions/daa_test.c
+    https://github.com/GunshipPenguin/lib8080/blob/master/test/unit/instructions/add_test.c
 """
 
 from tests.base.intel_8080 import Intel8080_Base
