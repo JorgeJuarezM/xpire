@@ -9,7 +9,7 @@ import unittest.mock
 import pygame
 from faker import Faker
 
-from tests.base import ColorBaseTest
+from tests.base.base import ColorBaseTest
 from xpire.constants import Colors
 from xpire.scenes.space_invaders import SpaceInvadersScene
 

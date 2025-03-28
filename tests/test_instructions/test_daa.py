@@ -5,9 +5,7 @@ Thanks to GunshipPenguin for the test cases.
     https://github.com/GunshipPenguin/lib8080/blob/master/test/unit/instructions/daa_test.c
 """
 
-import unittest
-
-from xpire.cpus.intel_8080 import Intel8080
+from tests.base.intel_8080 import Intel8080_Base
 
 
 def bcd_encode(n):
@@ -22,9 +20,7 @@ def bcd_decode(n):
     return (h * 10) + l
 
 
-class Test_DAA_Instruction(unittest.TestCase):
-    def setUp(self):
-        self.cpu = Intel8080()
+class Test_DAA_Instruction(Intel8080_Base):
 
     def test_cycles(self):
         self.cpu.write_memory_byte(0x0000, 0x27)  # DAA

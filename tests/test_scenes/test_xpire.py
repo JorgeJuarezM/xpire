@@ -1,6 +1,6 @@
 import unittest
 
-from tests.base import ColorBaseTest
+from tests.base.base import ColorBaseTest
 from xpire.constants import Colors
 from xpire.scenes.xpire import XpireScene
 

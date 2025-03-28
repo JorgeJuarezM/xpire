@@ -11,7 +11,7 @@ from xpire.screen import Screen
 WHITE_COLOR = (255, 255, 255, 255)
 
 
-class TestIntel8080(unittest.TestCase):
+class TestScreen(unittest.TestCase):
     """
     Test class for the Intel8080 CPU.
     """
