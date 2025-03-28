@@ -1,5 +1,5 @@
 """
-Test class for DAA Instruction.
+Test class for ADD Instruction.
 
 Thanks to GunshipPenguin for the test cases.
     https://github.com/GunshipPenguin/lib8080/blob/master/test/unit/instructions/daa_test.c
