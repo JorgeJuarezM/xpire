@@ -12,7 +12,7 @@ from xpire.devices.device import Device, P1Controls, Shifter
 fake = Faker()
 
 
-class TestSpaceInvadersScene(unittest.TestCase):
+class TestDevice(unittest.TestCase):
     def setUp(self):
         self.device = Device()
 

@@ -1,5 +1,5 @@
 test:
-	python -m unittest tests
+	python -m unittest tests -v
 
 test_asm:
 	asm80 examples/tests.asm -o examples/tests.bin
