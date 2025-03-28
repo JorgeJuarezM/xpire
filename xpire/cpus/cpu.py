@@ -47,9 +47,11 @@ class CPU(AbstractCPU):
 
         The CPU object starts a new thread to execute instructions.
         """
+        self.reset()
+
+    def reset(self):
         self.memory = bytearray(0x10000)
         self.registers = Registers()
-        self.flags = {}
 
         self.SP = 0x0000
         self.PC = 0x0000
