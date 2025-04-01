@@ -74,6 +74,7 @@ class CPU(AbstractCPU):
         """
         try:
             opcode = self.fetch_byte()
+            # print(f"0x{opcode:02x}")
             manager.execute(opcode, self)
         except SystemHalt:
             self.halted = True

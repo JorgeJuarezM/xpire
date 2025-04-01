@@ -9,14 +9,6 @@ from xpire.utils import join_bytes, split_word
 
 
 class Registers:
-    A = 0x00
-    B = 0x01
-    C = 0x02
-    D = 0x03
-    E = 0x04
-    H = 0x05
-    L = 0x06
-
     def __init__(self):
         self.A = 0x00
         self.B = 0x00

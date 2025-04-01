@@ -11,17 +11,20 @@ import traceback
 import click
 
 from xpire.engine import GameManager
+from xpire.scenes.cpm import CPM80_Scene
 from xpire.scenes.space_invaders import SpaceInvadersScene
 from xpire.scenes.xpire import XpireScene
 
 MACHINE_OPTIONS = [
     "SI",
     "XPIRE",
+    "CPM80",
 ]
 
 MACHINE_MAP = {
     "SI": SpaceInvadersScene,
     "XPIRE": XpireScene,
+    "CPM80": CPM80_Scene,
 }
 
 
