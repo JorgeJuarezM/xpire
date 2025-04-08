@@ -2,7 +2,13 @@ import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
 from xpire.devices.bus import Bus
-from xpire.devices.device import Device, P1Controls, Shifter
+from xpire.devices.device import (
+    DummyDevice,
+    DummyInput,
+    P1Controls,
+    P2Controls,
+    Shifter,
+)
 from xpire.engine import GameScene
 
 SCREEN_WIDTH = 256
@@ -20,12 +26,30 @@ class SpaceInvadersScene(GameScene):
     def __init__(self):
         super().__init__()
         self.cpu = Intel8080()
+
         self.p1_controller = P1Controls()
-        self.cpu.bus.add_device(Bus.Addresss.SHIFTER, Shifter())
-        self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, self.p1_controller)
-        self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
-        self.cpu.bus.add_device(Bus.Addresss.DUMMY_DEVICE, Device())
+        self.p2_controller = P2Controls()
+        self.dummy_input = DummyInput()
+
+        self.dummy_device = DummyDevice()
+        self.shifter = Shifter()
+
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 2, self.shifter.write_offset)
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 3, self.dummy_device.write)
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 4, self.shifter.write_value)
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 5, self.dummy_device.write)
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 6, self.dummy_device.write)
+
+        self.bus.register_device(Bus.DeviceTypes.READ, 0, self.dummy_input.read)
+        self.bus.register_device(Bus.DeviceTypes.READ, 1, self.p1_controller.read)
+        self.bus.register_device(Bus.DeviceTypes.READ, 2, self.p2_controller.read)
+        self.bus.register_device(Bus.DeviceTypes.READ, 3, self.shifter.read)
+
         self.surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    @property
+    def bus(self):
+        return self.cpu.bus
 
     def handle_events(self):
         self.p1_controller.reset()

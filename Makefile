@@ -6,7 +6,7 @@ test_asm:
 	python main.py run examples/tests.bin
 
 run_invaders:
-	@PYGAME_HIDE_SUPPORT_PROMPT=1 python main.py run drafts/invaders.com
+	@PYGAME_HIDE_SUPPORT_PROMPT=1 python main.py run drafts/invaders.com -m SI
 
 format:
 	git ls-files | grep ".py" | xargs autoflake --remove-all-unused-imports --in-place

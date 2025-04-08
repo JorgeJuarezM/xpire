@@ -1,27 +1,34 @@
 import pygame
 
 from xpire.constants import Colors
+from xpire.devices.bus import Bus
+from xpire.devices.device import Device
 from xpire.scenes.space_invaders import SCREEN_WIDTH, SpaceInvadersScene
 
 COLOR_PALETE = [
-    Colors.BLACK,
-    Colors.RED,
-    Colors.GREEN,
-    Colors.BLUE,
+    Colors.WHITE,
     Colors.BLACK,
 ]
 
 
 class XpireScene(SpaceInvadersScene):
+
+    def __init__(self):
+        super().__init__()
+
+        self.color_device = Device()
+
+        self.bus.register_device(Bus.DeviceTypes.READ, 255, self.color_device.read)
+        self.bus.register_device(Bus.DeviceTypes.WRITE, 255, self.color_device.write)
+
     def get_background_color(self):
-        color_index = self.cpu.memory[0x4000]
-        try:
-            return COLOR_PALETE[color_index]
-        except IndexError:
-            return super().get_background_color()
+        color_index = self.color_device.read()
+        return COLOR_PALETE[color_index]
 
     def get_ink_color(self):
-        return Colors.BLACK
+        color_index = self.color_device.read()
+        color_index = (color_index + 1) % len(COLOR_PALETE)
+        return COLOR_PALETE[color_index]
 
     def draw_line(self, line):
         pygame.draw.line(

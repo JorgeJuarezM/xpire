@@ -1,9 +1,10 @@
-from xpire.engine import GameScene
-from xpire.cpus.intel_8080 import Intel8080
-import pygame
-import sys
-from xpire.constants import Colors
 import os
+
+import pygame
+
+from xpire.constants import Colors
+from xpire.cpus.intel_8080 import Intel8080
+from xpire.engine import GameScene
 
 
 class CPM80_Scene(GameScene):

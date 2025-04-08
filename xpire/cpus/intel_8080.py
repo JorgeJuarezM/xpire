@@ -109,14 +109,27 @@ class Intel8080(CPU):
         return result
 
     def compare_with_twos_complement(self, v1: int, v2: int) -> int:
-        compl = get_twos_complement(v2)
-        result = v1 + compl
+        # compl = get_twos_complement(v2)
+        # result = v1 + compl
 
+        # self.flags.Z = (result & 0xFF) == 0x00
+        # self.flags.S = (result & 0x80) != 0
+        # self.flags.A = (get_ls_nib(v1) + get_ls_nib(compl)) > 0x0F
+        # self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
+        # # self.flags.C = result <= 0xFF
+        # self.flags.C = bool(result >> 8)
+
+        result = v1 - v2
+
+        # c->cf = result >> 8;
+        # c->hf = ~(c->a ^ result ^ val) & 0x10;
+        self.flags.C = bool(result >> 8)
+        self.flags.A = ~(v1 ^ v2 ^ result) & 0x10
         self.flags.Z = (result & 0xFF) == 0x00
-        self.flags.S = (result & 0x80) != 0
-        self.flags.A = (get_ls_nib(v1) + get_ls_nib(compl)) > 0x0F
-        self.flags.P = (bin(result & 0xFF).count("1") % 2) == 0
-        self.flags.C = result <= 0xFF
+        self.flags.S = bool((result & 0xFF) >> 7)
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
+
+        # print(f"CPI: {v1} - {v2} = {result}")
 
     @manager.add_instruction(0x01, ["B", "C"])
     @manager.add_instruction(0x11, ["D", "E"])
@@ -272,7 +285,7 @@ class Intel8080(CPU):
         self.set_carry_flag(result, mask=0xFFFF)
         self.cycles += 10
 
-        print(f"HL: {self.registers.HL}")
+        # print(f"HL: {self.registers.HL}")
 
     @manager.add_instruction(0x0A, ["BC"])
     @manager.add_instruction(0x1A, ["DE"])
@@ -1048,6 +1061,10 @@ class Intel8080(CPU):
     def out_d8(self) -> None:
         port = self.fetch_byte()
         self.bus.write(port, self.registers.A)
+
+        if port == 3:
+            print(self.registers.A)
+
         self.cycles += 10
 
     @manager.add_instruction(0xD4)
@@ -1105,6 +1122,10 @@ class Intel8080(CPU):
     def in_d8(self) -> int:
         port = self.fetch_byte()
         self.registers.A = self.bus.read(port)
+
+        # if port == 1:
+        #     print(f"Writing {self.registers.A} to port {port}")
+
         self.cycles += 10
 
     @manager.add_instruction(0xDC)
@@ -1397,7 +1418,7 @@ class Intel8080(CPU):
 
     @manager.add_instruction(0xFF)
     def rst_7(self) -> None:
-        if not self.interrupts_enabled:
+        if self.interrupts_enabled:
             self.interrupts_enabled = False
             h, l = split_word(self.PC)
             self._push(h, l)
