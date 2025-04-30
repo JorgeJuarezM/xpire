@@ -164,13 +164,19 @@ class Intel8080(CPU):
 
         Condition bits affected: Zero, Sign, Parity, Auxiliary.
         """
-        value = self.registers[register]
-        result = value + 0x01
-        new_value = result & 0xFF
-        self.registers[register] = new_value
+        reg_value = self.registers[register]
+        result = reg_value + 1
+        self.registers[register] = result & 0xFF
 
-        self.set_flags(new_value)
-        self.set_aux_carry_flag(value, 0x01)
+        # self.set_flags(new_value)
+        # self.set_aux_carry_flag(value, 1)
+
+        self.flags.S = (result & 0x80) != 0x00
+        self.flags.Z = (result & 0xFF) == 0x00
+        self.flags.A = (get_ls_nib(reg_value) + 1) > 0x0F
+        # self.flags.A = (result & 0xF) == 0
+        # self.flags.S = bool(result >> 7)
+        self.flags.P = bin(result & 0xFF).count("1") % 2 == 0
 
         self.cycles += 5
 
@@ -265,6 +271,8 @@ class Intel8080(CPU):
         self.registers.HL = new_value
         self.set_carry_flag(result, mask=0xFFFF)
         self.cycles += 10
+
+        print(f"HL: {self.registers.HL}")
 
     @manager.add_instruction(0x0A, ["BC"])
     @manager.add_instruction(0x1A, ["DE"])
@@ -1153,7 +1161,7 @@ class Intel8080(CPU):
     @manager.add_instruction(0xE2)
     def jpo_addr(self) -> None:
         address = self.fetch_word()
-        if self.flags.P:
+        if not self.flags.P:
             self.PC = address
             self.cycles += 17
             return

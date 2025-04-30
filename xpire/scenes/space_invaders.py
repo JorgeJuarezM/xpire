@@ -1,5 +1,3 @@
-import os
-
 import pygame
 
 from xpire.cpus.intel_8080 import Intel8080
@@ -28,18 +26,6 @@ class SpaceInvadersScene(GameScene):
         self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
         self.cpu.bus.add_device(Bus.Addresss.DUMMY_DEVICE, Device())
         self.surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-    def load_rom(self, program_path: str) -> None:
-        try:
-            file_size = os.path.getsize(program_path)
-            if file_size > 0xFFFF:
-                raise Exception("ROM is too large, max size is 64kb")
-
-            with open(program_path, "rb") as f:
-                self.cpu.memory = bytearray(f.read())
-            self.cpu.memory += bytearray(0x10000 - len(self.cpu.memory))
-        except FileNotFoundError as e:
-            raise Exception(f"ROM not found: {program_path}") from e
 
     def handle_events(self):
         self.p1_controller.reset()

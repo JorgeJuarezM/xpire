@@ -1,8 +1,10 @@
+import os
 import sys
 
 import pygame
 from pygame.surface import Surface
 
+from xpire.constants import Colors
 from xpire.devices.taito_arcade import FlipFlopD
 
 screen_frequency = 60
@@ -12,16 +14,9 @@ frequency_ratio = cpu_frequency // screen_frequency
 flipflop = FlipFlopD()
 
 
-WHITE = (0xFF, 0xFF, 0xFF)
-RED = (0xFF, 0x00, 0x00)
-GREEN = (0x00, 0xFF, 0x00)
-BLUE = (0x00, 0x00, 0xFF)
-BLACK = (0x00, 0x00, 0x00)
-
-BG_COLOR = (0x20, 0x22, 0x2E)
-
-
 class GameScene:
+    _memory_offset = 0
+
     def __init__(self):
         self.is_finished = False
 
@@ -29,10 +24,23 @@ class GameScene:
         """Update the game state."""
 
     def get_background_color(self) -> tuple[int, int, int]:
-        return BLACK
+        return Colors.BLACK
 
     def get_ink_color(self) -> tuple[int, int, int]:
-        return WHITE
+        return Colors.WHITE
+
+    def load_rom(self, program_path: str) -> None:
+        try:
+            file_size = os.path.getsize(program_path)
+            if file_size > 0xFFFF:
+                raise Exception("ROM is too large, max size is 64kb")
+
+            self.cpu.memory = bytearray(self._memory_offset)
+            with open(program_path, "rb") as f:
+                self.cpu.memory += bytearray(f.read())
+            self.cpu.memory += bytearray(0x10000 - len(self.cpu.memory))
+        except FileNotFoundError as e:
+            raise Exception(f"ROM not found: {program_path}") from e
 
 
 class GameManager:
@@ -74,17 +82,22 @@ class GameManager:
         running = True
         while running:
             self.clock.tick(60)
-            self.screen.fill(BG_COLOR)
+            self.screen.fill(Colors.BLACK)
             frame: Surface = self.scene.update()
 
             self.handle_events()
+
+            scale_x = self.screen.get_width() // frame.get_width()
+            scale_y = self.screen.get_height() // frame.get_height()
+            scale = min(scale_x, scale_y)
+
             surface = pygame.transform.scale(
                 frame,
-                (frame.get_width() * 2, frame.get_height() * 2),
+                (frame.get_width() * scale, frame.get_height() * scale),
             )
 
-            x_position = self.screen.get_width() // 2 - surface.get_width() // 2
-            y_position = self.screen.get_height() // 2 - surface.get_height() // 2
+            x_position = (self.screen.get_width() // 2) - (surface.get_width() // 2)
+            y_position = (self.screen.get_height() // 2) - (surface.get_height() // 2)
             self.screen.blit(surface, (x_position, y_position))
 
             # self.print_debug_info()
