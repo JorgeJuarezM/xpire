@@ -9,7 +9,7 @@ from xpire.engine import GameScene
 
 SCREEN_WIDTH = 256
 SCREEN_HEIGHT = 224
-SCREEN_LINE_SIZE = 32
+SCREEN_LINE_SIZE = 32  # Characters per line
 VIDEO_MEMORY_BASE = 0x2400
 
 SCREEN_FREQUENCY = 60
@@ -27,7 +27,7 @@ class SpaceInvadersScene(GameScene):
         self.cpu.bus.add_device(Bus.Addresss.P1_CONTROLLER, self.p1_controller)
         self.cpu.bus.add_device(Bus.Addresss.P2_CONTROLLER, Device())
         self.cpu.bus.add_device(Bus.Addresss.DUMMY_DEVICE, Device())
-        self.surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.surface = pygame.Surface((SCREEN_WIDTH * 3, SCREEN_HEIGHT * 3))
 
     def load_rom(self, program_path: str) -> None:
         try:
@@ -62,14 +62,26 @@ class SpaceInvadersScene(GameScene):
             self.cpu.execute_interrupt(0xD7)
 
     def draw_line(self, line):
-        counter = line * SCREEN_LINE_SIZE
-        memory_base = VIDEO_MEMORY_BASE + counter
+        # counter = line * SCREEN_LINE_SIZE
+        counter = 0
+        memory_base = VIDEO_MEMORY_BASE + (line * SCREEN_LINE_SIZE)
         for value in self.cpu.memory[memory_base : memory_base + SCREEN_LINE_SIZE]:
-            x = counter % SCREEN_LINE_SIZE
-            y = counter // SCREEN_LINE_SIZE
+            # x = counter % SCREEN_LINE_SIZE
+            # y = counter // SCREEN_LINE_SIZE
+            x = counter
+            y = line
+
             for i in range(8):
                 if value & (1 << i):
-                    self.surface.set_at((x * 8 + i, y), self.get_ink_color())
+                    # self.surface.set_at((x * 8 + i, y), self.get_ink_color())
+                    _x = (x * 8 + i) * 3
+                    _y = y * 3
+                    pygame.draw.rect(
+                        self.surface,
+                        self.get_ink_color(),
+                        (_x, _y, 3, 3),
+                        0,
+                    )
             counter += 1
 
     def get_frame(self):
